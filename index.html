@@ -5486,6 +5486,15 @@ async function initPushNotifications() {
 
     // Register SW and wait until it is fully active
     const reg = await navigator.serviceWorker.register('./sw.js');
+      // Auto-reload when a new service worker takes over
+      reg.addEventListener('updatefound', () => {
+        const newSW = reg.installing;
+        newSW?.addEventListener('statechange', () => {
+          if (newSW.state === 'activated' && navigator.serviceWorker.controller) {
+            window.location.reload();
+          }
+        });
+      });
     await new Promise((resolve) => {
       if (reg.active) return resolve();
       const sw = reg.installing || reg.waiting;
