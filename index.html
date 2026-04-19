@@ -914,6 +914,13 @@ html,body { height:100%; overflow:hidden; overflow-x:hidden; background:var(--bg
 <div class="toast" id="toast"></div>
 
 <script>
+// Force service worker update so new design loads for all users
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => reg.update());
+  });
+}
+
 // ═══════════════════════════════════════════════════════
 // CONFIG — Replace these with your actual values
 // ═══════════════════════════════════════════════════════
