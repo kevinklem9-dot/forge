@@ -986,17 +986,15 @@ let userProfile = null;
 let userPlan = null;
 let userSubscription = null; // { tier, accessTier, status, isExempt, trialDaysLeft, coachUsage, coachLimit, hasUnlimitedCoach }
 
-// Frontend feature access check — mirrors server hasAccess()
+// Frontend feature access check — uses accessTier from server (single source of truth)
 function canAccess(feature) {
-  if (!userSubscription) return true; // default open while loading
-  const { tier, isExempt, status } = userSubscription;
+  if (!userSubscription) return false; // default locked while loading, not open
+  const { accessTier, isExempt } = userSubscription;
   if (isExempt) return true;
-  // During trial, full access regardless of tier
-  if (status === 'trial') return true;
   const steelFeatures = ['unlimited_coach','weekly_review','checkin','overload_tracker','body_metrics','plan_editing','deload','shopping_list','multiple_programmes','export_history'];
   const forgeFeatures = ['video_demos','barcode_scanner','wearable_sync','monthly_review','priority_support','early_access'];
-  if (steelFeatures.includes(feature)) return tier === 'steel' || tier === 'forge';
-  if (forgeFeatures.includes(feature)) return tier === 'forge';
+  if (steelFeatures.includes(feature)) return accessTier === 'steel' || accessTier === 'forge';
+  if (forgeFeatures.includes(feature)) return accessTier === 'forge';
   return true;
 }
 
