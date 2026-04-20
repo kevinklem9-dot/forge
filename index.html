@@ -633,6 +633,7 @@ html,body { height:100%; overflow:hidden; overflow-x:hidden; background:var(--bg
       <div class="gen-dot"></div><div class="gen-dot"></div><div class="gen-dot"></div>
     </div>
     <div class="gen-status" id="gen-status">BUILDING YOUR PROGRAMME</div>
+    <div id="gen-subtitle" style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted);text-align:center;max-width:260px;line-height:1.5;margin-top:-8px;">This could take up to a minute — we're building your full personalised plan.</div>
   </div>
 </div>
 
@@ -2027,13 +2028,29 @@ async function submitOnboarding() {
     return;
   }
 
-  document.getElementById('gen-status').textContent = t('generating_workout');
-  await delay(600);
-  document.getElementById('gen-status').textContent = t('calculating_macros');
-  await delay(500);
-  document.getElementById('gen-status').textContent = t('building_meals');
+  // Cycle loading messages so user knows it's working (plan gen can take 40-60s)
+  const genStatus = document.getElementById('gen-status');
+  const genSubtitle = document.getElementById('gen-subtitle');
+  const loadingMsgs = [
+    { status: t('generating_workout'),   sub: 'This could take up to a minute — we\'re building your full personalised plan.' },
+    { status: t('calculating_macros'),   sub: 'Calculating your calories, protein, and macros...' },
+    { status: t('building_meals'),       sub: 'Building your 7-day meal plan...' },
+    { status: 'PERSONALISING FOR YOU',   sub: 'Accounting for your goals and restrictions...' },
+    { status: 'OPTIMISING EXERCISES',    sub: 'Selecting the best exercises for your equipment...' },
+    { status: 'ALMOST THERE',            sub: 'Just finalising the details...' },
+  ];
+  let msgIdx = 0;
+  if (genStatus) genStatus.textContent = loadingMsgs[0].status;
+  if (genSubtitle) genSubtitle.textContent = loadingMsgs[0].sub;
+  const msgInterval = setInterval(() => {
+    msgIdx = (msgIdx + 1) % loadingMsgs.length;
+    if (genStatus) genStatus.textContent = loadingMsgs[msgIdx].status;
+    if (genSubtitle) genSubtitle.textContent = loadingMsgs[msgIdx].sub;
+  }, 4000);
 
-  const res = await api('/api/generate-plan', 'POST', { language: appLanguage || 'en' });
+  const res = await api('/api/generate-plan', 'POST', { language: appLanguage || 'en' }, 120000);
+  clearInterval(msgInterval);
+
   if (res?.plan) {
     userPlan = res.plan;
     await loadPlanAndLaunch();
