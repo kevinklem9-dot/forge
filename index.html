@@ -4675,6 +4675,7 @@ function renderAdminUserCards(users) {
       + '</select>'
       + '<button onclick="toggleExempt(\'' + u.id + '\', ' + !u.is_exempt + ')" style="background:' + (u.is_exempt?'rgba(255,200,0,0.15)':'var(--bg)') + ';border:1px solid ' + (u.is_exempt?'var(--accent)':'var(--border)') + ';color:' + (u.is_exempt?'var(--accent)':'var(--muted)') + ';border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">'
       + (u.is_exempt ? '★ Exempt' : '☆ Exempt') + '</button>'
+      + (u.subscription_status === 'trial' ? '<button onclick="expireTrial(\'' + u.id + '\')" style="background:rgba(255,150,0,0.1);border:1px solid rgba(255,150,0,0.4);color:#ff9600;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">⏱ Expire Trial</button>' : '')
       + '<button onclick="toggleFreezeUser(\'' + u.id + '\', ' + !isFrozen + ')" style="background:' + (isFrozen?'rgba(100,180,255,0.15)':'var(--bg)') + ';border:1px solid ' + (isFrozen?'#7eb8f7':'var(--border)') + ';color:' + (isFrozen?'#7eb8f7':'var(--muted)') + ';border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">'
       + (isFrozen ? '❄ Unfreeze' : '❄ Freeze') + '</button>'
       + '</div>'
@@ -4731,6 +4732,16 @@ async function confirmDelete(userId, email) {
 }
 
 
+
+async function expireTrial(userId) {
+  const res = await api('/api/admin/users/' + userId + '/expire-trial', 'PATCH');
+  if (res?.success) {
+    showToast('Trial expired — user now on Iron', 'success');
+    renderAdmin();
+  } else {
+    showToast('Failed to expire trial', 'error');
+  }
+}
 
 async function toggleExempt(userId, exempt) {
   const res = await api('/api/admin/users/' + userId + '/tier', 'PATCH', { is_exempt: exempt });
@@ -4936,7 +4947,7 @@ const STRINGS = {
     exempt_free: 'Exempt (Free)',
     trial_days_left: 'Trial — {n} days left',
     trial_banner_days: '🔥 {n} day{s} left in your free trial — full access until it ends.',
-    trial_banner_active: '🔥 Free trial active — upgrade to keep full access.',
+    trial_banner_active: '🔥 Free trial active — full access until it ends.',
     trial_banner_free: '🔥 Free plan — upgrade to unlock all features.',
     upgrade_steel: 'Upgrade to Steel for unlimited.',
     name_empty: 'Name cannot be empty',
