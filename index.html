@@ -3059,24 +3059,53 @@ async function renderWeeklyReview() {
   const res = await api('/api/review/latest');
   const review = res?.review;
 
-  if (!review) { section.style.display = 'none'; return; }
   section.style.display = '';
 
-  const weekDate = new Date(review.week_start);
-  const weekLabel = weekDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  if (!review) {
+    // No review yet — show generate button
+    card.innerHTML = `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:0 0 8px;">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6;">Your weekly review analyses your training, highlights PRs, and tells you what to focus on next week.</div>
+        <button onclick="generateWeeklyReview(this)" style="width:100%;padding:12px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Generate This Week's Review</button>
+      </div>`;
+    return;
+  }
 
+  renderWeeklyReviewData(review);
+}
+
+function renderWeeklyReviewData(review) {
+  const section = document.getElementById('weeklyReviewSection');
+  const card = document.getElementById('weeklyReviewCard');
+  if (!section || !card) return;
+  section.style.display = '';
+  const weekDate = new Date(review.week_start || review.created_at || Date.now());
+  const weekLabel = weekDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   card.innerHTML = `
     <div class="review-card">
       <div class="review-card-header">
         <div class="review-week">WEEK OF ${weekLabel.toUpperCase()}</div>
         <div class="review-stats">
-          <div class="review-stat"><span>${review.workouts_completed}</span>/${review.workouts_planned} sessions</div>
-          <div class="review-stat"><span>${review.prs_hit}</span> PRs</div>
+          ${review.workouts_completed !== undefined ? `<div class="review-stat"><span>${review.workouts_completed}</span>${review.workouts_planned ? '/'+review.workouts_planned : ''} sessions</div>` : ''}
+          ${review.prs_hit !== undefined ? `<div class="review-stat"><span>${review.prs_hit}</span> PRs</div>` : ''}
         </div>
       </div>
       <div class="review-body">${review.summary || review.ai_insights || ''}</div>
+      <button onclick="generateWeeklyReview(this)" style="width:100%;margin-top:14px;padding:10px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;font-size:12px;cursor:pointer;font-family:'DM Mono',sans-serif;letter-spacing:1px;">REGENERATE REVIEW</button>
     </div>
   `;
+}
+
+async function generateWeeklyReview(btn) {
+  if (btn) { btn.disabled = true; btn.textContent = t('generating'); }
+  const res = await api('/api/review/generate', 'POST');
+  if (res?.review) {
+    showToast('Weekly review ready', 'success');
+    renderWeeklyReviewData(res.review);
+  } else {
+    showToast('Failed to generate — try again', 'error');
+    if (btn) { btn.disabled = false; btn.textContent = "Generate This Week's Review"; }
+  }
 }
 
 // ── MONTHLY DEEP-DIVE REVIEW ──────────────────────
