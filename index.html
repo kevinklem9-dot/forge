@@ -4488,13 +4488,6 @@ async function loadExerciseVideo(exerciseName, mwId) {
           '</div>';
       }
 
-      // MuscleWiki link
-      if (mwUrl) {
-        videoArea.innerHTML += '<div style="text-align:right;margin-top:6px;">' +
-          '<a href="' + mwUrl + '" target="_blank" style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-decoration:none;">View on MuscleWiki →</a>' +
-          '</div>';
-      }
-
       // Muscles + instructions
       let tipsHtml = '';
 
@@ -4518,13 +4511,11 @@ async function loadExerciseVideo(exerciseName, mwId) {
       tipsArea.innerHTML = tipsHtml;
 
     } else {
-      // No GIF match — show MuscleWiki link to view on their site
-      const mwUrl = res?.exercise?.muscleWikiUrl || 'https://musclewiki.com';
+      // No GIF match
       videoArea.innerHTML =
         '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">' +
           '<div style="font-size:28px;margin-bottom:8px;">🏋️</div>' +
-          '<div style="font-size:13px;color:var(--muted);margin-bottom:14px;">No animation found — view the full form guide on MuscleWiki.</div>' +
-          '<a href="' + mwUrl + '" target="_blank" style="display:inline-block;background:var(--accent);color:#000;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;font-family:DM Sans,sans-serif;text-decoration:none;">View on MuscleWiki →</a>' +
+          '<div style="font-size:13px;color:var(--muted);">No animation found for this exercise.</div>' +
         '</div>';
     }
   } catch(e) {
