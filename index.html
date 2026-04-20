@@ -908,7 +908,7 @@ html,body { height:100%; overflow:hidden; overflow-x:hidden; background:var(--bg
       <!-- Account Panel -->
       <div class="panel" id="panel-account" style="overflow-y:auto;">
         <div class="panel-header">
-          <div class="panel-title">ACCOUNT</div>
+          <div class="panel-title">' + t('account_section') + '</div>
           <div class="panel-sub">Membership, profile, and settings</div>
         </div>
         <div id="accountPanel" style="padding-bottom:100px;"></div>
@@ -2228,9 +2228,9 @@ function renderExercises() {
         <div class="ex-note">${e.note}</div>
         <div class="ex-tags">
           <span class="tag sets">${e.sets} × ${e.reps}</span>
-          <span class="tag">Rest ${e.rest}</span>
+          <span class="tag">${t('rest')} ${e.rest}</span>
           <span class="tag rpe-${e.rpe}">RPE ${e.rpe}</span>
-          <span class="tag" style="background:rgba(255,255,255,0.04);color:var(--muted)">▶ Form</span>
+          <span class="tag" style="background:rgba(255,255,255,0.04);color:var(--muted)">▶ ${t('form')}</span>
         </div>
       </div>
     </div>
@@ -2288,7 +2288,7 @@ function renderLogCards(day) {
         <div class="log-card-header">
           <div>
             <div class="log-ex-name">${e.name}</div>
-            <div class="log-target">Target: ${e.sets}×${e.reps}</div>
+            <div class="log-target">${t('target')}: ${e.sets}×${e.reps}</div>
           </div>
         </div>
         <div class="log-set-rows" id="log-sets-${i}">
@@ -2775,6 +2775,10 @@ function renderShoppingList() {
 }
 
 function copyShoppingList() {
+  if (!canAccess('shopping_list')) {
+    showLockedFeature('Shopping List', 'steel');
+    return;
+  }
   const n = userPlan?.nutrition_plan;
   if (!n) return;
 
@@ -3101,7 +3105,7 @@ async function renderMonthlyReview() {
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:0 0 8px;">
         <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:1px;margin-bottom:8px;">MONTHLY DEEP-DIVE · ${monthName.toUpperCase()}</div>
         <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6;">Your monthly deep-dive review analyses your full month of training — volume trends, strength progression, recovery patterns, and personalised recommendations for next month.</div>
-        <button onclick="generateMonthlyReview(this)" style="width:100%;padding:12px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Generate This Month's Review</button>
+        <button onclick="generateMonthlyReview(this)" style="width:100%;padding:12px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">${t('generate_review')}</button>
       </div>`;
     return;
   }
@@ -3119,12 +3123,12 @@ async function renderMonthlyReview() {
         ${review.adherence_pct !== undefined ? `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;text-align:center;flex:1;min-width:60px;"><div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent)">${review.adherence_pct}%</div><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px">ADHERENCE</div></div>` : ''}
       </div>
       <div style="font-size:13px;color:var(--text);line-height:1.65;white-space:pre-wrap;">${review.summary || review.ai_insights || ''}</div>
-      <button onclick="generateMonthlyReview(this)" style="width:100%;margin-top:14px;padding:10px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;font-size:12px;cursor:pointer;font-family:'DM Mono',sans-serif;letter-spacing:1px;">REGENERATE REVIEW</button>
+      <button onclick="generateMonthlyReview(this)" style="width:100%;margin-top:14px;padding:10px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;font-size:12px;cursor:pointer;font-family:'DM Mono',sans-serif;letter-spacing:1px;">${t('regenerate_review')}</button>
     </div>`;
 }
 
 async function generateMonthlyReview(btn) {
-  if (btn) { btn.disabled = true; btn.textContent = 'Generating...'; }
+  if (btn) { btn.disabled = true; btn.textContent = t('generating'); }
   const res = await api('/api/monthly-review/generate', 'POST');
   if (res?.review) {
     showToast('Monthly review ready', 'success');
@@ -3132,7 +3136,7 @@ async function generateMonthlyReview(btn) {
     renderMonthlyReviewData(res.review);
   } else {
     showToast('Failed to generate — try again', 'error');
-    if (btn) { btn.disabled = false; btn.textContent = 'Generate This Month\'s Review'; }
+    if (btn) { btn.disabled = false; btn.textContent = t('generate_review'); }
   }
 }
 
@@ -3152,7 +3156,7 @@ function renderMonthlyReviewData(review) {
         ${review.adherence_pct !== undefined ? `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;text-align:center;flex:1;min-width:60px;"><div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent)">${review.adherence_pct}%</div><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px">ADHERENCE</div></div>` : ''}
       </div>
       <div style="font-size:13px;color:var(--text);line-height:1.65;white-space:pre-wrap;">${review.summary || review.review_content || ''}</div>
-      <button onclick="generateMonthlyReview(this)" style="width:100%;margin-top:14px;padding:10px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;font-size:12px;cursor:pointer;font-family:'DM Mono',sans-serif;letter-spacing:1px;">REGENERATE REVIEW</button>
+      <button onclick="generateMonthlyReview(this)" style="width:100%;margin-top:14px;padding:10px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;font-size:12px;cursor:pointer;font-family:'DM Mono',sans-serif;letter-spacing:1px;">${t('regenerate_review')}</button>
     </div>`;
 }
 
@@ -3223,7 +3227,7 @@ async function saveMetrics() {
     toggleMetricsForm();
     renderMetricsHistory();
   } else {
-    showToast('Failed to save — try again', 'error');
+    showToast(t('failed_save'), 'error');
   }
 }
 
@@ -3750,11 +3754,11 @@ function renderTrialBanner() {
 
   let daysText;
   if (status === 'trial' && daysLeft > 0) {
-    daysText = '🔥 ' + daysLeft + ' day' + (daysLeft === 1 ? '' : 's') + ' left in your free trial — full access until it ends.';
+    daysText = t('trial_banner_days', {n: daysLeft, s: daysLeft === 1 ? '' : 's'});
   } else if (status === 'trial') {
-    daysText = '🔥 Free trial active — upgrade to keep full access.';
+    daysText = t('trial_banner_active');
   } else {
-    daysText = '🔥 Free plan — upgrade to unlock all features.';
+    daysText = t('trial_banner_free');
   }
 
   const banner = document.createElement('div');
@@ -3767,7 +3771,7 @@ function renderTrialBanner() {
   `;
   banner.innerHTML = `
     <span>${daysText}</span>
-    <button onclick="openUpgradeSheet()" style="background:#000;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;margin-left:8px">Upgrade</button>
+    <button onclick="openUpgradeSheet()" style="background:#000;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;margin-left:8px">${t('upgrade')}</button>
   `;
   // Insert inside the panels container so it pushes content down, not over it
   // Insert inside .app (flex column) before .panels so it pushes content down
@@ -3800,7 +3804,7 @@ function renderCoachCounter() {
   counter.innerHTML = `
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.5px">AI COACH MESSAGES</span>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.5px">' + t('ai_coach_messages') + '</span>
         <span style="font-size:12px;font-weight:600;color:${color}">${coachUsage} / ${coachLimit} used</span>
       </div>
       <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;">
@@ -3808,7 +3812,7 @@ function renderCoachCounter() {
       </div>
       ${remaining <= 5 ? `<div style="margin-top:8px;font-size:12px;color:${color}">
         ${remaining === 0 ? 'No messages remaining this month.' : `${remaining} message${remaining === 1 ? '' : 's'} remaining.`}
-        <span onclick="openUpgradeSheet()" style="color:var(--accent);cursor:pointer;text-decoration:underline;margin-left:4px">Upgrade to Steel for unlimited.</span>
+        <span onclick="openUpgradeSheet()" style="color:var(--accent);cursor:pointer;text-decoration:underline;margin-left:4px">${t('upgrade_steel')}</span>
       </div>` : ''}
     </div>
   `;
@@ -4192,7 +4196,7 @@ async function saveCurrentProgramme() {
     document.getElementById('newProgModal')?.remove();
     showLockedFeature('Multiple Saved Programmes', 'steel');
   } else {
-    showToast('Failed to save — try again', 'error');
+    showToast(t('failed_save'), 'error');
   }
 }
 
@@ -4231,65 +4235,66 @@ function renderAccount() {
   const tierLabel = { iron: '⚙️ Iron', steel: '🔩 Steel', forge: '🔥 Forge' };
   const tierColour = { iron: 'var(--muted)', steel: 'var(--steel, #7eb8f7)', forge: 'var(--accent)' };
   const displayTier = sub.isExempt ? 'forge' : (sub.tier || 'iron');
-  const statusText = sub.isExempt ? 'Exempt (Free)' : (sub.status === 'trial' ? 'Trial — ' + (sub.trialEndsAt ? Math.max(0, Math.floor((new Date(sub.trialEndsAt) - new Date()) / (1000*60*60*24))) : (sub.trialDaysLeft || 0)) + ' days left' : (sub.status || 'Trial'));
+  const trialDays = sub.trialEndsAt ? Math.max(0, Math.floor((new Date(sub.trialEndsAt) - new Date()) / (1000*60*60*24))) : (sub.trialDaysLeft || 0);
+  const statusText = sub.isExempt ? t('exempt_free') : (sub.status === 'trial' ? t('trial_days_left', {n: trialDays}) : (sub.status || 'Trial'));
 
   el.innerHTML = `
     <div style="padding:0 18px 24px;">
 
       <!-- Membership Card -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px;">
-        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:12px;">MEMBERSHIP</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:12px;">${t('membership')}</div>
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div>
             <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;color:${tierColour[displayTier]}">${tierLabel[displayTier] || 'Iron'}</div>
             <div style="font-size:12px;color:var(--muted);margin-top:2px;">${statusText}</div>
           </div>
           <button onclick="openUpgradeSheet()" style="background:var(--accent);color:#000;border:none;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">
-            ${displayTier === 'forge' && sub.isExempt ? 'View Plans' : 'Upgrade'}
+            ${displayTier === 'forge' && sub.isExempt ? t('view_plans') : t('upgrade')}
           </button>
         </div>
         ${!sub.hasUnlimitedCoach && !sub.isExempt ? `
         <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
           <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
-            <span style="color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.5px;">AI COACH MESSAGES</span>
+            <span style="color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.5px;">${t('ai_coach_messages')}</span>
             <span style="font-weight:600;">${sub.coachUsage || 0} / ${sub.coachLimit || 20}</span>
           </div>
           <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;">
             <div style="height:100%;width:${Math.min(100, ((sub.coachUsage||0)/(sub.coachLimit||20))*100)}%;background:var(--accent);border-radius:2px;"></div>
           </div>
-          <div style="font-size:11px;color:var(--muted);margin-top:6px;">Resets on the 1st of each month.</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px;">${t('resets_monthly')}</div>
         </div>` : ''}
       </div>
 
       <!-- Profile Info -->
-      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;">PROFILE</div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;">${t('profile')}</div>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px;">
         <div style="margin-bottom:14px;">
-          <label style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:0.5px;display:block;margin-bottom:6px;">NAME</label>
+          <label style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:0.5px;display:block;margin-bottom:6px;">${t('name_field')}</label>
           <input id="acct-name" value="${escHtml(profile.name || '')}" style="width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:9px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;box-sizing:border-box;">
         </div>
         <div style="margin-bottom:14px;">
-          <label style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:0.5px;display:block;margin-bottom:6px;">EMAIL</label>
+          <label style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:0.5px;display:block;margin-bottom:6px;">${t('email_field')}</label>
           <input id="acct-email" value="${escHtml(currentUser?.email || '')}" style="width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:9px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;box-sizing:border-box;">
         </div>
         <button onclick="saveAccountProfile()" style="width:100%;padding:12px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">
-          Save Changes
+          ${t('save_changes')}
         </button>
       </div>
 
       <!-- Password -->
-      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;">SECURITY</div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;">${t('security')}</div>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px;">
         <button onclick="sendPasswordResetAccount(event)" style="width:100%;padding:12px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">
-          Send Password Reset Email
+          ${t('send_password_reset')}
         </button>
       </div>
 
       <!-- Danger zone -->
-      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;">ACCOUNT</div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;">${t('account_section')}</div>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px;">
         <button onclick="signOut()" style="width:100%;padding:12px;background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.25);color:var(--red);border-radius:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">
-          Sign Out
+          ${t('sign_out')}
         </button>
       </div>
 
@@ -4300,11 +4305,11 @@ function renderAccount() {
 async function saveAccountProfile() {
   const name = document.getElementById('acct-name')?.value.trim();
   const email = document.getElementById('acct-email')?.value.trim();
-  if (!name) { showToast('Name cannot be empty', 'error'); return; }
+  if (!name) { showToast(t('name_empty'), 'error'); return; }
 
   // Update name via profile API
   const res = await api('/api/profile', 'PATCH', { name });
-  if (!res?.profile) { showToast('Failed to save — try again', 'error'); return; }
+  if (!res?.profile) { showToast(t('failed_save'), 'error'); return; }
 
   userProfile = res.profile;
   localStorage.setItem('forge-cached-profile', JSON.stringify(userProfile));
@@ -4318,9 +4323,9 @@ async function saveAccountProfile() {
       showToast('Name saved. Email update failed: ' + error.message, 'error');
       return;
     }
-    showToast('Name saved. Check your new email to confirm the change.', 'success');
+    showToast(t('name_saved_email_confirm'), 'success');
   } else {
-    showToast('Profile saved', 'success');
+    showToast(t('profile_saved'), 'success');
   }
   renderAccount();
 }
@@ -4338,16 +4343,16 @@ async function sendPasswordResetAccount(event) {
   }
 
   const btn = event?.target;
-  if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+  if (btn) { btn.disabled = true; btn.textContent = t('sending'); }
 
   const res = await api('/api/reset-password', 'POST', { email });
 
-  if (btn) { btn.disabled = false; btn.textContent = 'Send Password Reset Email'; }
+  if (btn) { btn.disabled = false; btn.textContent = t('send_password_reset'); }
 
   if (res?.success) {
-    showToast('Password reset email sent to ' + email, 'success');
+    showToast(t('reset_sent') + ' ' + email, 'success');
   } else {
-    showToast('Failed to send reset email — try again', 'error');
+    showToast(t('reset_failed'), 'error');
   }
 }
 
@@ -4399,10 +4404,10 @@ async function showExerciseModal(exerciseIndex) {
   loadExerciseVideo(exercise.name, exercise.mw_id);
 }
 
-// Normalise AI-generated exercise names to match database names
+
+
 function normaliseExerciseName(name) {
-  return name
-    .toLowerCase()
+  return name.toLowerCase()
     // Remove common prefixes that won't be in DB
     .replace(/^(barbell|dumbbell|db|bb|cable|machine|ez.bar|resistance band|bodyweight|bw|kettlebell|kb)\s+/i, '')
     // Remove trailing qualifiers
@@ -4873,7 +4878,51 @@ const STRINGS = {
     choose_theme:'CHOOSE THEME', coach_language:'COACH LANGUAGE',
     // Misc toasts & labels
     plan_updated:'Plan updated ✓', list_copied:'List copied ✓', copy_failed:'Copy failed',
-    enter_weight:'Enter a valid weight', saved:'saved ✓', select_days_first:'Select exactly {n} days first',
+    enter_weight:'Enter a valid weight', saved:'saved ✓', select_days_first:'Select exactly {n} training days',
+    rest: 'Rest',
+    form: 'Form',
+    target: 'Target',
+    rpe: 'RPE',
+    membership: 'MEMBERSHIP',
+    upgrade: 'Upgrade',
+    view_plans: 'View Plans',
+    ai_coach_messages: 'AI COACH MESSAGES',
+    resets_monthly: 'Resets on the 1st of each month.',
+    profile: 'PROFILE',
+    name_field: 'NAME',
+    email_field: 'EMAIL',
+    save_changes: 'Save Changes',
+    security: 'SECURITY',
+    send_password_reset: 'Send Password Reset Email',
+    account_section: 'ACCOUNT',
+    sign_out: 'Sign Out',
+    exempt_free: 'Exempt (Free)',
+    trial_days_left: 'Trial — {n} days left',
+    trial_banner_days: '🔥 {n} day{s} left in your free trial — full access until it ends.',
+    trial_banner_active: '🔥 Free trial active — upgrade to keep full access.',
+    trial_banner_free: '🔥 Free plan — upgrade to unlock all features.',
+    upgrade_steel: 'Upgrade to Steel for unlimited.',
+    name_empty: 'Name cannot be empty',
+    profile_saved: 'Profile saved',
+    name_saved_email_confirm: 'Name saved. Check your new email to confirm the change.',
+    sending: 'Sending...',
+    reset_sent: 'Password reset email sent',
+    reset_failed: 'Failed to send reset email — try again',
+    failed_save: 'Failed to save — try again',
+    shopping_locked: 'Shopping list requires Steel or above',
+    list_copied: 'Shopping list copied',
+    copy_failed: 'Could not copy to clipboard',
+    add_set: '+ Add Set',
+    draft_restored: 'Draft restored',
+    coach_messages_left: '{n} messages left this month',
+    generating: 'Generating...',
+    generate_review: 'Generate This Month\'s Review',
+    regenerate_review: 'REGENERATE REVIEW',
+    nav_account: 'Account',
+    sessions: 'SESSIONS',
+    prs_hit_label: 'PRs HIT',
+    adherence_label: 'ADHERENCE',
+    copy: 'COPY',
     generating_workout:'GENERATING YOUR WORKOUT PLAN', calculating_macros:'CALCULATING YOUR MACROS',
     building_meals:'BUILDING YOUR MEAL PLAN', saving_profile:'SAVING YOUR PROFILE',
     coach_greeting_1:'Hey {name}. Let\'s get to work.', coach_greeting_2:'Your programme is built and personalised to you. I know your goal, your training history, and your nutrition plan. Ask me anything - form, food, recovery, when to go heavier. I\'m here.',
@@ -4922,7 +4971,51 @@ const STRINGS = {
     quick_muscle:'Músculo rezagado', quick_sleep:'Sueño y recuperación', quick_creatine:'¿Creatina?',
     choose_theme:'ELEGIR TEMA', coach_language:'IDIOMA DEL COACH',
     plan_updated:'Plan actualizado ✓', list_copied:'Lista copiada ✓', copy_failed:'Error al copiar',
-    enter_weight:'Introduce un peso válido', saved:'guardado ✓', select_days_first:'Selecciona exactamente {n} días',
+    enter_weight:'Introduce un peso válido', saved:'guardado ✓', select_days_first:'Selecciona exactamente {n} días de entrenamiento',
+    rest: 'Descanso',
+    form: 'Forma',
+    target: 'Objetivo',
+    rpe: 'RPE',
+    membership: 'MEMBRESÍA',
+    upgrade: 'Mejorar Plan',
+    view_plans: 'Ver Planes',
+    ai_coach_messages: 'MENSAJES AL COACH IA',
+    resets_monthly: 'Se renueva el 1 de cada mes.',
+    profile: 'PERFIL',
+    name_field: 'NOMBRE',
+    email_field: 'CORREO',
+    save_changes: 'Guardar Cambios',
+    security: 'SEGURIDAD',
+    send_password_reset: 'Enviar Email de Restablecimiento',
+    account_section: 'CUENTA',
+    sign_out: 'Cerrar Sesión',
+    exempt_free: 'Exento (Gratis)',
+    trial_days_left: 'Prueba — {n} días restantes',
+    trial_banner_days: '🔥 {n} día{s} restante{s} en tu prueba gratuita — acceso completo hasta que termine.',
+    trial_banner_active: '🔥 Prueba gratuita activa — mejora para mantener el acceso completo.',
+    trial_banner_free: '🔥 Plan gratuito — mejora para desbloquear todas las funciones.',
+    upgrade_steel: 'Actualiza a Steel para acceso ilimitado.',
+    name_empty: 'El nombre no puede estar vacío',
+    profile_saved: 'Perfil guardado',
+    name_saved_email_confirm: 'Nombre guardado. Revisa tu nuevo correo para confirmar el cambio.',
+    sending: 'Enviando...',
+    reset_sent: 'Email de restablecimiento enviado',
+    reset_failed: 'Error al enviar el email — inténtalo de nuevo',
+    failed_save: 'Error al guardar — inténtalo de nuevo',
+    shopping_locked: 'La lista de compras requiere Steel o superior',
+    list_copied: 'Lista de compras copiada',
+    copy_failed: 'No se pudo copiar al portapapeles',
+    add_set: '+ Añadir Serie',
+    draft_restored: 'Borrador restaurado',
+    coach_messages_left: '{n} mensajes restantes este mes',
+    generating: 'Generando...',
+    generate_review: 'Generar Revisión Mensual',
+    regenerate_review: 'REGENERAR REVISIÓN',
+    nav_account: 'Cuenta',
+    sessions: 'SESIONES',
+    prs_hit_label: 'RPs LOGRADOS',
+    adherence_label: 'ADHERENCIA',
+    copy: 'COPIAR',
     generating_workout:'GENERANDO TU PLAN DE ENTRENAMIENTO', calculating_macros:'CALCULANDO TUS MACROS',
     building_meals:'CONSTRUYENDO TU PLAN DE COMIDAS', saving_profile:'GUARDANDO TU PERFIL',
     coach_greeting_1:'Hola {name}. A trabajar.', coach_greeting_2:'Tu programa está creado y personalizado para ti. Pregúntame cualquier cosa - técnica, alimentación, recuperación, cuándo aumentar el peso. Aquí estoy.',
@@ -4971,7 +5064,51 @@ const STRINGS = {
     quick_muscle:'Muscle en retard', quick_sleep:'Sommeil et récupération', quick_creatine:'Créatine ?',
     choose_theme:'CHOISIR UN THÈME', coach_language:'LANGUE DU COACH',
     plan_updated:'Plan mis à jour ✓', list_copied:'Liste copiée ✓', copy_failed:'Échec de copie',
-    enter_weight:'Entrez un poids valide', saved:'sauvegardé ✓', select_days_first:'Sélectionnez exactement {n} jours',
+    enter_weight:'Entrez un poids valide', saved:'sauvegardé ✓', select_days_first:'Sélectionnez exactement {n} jours d\'entraînement',
+    rest: 'Repos',
+    form: 'Forme',
+    target: 'Objectif',
+    rpe: 'RPE',
+    membership: 'ABONNEMENT',
+    upgrade: 'Améliorer',
+    view_plans: 'Voir les Plans',
+    ai_coach_messages: 'MESSAGES AU COACH IA',
+    resets_monthly: 'Se renouvelle le 1er de chaque mois.',
+    profile: 'PROFIL',
+    name_field: 'NOM',
+    email_field: 'EMAIL',
+    save_changes: 'Sauvegarder',
+    security: 'SÉCURITÉ',
+    send_password_reset: 'Envoyer un Email de Réinitialisation',
+    account_section: 'COMPTE',
+    sign_out: 'Se Déconnecter',
+    exempt_free: 'Exempté (Gratuit)',
+    trial_days_left: 'Essai — {n} jours restants',
+    trial_banner_days: '🔥 {n} jour{s} restant{s} dans votre essai gratuit — accès complet jusqu\'à la fin.',
+    trial_banner_active: '🔥 Essai gratuit actif — passez à la version supérieure pour conserver l\'accès.',
+    trial_banner_free: '🔥 Plan gratuit — passez à la version supérieure pour tout débloquer.',
+    upgrade_steel: 'Passez à Steel pour un accès illimité.',
+    name_empty: 'Le nom ne peut pas être vide',
+    profile_saved: 'Profil sauvegardé',
+    name_saved_email_confirm: 'Nom sauvegardé. Vérifiez votre nouvel email pour confirmer.',
+    sending: 'Envoi...',
+    reset_sent: 'Email de réinitialisation envoyé',
+    reset_failed: 'Échec de l\'envoi — réessayez',
+    failed_save: 'Échec de la sauvegarde — réessayez',
+    shopping_locked: 'La liste de courses nécessite Steel ou supérieur',
+    list_copied: 'Liste de courses copiée',
+    copy_failed: 'Impossible de copier',
+    add_set: '+ Ajouter Série',
+    draft_restored: 'Brouillon restauré',
+    coach_messages_left: '{n} messages restants ce mois',
+    generating: 'Génération...',
+    generate_review: 'Générer la Revue Mensuelle',
+    regenerate_review: 'RÉGÉNÉRER LA REVUE',
+    nav_account: 'Compte',
+    sessions: 'SÉANCES',
+    prs_hit_label: 'RPs ATTEINTS',
+    adherence_label: 'ADHÉRENCE',
+    copy: 'COPIER',
     generating_workout:'GÉNÉRATION DE VOTRE PLAN', calculating_macros:'CALCUL DE VOS MACROS',
     building_meals:'CONSTRUCTION DU PLAN ALIMENTAIRE', saving_profile:'SAUVEGARDE DU PROFIL',
     coach_greeting_1:'Salut {name}. Au travail.', coach_greeting_2:'Ton programme est créé et personnalisé pour toi. Pose-moi toutes tes questions - technique, alimentation, récupération, quand augmenter les charges. Je suis là.',
@@ -5020,7 +5157,51 @@ const STRINGS = {
     quick_muscle:'Nachzügelnder Muskel', quick_sleep:'Schlaf & Erholung', quick_creatine:'Kreatin?',
     choose_theme:'THEMA WÄHLEN', coach_language:'COACH-SPRACHE',
     plan_updated:'Plan aktualisiert ✓', list_copied:'Liste kopiert ✓', copy_failed:'Kopieren fehlgeschlagen',
-    enter_weight:'Gültiges Gewicht eingeben', saved:'gespeichert ✓', select_days_first:'Genau {n} Tage auswählen',
+    enter_weight:'Gültiges Gewicht eingeben', saved:'gespeichert ✓', select_days_first:'Wähle genau {n} Trainingstage',
+    rest: 'Pause',
+    form: 'Form',
+    target: 'Ziel',
+    rpe: 'RPE',
+    membership: 'MITGLIEDSCHAFT',
+    upgrade: 'Upgrade',
+    view_plans: 'Pläne Ansehen',
+    ai_coach_messages: 'KI-COACH NACHRICHTEN',
+    resets_monthly: 'Wird am 1. jeden Monats zurückgesetzt.',
+    profile: 'PROFIL',
+    name_field: 'NAME',
+    email_field: 'E-MAIL',
+    save_changes: 'Änderungen Speichern',
+    security: 'SICHERHEIT',
+    send_password_reset: 'Passwort-Reset-E-Mail Senden',
+    account_section: 'KONTO',
+    sign_out: 'Abmelden',
+    exempt_free: 'Befreit (Kostenlos)',
+    trial_days_left: 'Testphase — noch {n} Tage',
+    trial_banner_days: '🔥 Noch {n} Tag{s} in deiner kostenlosen Testphase — voller Zugang bis zum Ende.',
+    trial_banner_active: '🔥 Kostenlose Testphase aktiv — upgraden für dauerhaften Zugang.',
+    trial_banner_free: '🔥 Kostenloser Plan — upgraden für alle Funktionen.',
+    upgrade_steel: 'Auf Steel upgraden für unbegrenzten Zugang.',
+    name_empty: 'Name darf nicht leer sein',
+    profile_saved: 'Profil gespeichert',
+    name_saved_email_confirm: 'Name gespeichert. Bestätige deine neue E-Mail-Adresse.',
+    sending: 'Senden...',
+    reset_sent: 'Passwort-Reset-E-Mail gesendet',
+    reset_failed: 'Senden fehlgeschlagen — erneut versuchen',
+    failed_save: 'Speichern fehlgeschlagen — erneut versuchen',
+    shopping_locked: 'Einkaufsliste erfordert Steel oder höher',
+    list_copied: 'Einkaufsliste kopiert',
+    copy_failed: 'Kopieren fehlgeschlagen',
+    add_set: '+ Satz Hinzufügen',
+    draft_restored: 'Entwurf wiederhergestellt',
+    coach_messages_left: 'Noch {n} Nachrichten diesen Monat',
+    generating: 'Generiere...',
+    generate_review: 'Monatliche Auswertung Erstellen',
+    regenerate_review: 'AUSWERTUNG NEU ERSTELLEN',
+    nav_account: 'Konto',
+    sessions: 'EINHEITEN',
+    prs_hit_label: 'PRs ERREICHT',
+    adherence_label: 'EINHALTUNG',
+    copy: 'KOPIEREN',
     generating_workout:'TRAININGSPLAN WIRD ERSTELLT', calculating_macros:'MAKROS WERDEN BERECHNET',
     building_meals:'ERNÄHRUNGSPLAN WIRD ERSTELLT', saving_profile:'PROFIL WIRD GESPEICHERT',
     coach_greeting_1:'Hey {name}. Ran ans Werk.', coach_greeting_2:'Dein Programm ist erstellt und auf dich zugeschnitten. Frag mich alles - Technik, Ernährung, Erholung, wann du schwerer werden solltest. Ich bin hier.',
@@ -5069,7 +5250,51 @@ const STRINGS = {
     quick_muscle:'Muscolo carente', quick_sleep:'Sonno e recupero', quick_creatine:'Creatina?',
     choose_theme:'SCEGLI TEMA', coach_language:'LINGUA DEL COACH',
     plan_updated:'Piano aggiornato ✓', list_copied:'Lista copiata ✓', copy_failed:'Copia fallita',
-    enter_weight:'Inserisci un peso valido', saved:'salvato ✓', select_days_first:'Seleziona esattamente {n} giorni',
+    enter_weight:'Inserisci un peso valido', saved:'salvato ✓', select_days_first:'Seleziona esattamente {n} giorni di allenamento',
+    rest: 'Riposo',
+    form: 'Forma',
+    target: 'Obiettivo',
+    rpe: 'RPE',
+    membership: 'ABBONAMENTO',
+    upgrade: 'Aggiorna',
+    view_plans: 'Vedi Piani',
+    ai_coach_messages: 'MESSAGGI AL COACH IA',
+    resets_monthly: 'Si azzera il 1° di ogni mese.',
+    profile: 'PROFILO',
+    name_field: 'NOME',
+    email_field: 'EMAIL',
+    save_changes: 'Salva Modifiche',
+    security: 'SICUREZZA',
+    send_password_reset: 'Invia Email di Recupero Password',
+    account_section: 'ACCOUNT',
+    sign_out: 'Esci',
+    exempt_free: 'Esente (Gratuito)',
+    trial_days_left: 'Prova — {n} giorni rimasti',
+    trial_banner_days: '🔥 {n} giorno{s} rimasto nella prova gratuita — accesso completo fino alla fine.',
+    trial_banner_active: '🔥 Prova gratuita attiva — aggiorna per mantenere l\'accesso.',
+    trial_banner_free: '🔥 Piano gratuito — aggiorna per sbloccare tutto.',
+    upgrade_steel: 'Passa a Steel per accesso illimitato.',
+    name_empty: 'Il nome non può essere vuoto',
+    profile_saved: 'Profilo salvato',
+    name_saved_email_confirm: 'Nome salvato. Controlla la nuova email per confermare.',
+    sending: 'Invio...',
+    reset_sent: 'Email di recupero inviata',
+    reset_failed: 'Invio fallito — riprova',
+    failed_save: 'Salvataggio fallito — riprova',
+    shopping_locked: 'La lista della spesa richiede Steel o superiore',
+    list_copied: 'Lista della spesa copiata',
+    copy_failed: 'Impossibile copiare',
+    add_set: '+ Aggiungi Serie',
+    draft_restored: 'Bozza ripristinata',
+    coach_messages_left: '{n} messaggi rimasti questo mese',
+    generating: 'Generando...',
+    generate_review: 'Genera Revisione Mensile',
+    regenerate_review: 'RIGENERA REVISIONE',
+    nav_account: 'Account',
+    sessions: 'SESSIONI',
+    prs_hit_label: 'PR RAGGIUNTI',
+    adherence_label: 'ADERENZA',
+    copy: 'COPIA',
     generating_workout:'CREAZIONE PIANO DI ALLENAMENTO', calculating_macros:'CALCOLO DEI MACRO',
     building_meals:'CREAZIONE PIANO ALIMENTARE', saving_profile:'SALVATAGGIO PROFILO',
     coach_greeting_1:'Ciao {name}. Al lavoro.', coach_greeting_2:'Il tuo programma è creato e personalizzato per te. Chiedimi qualsiasi cosa - tecnica, alimentazione, recupero, quando aumentare i pesi. Sono qui.',
@@ -5118,7 +5343,51 @@ const STRINGS = {
     quick_muscle:'Músculo em atraso', quick_sleep:'Sono e recuperação', quick_creatine:'Creatina?',
     choose_theme:'ESCOLHER TEMA', coach_language:'IDIOMA DO COACH',
     plan_updated:'Plano atualizado ✓', list_copied:'Lista copiada ✓', copy_failed:'Falha ao copiar',
-    enter_weight:'Insira um peso válido', saved:'guardado ✓', select_days_first:'Selecione exatamente {n} dias',
+    enter_weight:'Insira um peso válido', saved:'guardado ✓', select_days_first:'Selecione exatamente {n} dias de treino',
+    rest: 'Descanso',
+    form: 'Forma',
+    target: 'Objetivo',
+    rpe: 'RPE',
+    membership: 'ASSINATURA',
+    upgrade: 'Fazer Upgrade',
+    view_plans: 'Ver Planos',
+    ai_coach_messages: 'MENSAGENS AO COACH IA',
+    resets_monthly: 'Reinicia no dia 1 de cada mês.',
+    profile: 'PERFIL',
+    name_field: 'NOME',
+    email_field: 'EMAIL',
+    save_changes: 'Salvar Alterações',
+    security: 'SEGURANÇA',
+    send_password_reset: 'Enviar Email de Redefinição',
+    account_section: 'CONTA',
+    sign_out: 'Sair',
+    exempt_free: 'Isento (Gratuito)',
+    trial_days_left: 'Teste — {n} dias restantes',
+    trial_banner_days: '🔥 {n} dia{s} restante{s} no seu teste gratuito — acesso completo até o fim.',
+    trial_banner_active: '🔥 Teste gratuito ativo — faça upgrade para manter o acesso.',
+    trial_banner_free: '🔥 Plano gratuito — faça upgrade para desbloquear tudo.',
+    upgrade_steel: 'Faça upgrade para Steel para acesso ilimitado.',
+    name_empty: 'O nome não pode estar vazio',
+    profile_saved: 'Perfil salvo',
+    name_saved_email_confirm: 'Nome salvo. Verifique o novo email para confirmar.',
+    sending: 'Enviando...',
+    reset_sent: 'Email de redefinição enviado',
+    reset_failed: 'Falha ao enviar — tente novamente',
+    failed_save: 'Falha ao salvar — tente novamente',
+    shopping_locked: 'Lista de compras requer Steel ou superior',
+    list_copied: 'Lista de compras copiada',
+    copy_failed: 'Não foi possível copiar',
+    add_set: '+ Adicionar Série',
+    draft_restored: 'Rascunho restaurado',
+    coach_messages_left: '{n} mensagens restantes este mês',
+    generating: 'Gerando...',
+    generate_review: 'Gerar Revisão Mensal',
+    regenerate_review: 'REGENERAR REVISÃO',
+    nav_account: 'Conta',
+    sessions: 'SESSÕES',
+    prs_hit_label: 'PRs ATINGIDOS',
+    adherence_label: 'ADESÃO',
+    copy: 'COPIAR',
     generating_workout:'GERANDO SEU PLANO DE TREINO', calculating_macros:'CALCULANDO SEUS MACROS',
     building_meals:'CONSTRUINDO SEU PLANO ALIMENTAR', saving_profile:'GUARDANDO PERFIL',
     coach_greeting_1:'Olá {name}. Vamos trabalhar.', coach_greeting_2:'O seu programa está criado e personalizado para você. Pergunte-me qualquer coisa - técnica, alimentação, recuperação, quando aumentar a carga. Estou aqui.',
@@ -5167,7 +5436,51 @@ const STRINGS = {
     quick_muscle:'Achterblijvende spier', quick_sleep:'Slaap en herstel', quick_creatine:'Creatine?',
     choose_theme:'THEMA KIEZEN', coach_language:'COACH TAAL',
     plan_updated:'Plan bijgewerkt ✓', list_copied:'Lijst gekopieerd ✓', copy_failed:'Kopiëren mislukt',
-    enter_weight:'Voer een geldig gewicht in', saved:'opgeslagen ✓', select_days_first:'Selecteer precies {n} dagen',
+    enter_weight:'Voer een geldig gewicht in', saved:'opgeslagen ✓', select_days_first:'Selecteer precies {n} trainingsdagen',
+    rest: 'Rust',
+    form: 'Vorm',
+    target: 'Doel',
+    rpe: 'RPE',
+    membership: 'LIDMAATSCHAP',
+    upgrade: 'Upgraden',
+    view_plans: 'Plannen Bekijken',
+    ai_coach_messages: 'AI COACH BERICHTEN',
+    resets_monthly: 'Wordt op de 1e van elke maand gereset.',
+    profile: 'PROFIEL',
+    name_field: 'NAAM',
+    email_field: 'EMAIL',
+    save_changes: 'Wijzigingen Opslaan',
+    security: 'BEVEILIGING',
+    send_password_reset: 'Stuur Wachtwoord Reset Email',
+    account_section: 'ACCOUNT',
+    sign_out: 'Uitloggen',
+    exempt_free: 'Vrijgesteld (Gratis)',
+    trial_days_left: 'Proef — nog {n} dagen',
+    trial_banner_days: '🔥 Nog {n} dag{s} in je gratis proefperiode — volledige toegang tot het einde.',
+    trial_banner_active: '🔥 Gratis proefperiode actief — upgrade voor blijvende toegang.',
+    trial_banner_free: '🔥 Gratis plan — upgrade om alles te ontgrendelen.',
+    upgrade_steel: 'Upgrade naar Steel voor onbeperkte toegang.',
+    name_empty: 'Naam mag niet leeg zijn',
+    profile_saved: 'Profiel opgeslagen',
+    name_saved_email_confirm: 'Naam opgeslagen. Controleer je nieuwe email om te bevestigen.',
+    sending: 'Verzenden...',
+    reset_sent: 'Wachtwoord reset email verzonden',
+    reset_failed: 'Verzenden mislukt — probeer opnieuw',
+    failed_save: 'Opslaan mislukt — probeer opnieuw',
+    shopping_locked: 'Boodschappenlijst vereist Steel of hoger',
+    list_copied: 'Boodschappenlijst gekopieerd',
+    copy_failed: 'Kopiëren mislukt',
+    add_set: '+ Serie Toevoegen',
+    draft_restored: 'Concept hersteld',
+    coach_messages_left: 'Nog {n} berichten deze maand',
+    generating: 'Genereren...',
+    generate_review: 'Maandelijkse Review Genereren',
+    regenerate_review: 'REVIEW OPNIEUW GENEREREN',
+    nav_account: 'Account',
+    sessions: 'SESSIES',
+    prs_hit_label: 'PRs GEHAALD',
+    adherence_label: 'NALEVING',
+    copy: 'KOPIEER',
     generating_workout:'TRAININGSPLAN AANMAKEN', calculating_macros:'MACRO\'S BEREKENEN',
     building_meals:'MAALTIJDPLAN AANMAKEN', saving_profile:'PROFIEL OPSLAAN',
     coach_greeting_1:'Hé {name}. Aan de slag.', coach_greeting_2:'Jouw programma is gemaakt en op jou afgestemd. Stel me alles wat je wilt - techniek, voeding, herstel, wanneer je zwaarder moet gaan. Ik ben er.',
@@ -5216,7 +5529,51 @@ const STRINGS = {
     quick_muscle:'Відстаючий м\'яз', quick_sleep:'Сон і відновлення', quick_creatine:'Креатин?',
     choose_theme:'ВИБРАТИ ТЕМУ', coach_language:'МОВА ТРЕНЕРА',
     plan_updated:'План оновлено ✓', list_copied:'Список скопійовано ✓', copy_failed:'Помилка копіювання',
-    enter_weight:'Введіть коректну вагу', saved:'збережено ✓', select_days_first:'Виберіть рівно {n} дні',
+    enter_weight:'Введіть коректну вагу', saved:'збережено ✓', select_days_first:'Виберіть рівно {n} тренувальних дні',
+    rest: 'Відпочинок',
+    form: 'Техніка',
+    target: 'Ціль',
+    rpe: 'RPE',
+    membership: 'ЧЛЕНСТВО',
+    upgrade: 'Покращити',
+    view_plans: 'Переглянути Плани',
+    ai_coach_messages: 'ПОВІДОМЛЕННЯ ДО AI ТРЕНЕРА',
+    resets_monthly: 'Скидається 1-го числа кожного місяця.',
+    profile: 'ПРОФІЛЬ',
+    name_field: 'ІМ\'Я',
+    email_field: 'ПОШТА',
+    save_changes: 'Зберегти Зміни',
+    security: 'БЕЗПЕКА',
+    send_password_reset: 'Надіслати Email для Скидання Пароля',
+    account_section: 'АКАУНТ',
+    sign_out: 'Вийти',
+    exempt_free: 'Звільнений (Безкоштовно)',
+    trial_days_left: 'Пробний — залишилось {n} днів',
+    trial_banner_days: '🔥 {n} день{s} залишилось у пробному — повний доступ до кінця.',
+    trial_banner_active: '🔥 Пробний активний — оновіться для збереження доступу.',
+    trial_banner_free: '🔥 Безкоштовний план — оновіться для доступу до всіх функцій.',
+    upgrade_steel: 'Перейдіть на Steel для необмеженого доступу.',
+    name_empty: 'Ім\'я не може бути порожнім',
+    profile_saved: 'Профіль збережено',
+    name_saved_email_confirm: 'Ім\'я збережено. Перевірте нову пошту для підтвердження.',
+    sending: 'Надсилання...',
+    reset_sent: 'Email для скидання пароля надіслано',
+    reset_failed: 'Не вдалося надіслати — спробуйте знову',
+    failed_save: 'Не вдалося зберегти — спробуйте знову',
+    shopping_locked: 'Список покупок вимагає Steel або вище',
+    list_copied: 'Список покупок скопійовано',
+    copy_failed: 'Не вдалося скопіювати',
+    add_set: '+ Додати Підхід',
+    draft_restored: 'Чернетку відновлено',
+    coach_messages_left: 'Залишилось {n} повідомлень цього місяця',
+    generating: 'Генерування...',
+    generate_review: 'Згенерувати Місячний Огляд',
+    regenerate_review: 'ПЕРЕГЕНЕРУВАТИ ОГЛЯД',
+    nav_account: 'Акаунт',
+    sessions: 'ТРЕНУВАННЯ',
+    prs_hit_label: 'ОСОБИСТІ РЕКОРДИ',
+    adherence_label: 'ДОТРИМАННЯ',
+    copy: 'КОПІЮВАТИ',
     generating_workout:'СТВОРЕННЯ ПЛАНУ ТРЕНУВАНЬ', calculating_macros:'РОЗРАХУНОК МАКРОСІВ',
     building_meals:'СТВОРЕННЯ ПЛАНУ ХАРЧУВАННЯ', saving_profile:'ЗБЕРЕЖЕННЯ ПРОФІЛЮ',
     coach_greeting_1:'Привіт {name}. До роботи.', coach_greeting_2:'Твоя програма створена і персоналізована для тебе. Питай мене про все - техніку, їжу, відновлення, коли збільшувати вагу. Я тут.',
@@ -5265,7 +5622,51 @@ const STRINGS = {
     quick_muscle:'Jälkeen jäävä lihas', quick_sleep:'Uni ja palautuminen', quick_creatine:'Kreatiini?',
     choose_theme:'VALITSE TEEMA', coach_language:'VALMENTAJAN KIELI',
     plan_updated:'Suunnitelma päivitetty ✓', list_copied:'Lista kopioitu ✓', copy_failed:'Kopiointi epäonnistui',
-    enter_weight:'Syötä kelvollinen paino', saved:'tallennettu ✓', select_days_first:'Valitse tasan {n} päivää',
+    enter_weight:'Syötä kelvollinen paino', saved:'tallennettu ✓', select_days_first:'Valitse tasan {n} harjoituspäivää',
+    rest: 'Lepo',
+    form: 'Tekniikka',
+    target: 'Tavoite',
+    rpe: 'RPE',
+    membership: 'JÄSENYYS',
+    upgrade: 'Päivitä',
+    view_plans: 'Katso Suunnitelmat',
+    ai_coach_messages: 'AI VALMENTAJA VIESTIT',
+    resets_monthly: 'Nollautuu kuun 1. päivä.',
+    profile: 'PROFIILI',
+    name_field: 'NIMI',
+    email_field: 'SÄHKÖPOSTI',
+    save_changes: 'Tallenna Muutokset',
+    security: 'TURVALLISUUS',
+    send_password_reset: 'Lähetä Salasanan Nollaussähköposti',
+    account_section: 'TILI',
+    sign_out: 'Kirjaudu Ulos',
+    exempt_free: 'Vapautettu (Ilmainen)',
+    trial_days_left: 'Kokeilu — {n} päivää jäljellä',
+    trial_banner_days: '🔥 {n} päivä{s} jäljellä ilmaisessa kokeilussa — täysi pääsy loppuun asti.',
+    trial_banner_active: '🔥 Ilmainen kokeilu aktiivinen — päivitä säilyttääksesi pääsyn.',
+    trial_banner_free: '🔥 Ilmainen suunnitelma — päivitä avataksesi kaikki.',
+    upgrade_steel: 'Päivitä Steeliin rajattoman pääsyn saamiseksi.',
+    name_empty: 'Nimi ei voi olla tyhjä',
+    profile_saved: 'Profiili tallennettu',
+    name_saved_email_confirm: 'Nimi tallennettu. Tarkista uusi sähköpostiosoitteesi vahvistaaksesi.',
+    sending: 'Lähetetään...',
+    reset_sent: 'Salasanan nollaussähköposti lähetetty',
+    reset_failed: 'Lähetys epäonnistui — yritä uudelleen',
+    failed_save: 'Tallennus epäonnistui — yritä uudelleen',
+    shopping_locked: 'Ostoslista vaatii Steel-tason tai korkeamman',
+    list_copied: 'Ostoslista kopioitu',
+    copy_failed: 'Kopiointi epäonnistui',
+    add_set: '+ Lisää Setti',
+    draft_restored: 'Luonnos palautettu',
+    coach_messages_left: '{n} viestiä jäljellä tässä kuussa',
+    generating: 'Luodaan...',
+    generate_review: 'Luo Kuukausikatsaus',
+    regenerate_review: 'LUAT KATSAUS UUDELLEEN',
+    nav_account: 'Tili',
+    sessions: 'HARJOITUKSET',
+    prs_hit_label: 'ENNÄTYKSET',
+    adherence_label: 'SITOUTUMINEN',
+    copy: 'KOPIOI',
     generating_workout:'LUODAAN HARJOITUSSUUNNITELMAA', calculating_macros:'LASKETAAN MAKROJA',
     building_meals:'LUODAAN RUOKASUUNNITELMAA', saving_profile:'TALLENNETAAN PROFIILIA',
     coach_greeting_1:'Hei {name}. Töihin.', coach_greeting_2:'Ohjelmasi on luotu ja räätälöity sinulle. Kysy minulta mitä tahansa - tekniikka, ravinto, palautuminen, milloin lisätä painoa. Olen täällä.',
@@ -5314,7 +5715,51 @@ const STRINGS = {
     quick_muscle:'عضلة متأخرة', quick_sleep:'النوم والتعافي', quick_creatine:'الكرياتين؟',
     choose_theme:'اختر الثيم', coach_language:'لغة المدرب',
     plan_updated:'تم تحديث الخطة ✓', list_copied:'تم نسخ القائمة ✓', copy_failed:'فشل النسخ',
-    enter_weight:'أدخل وزناً صحيحاً', saved:'تم الحفظ ✓', select_days_first:'اختر {n} أيام بالضبط',
+    enter_weight:'أدخل وزناً صحيحاً', saved:'تم الحفظ ✓', select_days_first:'اختر {n} أيام تدريب بالضبط',
+    rest: 'راحة',
+    form: 'الأسلوب',
+    target: 'الهدف',
+    rpe: 'RPE',
+    membership: 'العضوية',
+    upgrade: 'ترقية',
+    view_plans: 'عرض الخطط',
+    ai_coach_messages: 'رسائل المدرب الذكي',
+    resets_monthly: 'يُعاد تعيينه في الأول من كل شهر.',
+    profile: 'الملف الشخصي',
+    name_field: 'الاسم',
+    email_field: 'البريد الإلكتروني',
+    save_changes: 'حفظ التغييرات',
+    security: 'الأمان',
+    send_password_reset: 'إرسال بريد إعادة تعيين كلمة المرور',
+    account_section: 'الحساب',
+    sign_out: 'تسجيل الخروج',
+    exempt_free: 'معفى (مجاني)',
+    trial_days_left: 'تجريبي — {n} أيام متبقية',
+    trial_banner_days: '🔥 {n} يوم متبقية في تجربتك المجانية — وصول كامل حتى النهاية.',
+    trial_banner_active: '🔥 التجربة المجانية نشطة — قم بالترقية للحفاظ على الوصول.',
+    trial_banner_free: '🔥 الخطة المجانية — قم بالترقية لفتح جميع الميزات.',
+    upgrade_steel: 'قم بالترقية إلى Steel للوصول غير المحدود.',
+    name_empty: 'لا يمكن أن يكون الاسم فارغاً',
+    profile_saved: 'تم حفظ الملف الشخصي',
+    name_saved_email_confirm: 'تم حفظ الاسم. تحقق من بريدك الجديد للتأكيد.',
+    sending: 'جاري الإرسال...',
+    reset_sent: 'تم إرسال بريد إعادة التعيين',
+    reset_failed: 'فشل الإرسال — حاول مرة أخرى',
+    failed_save: 'فشل الحفظ — حاول مرة أخرى',
+    shopping_locked: 'قائمة التسوق تتطلب Steel أو أعلى',
+    list_copied: 'تم نسخ قائمة التسوق',
+    copy_failed: 'تعذّر النسخ',
+    add_set: '+ إضافة مجموعة',
+    draft_restored: 'تم استعادة المسودة',
+    coach_messages_left: '{n} رسائل متبقية هذا الشهر',
+    generating: 'جاري التوليد...',
+    generate_review: 'توليد المراجعة الشهرية',
+    regenerate_review: 'إعادة توليد المراجعة',
+    nav_account: 'الحساب',
+    sessions: 'الجلسات',
+    prs_hit_label: 'الأرقام القياسية',
+    adherence_label: 'الالتزام',
+    copy: 'نسخ',
     generating_workout:'جاري إنشاء خطة التدريب', calculating_macros:'جاري حساب الماكرو',
     building_meals:'جاري إنشاء خطة الوجبات', saving_profile:'جاري حفظ الملف الشخصي',
     coach_greeting_1:'مرحباً {name}. لنبدأ العمل.', coach_greeting_2:'تم إنشاء برنامجك وتخصيصه لك. اسألني عن أي شيء - التقنية والغذاء والتعافي ومتى تزيد الأوزان. أنا هنا.',
@@ -5363,7 +5808,51 @@ const STRINGS = {
     quick_muscle:'滞后肌肉', quick_sleep:'睡眠与恢复', quick_creatine:'肌酸？',
     choose_theme:'选择主题', coach_language:'教练语言',
     plan_updated:'计划已更新 ✓', list_copied:'列表已复制 ✓', copy_failed:'复制失败',
-    enter_weight:'请输入有效重量', saved:'已保存 ✓', select_days_first:'请选择正好 {n} 天',
+    enter_weight:'请输入有效重量', saved:'已保存 ✓', select_days_first:'请选择{n}个训练日',
+    rest: '休息',
+    form: '动作',
+    target: '目标',
+    rpe: 'RPE',
+    membership: '会员',
+    upgrade: '升级',
+    view_plans: '查看计划',
+    ai_coach_messages: 'AI教练消息',
+    resets_monthly: '每月1日重置。',
+    profile: '个人资料',
+    name_field: '姓名',
+    email_field: '邮箱',
+    save_changes: '保存更改',
+    security: '安全',
+    send_password_reset: '发送密码重置邮件',
+    account_section: '账户',
+    sign_out: '退出登录',
+    exempt_free: '豁免（免费）',
+    trial_days_left: '试用 — 还剩{n}天',
+    trial_banner_days: '🔥 免费试用还剩{n}天 — 到期前完整访问。',
+    trial_banner_active: '🔥 免费试用中 — 升级以保持完整访问。',
+    trial_banner_free: '🔥 免费计划 — 升级解锁所有功能。',
+    upgrade_steel: '升级到Steel获得无限访问。',
+    name_empty: '姓名不能为空',
+    profile_saved: '个人资料已保存',
+    name_saved_email_confirm: '姓名已保存。请查看新邮箱以确认更改。',
+    sending: '发送中...',
+    reset_sent: '密码重置邮件已发送',
+    reset_failed: '发送失败 — 请重试',
+    failed_save: '保存失败 — 请重试',
+    shopping_locked: '购物清单需要Steel或以上计划',
+    list_copied: '购物清单已复制',
+    copy_failed: '无法复制',
+    add_set: '+ 添加组',
+    draft_restored: '草稿已恢复',
+    coach_messages_left: '本月还剩{n}条消息',
+    generating: '生成中...',
+    generate_review: '生成月度报告',
+    regenerate_review: '重新生成报告',
+    nav_account: '账户',
+    sessions: '训练次数',
+    prs_hit_label: '个人记录',
+    adherence_label: '执行率',
+    copy: '复制',
     generating_workout:'正在生成训练计划', calculating_macros:'正在计算宏量',
     building_meals:'正在生成饮食计划', saving_profile:'正在保存资料',
     coach_greeting_1:'嗨 {name}。开始训练吧。', coach_greeting_2:'你的计划已经根据你的情况制定并个性化。随时问我任何问题--动作技术、饮食、恢复或何时加重。我在这里。',
@@ -5412,7 +5901,51 @@ const STRINGS = {
     quick_muscle:'成長が遅い筋肉', quick_sleep:'睡眠と回復', quick_creatine:'クレアチン？',
     choose_theme:'テーマを選択', coach_language:'コーチの言語',
     plan_updated:'プラン更新 ✓', list_copied:'リストをコピー ✓', copy_failed:'コピー失敗',
-    enter_weight:'有効な体重を入力', saved:'保存 ✓', select_days_first:'ちょうど {n} 日を選択',
+    enter_weight:'有効な体重を入力', saved:'保存 ✓', select_days_first:'トレーニング日を{n}日選択してください',
+    rest: '休憩',
+    form: 'フォーム',
+    target: '目標',
+    rpe: 'RPE',
+    membership: 'メンバーシップ',
+    upgrade: 'アップグレード',
+    view_plans: 'プランを見る',
+    ai_coach_messages: 'AIコーチメッセージ',
+    resets_monthly: '毎月1日にリセットされます。',
+    profile: 'プロフィール',
+    name_field: '名前',
+    email_field: 'メール',
+    save_changes: '変更を保存',
+    security: 'セキュリティ',
+    send_password_reset: 'パスワードリセットメールを送信',
+    account_section: 'アカウント',
+    sign_out: 'ログアウト',
+    exempt_free: '免除（無料）',
+    trial_days_left: 'トライアル — 残り{n}日',
+    trial_banner_days: '🔥 無料トライアル残り{n}日 — 終了まで完全アクセス。',
+    trial_banner_active: '🔥 無料トライアル中 — アップグレードでアクセスを維持。',
+    trial_banner_free: '🔥 無料プラン — アップグレードで全機能解放。',
+    upgrade_steel: 'Steelにアップグレードで無制限アクセス。',
+    name_empty: '名前を入力してください',
+    profile_saved: 'プロフィールを保存しました',
+    name_saved_email_confirm: '名前を保存しました。新しいメールで変更を確認してください。',
+    sending: '送信中...',
+    reset_sent: 'パスワードリセットメールを送信しました',
+    reset_failed: '送信に失敗 — もう一度試してください',
+    failed_save: '保存に失敗 — もう一度試してください',
+    shopping_locked: 'ショッピングリストはSteel以上が必要です',
+    list_copied: 'ショッピングリストをコピーしました',
+    copy_failed: 'コピーできませんでした',
+    add_set: '+ セット追加',
+    draft_restored: '下書きを復元しました',
+    coach_messages_left: '今月残り{n}件のメッセージ',
+    generating: '生成中...',
+    generate_review: '月次レビューを生成',
+    regenerate_review: 'レビューを再生成',
+    nav_account: 'アカウント',
+    sessions: 'セッション',
+    prs_hit_label: '達成PR',
+    adherence_label: '遵守率',
+    copy: 'コピー',
     generating_workout:'トレーニングプランを生成中', calculating_macros:'マクロを計算中',
     building_meals:'食事プランを生成中', saving_profile:'プロフィールを保存中',
     coach_greeting_1:'やあ {name}。さあ、始めよう。', coach_greeting_2:'あなたのプログラムはあなた専用に作られています。何でも聞いてください。ここにいます。',
@@ -5430,7 +5963,7 @@ function t(key, vars) {
 // Apply all translations to the DOM
 function applyLanguage() {
   // Nav labels
-  const navMap = { coach:'nav_coach', workout:'nav_plan', log:'nav_log', nutrition:'nav_food', progress:'nav_progress', admin:'nav_admin' };
+  const navMap = { coach:'nav_coach', workout:'nav_plan', log:'nav_log', nutrition:'nav_food', progress:'nav_progress', admin:'nav_admin', account:'nav_account' };
   Object.entries(navMap).forEach(([panel, key]) => {
     const btn = document.getElementById('nav-' + panel);
     if (btn) btn.querySelector('.nav-label').textContent = t(key);
@@ -5564,6 +6097,11 @@ function setLanguage(code) {
   if (typeof renderNutritionPanel === 'function') renderNutritionPanel();
   if (typeof renderStatGrid === 'function') renderStatGrid();
   if (typeof initCoach === 'function') initCoach();
+  if (typeof renderAccount === 'function' && document.getElementById('panel-account')?.classList.contains('active')) renderAccount();
+  if (typeof renderTrialBanner === 'function') renderTrialBanner();
+  if (typeof renderLog === 'function' && document.getElementById('panel-log')?.classList.contains('active')) renderLog();
+  if (typeof renderAccount === 'function' && document.getElementById('accountPanel')?.innerHTML) renderAccount();
+  if (typeof renderTrialBanner === 'function') renderTrialBanner();
   closeLangDrawer();
   showToast(`${lang.flag} ${lang.label}`, 'success');
 }
