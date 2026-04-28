@@ -4851,10 +4851,11 @@ function renderAdminList(users) {
 
   el.innerHTML = `
     <div style="padding:0 0 12px;">
-      <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
         <input id="adminSearch" type="text" placeholder="Search by name or email..." oninput="filterAdminUsers()" style="flex:1;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;">
         <button onclick="renderAdmin()" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:10px 14px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">↺</button>
       </div>
+      <button onclick="clearAllTranslationCaches()" style="width:100%;margin-bottom:14px;padding:10px;background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.4);color:#ff6b35;border-radius:10px;font-size:12px;cursor:pointer;font-family:'DM Mono',sans-serif;letter-spacing:1px;">🌐 CLEAR ALL TRANSLATION CACHES</button>
       <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:10px;">${users.length} USERS</div>
       <div id="adminUserListInner">${renderAdminUserCards(users)}</div>
     </div>
@@ -4944,6 +4945,16 @@ async function confirmDelete(userId, email) {
 }
 
 
+
+async function clearAllTranslationCaches() {
+  if (!confirm('Clear all translation caches? All users will get fresh translations on next language switch. This cannot be undone.')) return;
+  const res = await api('/api/admin/clear-translation-cache', 'POST');
+  if (res?.success) {
+    showToast('✓ All translation caches cleared — fresh translations on next switch', 'success');
+  } else {
+    showToast('Failed: ' + (res?.error || 'unknown error'), 'error');
+  }
+}
 
 async function expireTrial(userId) {
   const res = await api('/api/admin/users/' + userId + '/expire-trial', 'PATCH');
