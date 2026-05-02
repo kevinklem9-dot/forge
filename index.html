@@ -605,6 +605,19 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,76px);line-heigh
 </footer>
 
 <script>
+// ── INSTANT SESSION CHECK ─────────────────────────────
+// If already logged in, skip landing page and go straight to app
+(function() {
+  try {
+    const session = JSON.parse(localStorage.getItem('forge-session') || 'null')
+                 || JSON.parse(sessionStorage.getItem('forge-session-temp') || 'null');
+    if (session?.access_token) {
+      const _base = window.location.origin + window.location.pathname.replace(/\/?$/, '').replace(/\/[^\/]*$/, '');
+      window.location.replace(_base + '/app.html');
+    }
+  } catch(e) {}
+})();
+
 const BACKEND_URL = 'https://forge-production-db97.up.railway.app';
 const SUPABASE_URL = 'https://ozhtiqoregcwxkkxohbk.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96aHRpcW9yZWdjd3hra3hvaGJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjAxMTAsImV4cCI6MjA5MDMzNjExMH0.DrrZLUgLgtBTfSrhDC_acZ48ZrKQdqltBfAi_0-aTeI';
@@ -813,22 +826,39 @@ async function doSignin(instance) {
 function showForgotLanding(instance) {
   const form = document.getElementById('form-signin-' + instance);
   if (!form) return;
-  form.querySelectorAll('.field-group, .auth-note').forEach(el => el.style.display = 'none');
-  form.querySelectorAll('.auth-btn').forEach(el => { if (!el.closest('#' + instance + '-forgot')) el.style.display = 'none'; });
+  // Hide only the direct children field-groups (email + password), not ones inside forgot panel
+  const forgotPanel = document.getElementById(instance + '-forgot');
+  form.querySelectorAll('.field-group').forEach(el => {
+    if (!forgotPanel.contains(el)) el.style.display = 'none';
+  });
+  form.querySelectorAll('.auth-note').forEach(el => el.style.display = 'none');
+  form.querySelectorAll('.auth-btn').forEach(el => {
+    if (!forgotPanel.contains(el)) el.style.display = 'none';
+  });
   const rememberRow = form.querySelector('div[style*="space-between"]');
   if (rememberRow) rememberRow.style.display = 'none';
   document.getElementById(instance + '-signin-error').style.display = 'none';
-  document.getElementById(instance + '-forgot').style.display = '';
+  forgotPanel.style.display = '';
 }
 
 function hideForgotLanding(instance) {
   const form = document.getElementById('form-signin-' + instance);
   if (!form) return;
-  form.querySelectorAll('.field-group, .auth-note').forEach(el => el.style.display = '');
-  form.querySelectorAll('.auth-btn').forEach(el => el.style.display = '');
+  const forgotPanel = document.getElementById(instance + '-forgot');
+  form.querySelectorAll('.field-group').forEach(el => {
+    if (!forgotPanel.contains(el)) el.style.display = '';
+  });
+  form.querySelectorAll('.auth-note').forEach(el => el.style.display = '');
+  form.querySelectorAll('.auth-btn').forEach(el => {
+    if (!forgotPanel.contains(el)) el.style.display = '';
+  });
   const rememberRow = form.querySelector('div[style*="space-between"]');
   if (rememberRow) rememberRow.style.display = '';
-  document.getElementById(instance + '-forgot').style.display = 'none';
+  forgotPanel.style.display = 'none';
+  // Clear reset form state
+  const resetEmail = document.getElementById(instance + '-reset-email');
+  if (resetEmail) resetEmail.value = '';
+  showError(instance + '-reset-error', '');
 }
 
 async function sendResetLanding(instance) {
