@@ -2216,6 +2216,8 @@ async function loadPlanAndLaunch() {
   initCoach();
   renderStatGrid();
   showPanel('coach');
+  // Show PWA install prompt once, after a short delay so it doesn't interrupt boot
+  setTimeout(() => showPwaPrompt(), 3000);
 
   // Fetch plan + profile + subscription in parallel in background
   try {
@@ -2402,6 +2404,64 @@ function dismissExpiredPaywall() {
   }
 }
 // ═══════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════
+// PWA INSTALL PROMPT
+// ═══════════════════════════════════════════════════════
+function showPwaPrompt() {
+  if (window.navigator.standalone === true) return;
+  if (window.matchMedia('(display-mode: standalone)').matches) return;
+  if (localStorage.getItem('forge-pwa-dismissed')) return;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isAndroid = /Android/.test(navigator.userAgent);
+  if (!isIOS && !isAndroid) return;
+
+  const style = document.createElement('style');
+  style.textContent = '@keyframes pwaSlideUp{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}';
+  document.head.appendChild(style);
+
+  const prompt = document.createElement('div');
+  prompt.id = 'pwaPrompt';
+  prompt.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9998;width:calc(100% - 32px);max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 18px;box-shadow:0 8px 40px rgba(0,0,0,0.6);animation:pwaSlideUp 0.3s ease;';
+
+  const steps = isIOS
+    ? [
+        'Tap the <strong style="color:var(--accent);">Share</strong> button ⬆ at the bottom of Safari',
+        'Scroll down and tap <strong style="color:var(--accent);">Add to Home Screen</strong> ＋'
+      ]
+    : [
+        'Tap the <strong style="color:var(--accent);">⋮ menu</strong> in your browser',
+        'Tap <strong style="color:var(--accent);">Add to Home screen</strong>'
+      ];
+
+  prompt.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;color:#000;">⚡</div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--text);">Add FORGE to your home screen</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:1px;">Works like a native app</div>
+        </div>
+      </div>
+      <button onclick="dismissPwaPrompt()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 0 0 8px;line-height:1;">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      ${steps.map((s,i) => `<div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:10px;padding:10px 12px;"><span style="font-size:15px;font-weight:700;color:var(--muted);">${i+1}.</span><span style="font-size:13px;color:var(--text);">${s}</span></div>`).join('')}
+    </div>
+  `;
+  document.body.appendChild(prompt);
+  setTimeout(() => dismissPwaPrompt(), 12000);
+}
+
+function dismissPwaPrompt() {
+  const el = document.getElementById('pwaPrompt');
+  if (!el) return;
+  el.style.transition = 'opacity 0.2s, transform 0.2s';
+  el.style.opacity = '0';
+  el.style.transform = 'translateX(-50%) translateY(20px)';
+  setTimeout(() => el.remove(), 200);
+  localStorage.setItem('forge-pwa-dismissed', '1');
+}
 
 async function startCheckout(tier, billing, isPromo) {
   if (!currentUser) { showToast('Please sign in first', 'error'); return; }
