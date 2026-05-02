@@ -2503,7 +2503,14 @@ function handlePaymentRedirect() {
     dismissExpiredPaywall();
   } else if (payment === 'cancelled') {
     window.history.replaceState({}, '', window.location.pathname);
-    showToast('Payment cancelled — no charge made.', 'error');
+    // If user has a valid session show toast, otherwise redirect to landing page
+    const session = JSON.parse(localStorage.getItem('forge-session') || 'null');
+    if (session?.access_token) {
+      showToast('Payment cancelled — no charge made.', 'error');
+    } else {
+      // No session — send back to landing page
+      window.location.href = window.location.href.replace(/\/app\.html.*$/, '/');
+    }
   }
 }
 // ═══════════════════════════════════════════════════════
