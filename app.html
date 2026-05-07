@@ -1399,6 +1399,15 @@ async function handleSession(session) {
   if (!session) return;
   currentUser = session.user;
 
+  const _redirectToLanding = () => {
+    localStorage.removeItem('forge-session');
+    localStorage.removeItem('forge-cached-profile');
+    localStorage.removeItem('forge-cached-plan');
+    sessionStorage.removeItem('forge-session-temp');
+    currentUser = null;
+    window.location.href = window.location.href.replace(/\/app\.html.*$/, '/');
+  };
+
   document.querySelectorAll('.auth-btn').forEach(b => {
     b.disabled = false;
     b.textContent = b.closest('#auth-login') ? 'Sign In' : 'Create Account';
@@ -1408,37 +1417,8 @@ async function handleSession(session) {
   let profileData = null;
   for (let i = 0; i < 3; i++) {
     const res = await api('/api/profile');
-    if (res?._status === 401) {
-      localStorage.removeItem('forge-session');
-      localStorage.removeItem('forge-cached-profile');
-      localStorage.removeItem('forge-cached-plan');
-      sessionStorage.removeItem('forge-session-temp');
-      currentUser = null;
-      showAuthError('Session expired. Please sign in again.');
-      showScreen('auth');
-      return;
-    }
-    if (res?._status === 403) {
-      // Check if account is frozen
-      if (res?.error === 'account_frozen') {
-        localStorage.removeItem('forge-session');
-        localStorage.removeItem('forge-cached-profile');
-        localStorage.removeItem('forge-cached-plan');
-        sessionStorage.removeItem('forge-session-temp');
-        currentUser = null;
-        showAuthError('Your account has been suspended. Contact support to resolve this.');
-        showScreen('auth');
-        return;
-      }
-      localStorage.removeItem('forge-session');
-      localStorage.removeItem('forge-cached-profile');
-      localStorage.removeItem('forge-cached-plan');
-      sessionStorage.removeItem('forge-session-temp');
-      currentUser = null;
-      showAuthError('Access denied. Please sign in again.');
-      showScreen('auth');
-      return;
-    }
+    if (res?._status === 401) { _redirectToLanding(); return; }
+    if (res?._status === 403) { _redirectToLanding(); return; }
     if (res?.profile) { profileData = res.profile; break; }
     if (i < 2) await new Promise(r => setTimeout(r, 1500));
   }
@@ -1453,8 +1433,8 @@ async function handleSession(session) {
       await loadPlanAndLaunch();
       return;
     }
-    showAuthError('Could not connect to server — check your connection.');
-    showScreen('auth');
+    // No cache either — redirect to landing
+    _redirectToLanding();
     return;
   }
 
@@ -1464,10 +1444,8 @@ async function handleSession(session) {
   let planData = null;
   for (let i = 0; i < 3; i++) {
     const planRes = await api('/api/plan');
-    // planRes.plan can be null (no plan) or an object (has plan)
-    // Only retry on null response (network failure), not on explicit null plan
     if (planRes !== null) {
-      planData = planRes.plan; // may be null if genuinely no plan
+      planData = planRes.plan;
       break;
     }
     if (i < 2) await new Promise(r => setTimeout(r, 1500));
@@ -1484,10 +1462,9 @@ async function handleSession(session) {
   }
 
   if (planData) {
-    // Plan exists — go to app
     userPlan = planData;
     if (!userProfile.onboarding_complete) {
-      api('/api/profile', 'PATCH', { onboarding_complete: true }); // fire and forget
+      api('/api/profile', 'PATCH', { onboarding_complete: true });
       userProfile.onboarding_complete = true;
     }
     await loadPlanAndLaunch();
@@ -1496,7 +1473,6 @@ async function handleSession(session) {
 
   // No plan found — only go to onboarding if we're genuinely sure
   if (userProfile.onboarding_complete) {
-    // Marked complete but no plan — something went wrong, try generating
     await loadPlanAndLaunch();
     return;
   }
