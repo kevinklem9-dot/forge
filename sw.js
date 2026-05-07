@@ -1,7 +1,23 @@
-// FORGE Service Worker — push notifications only, no asset caching
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+// FORGE Service Worker v2 — push notifications only
+const CACHE_NAME = 'forge-push-only';
 
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.map(k => caches.delete(k)))
+    ).then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+
+// No fetch handler — do not intercept any requests
 self.addEventListener('push', e => {
   if (!e.data) return;
   let data = {};
@@ -9,7 +25,7 @@ self.addEventListener('push', e => {
   e.waitUntil(self.registration.showNotification(data.title || 'FORGE', {
     body: data.body || '',
     icon: data.icon || '/icon-192.png',
-    badge: data.badge || '/icon-192.png',
+    badge: '/icon-192.png',
     data: data.url ? { url: data.url } : {},
     requireInteraction: false
   }));
