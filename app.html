@@ -10637,12 +10637,13 @@ function urlBase64ToUint8Array(base64String) {
             return;
           }
         } catch(refreshErr) {}
-        // Refresh failed — kick to auth
+        // Refresh failed — clear session and redirect to landing page
         localStorage.removeItem('forge-session');
         localStorage.removeItem('forge-cached-profile');
         localStorage.removeItem('forge-cached-plan');
+        sessionStorage.removeItem('forge-session-temp');
         currentUser = null; userProfile = null; userPlan = null;
-        showScreen('auth');
+        window.location.href = window.location.href.replace(/\/app\.html.*$/, '/');
         return;
       }
 
@@ -10694,11 +10695,13 @@ function urlBase64ToUint8Array(base64String) {
       await handleSession(newSession);
     } else {
       localStorage.removeItem('forge-session');
-      showScreen('auth');
+      sessionStorage.removeItem('forge-session-temp');
+      window.location.href = window.location.href.replace(/\/app\.html.*$/, '/');
     }
   } catch(e) {
     localStorage.removeItem('forge-session');
-    showScreen('auth');
+    sessionStorage.removeItem('forge-session-temp');
+    window.location.href = window.location.href.replace(/\/app\.html.*$/, '/');
   }
 })();
 

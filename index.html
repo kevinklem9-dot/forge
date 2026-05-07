@@ -606,14 +606,23 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,76px);line-heigh
 
 <script>
 // ── INSTANT SESSION CHECK ─────────────────────────────
-// If already logged in, skip landing page and go straight to app
+// If already logged in with a valid non-expired session, skip to app
 (function() {
   try {
     const session = JSON.parse(localStorage.getItem('forge-session') || 'null')
                  || JSON.parse(sessionStorage.getItem('forge-session-temp') || 'null');
     if (session?.access_token) {
-      const _base = window.location.origin + window.location.pathname.replace(/\/?$/, '').replace(/\/[^\/]*$/, '');
-      window.location.replace(_base + '/app.html');
+      // Check if token is expired by decoding the JWT payload
+      const payload = JSON.parse(atob(session.access_token.split('.')[1]));
+      const isExpired = payload.exp && (payload.exp * 1000) < Date.now();
+      if (!isExpired) {
+        const _base = window.location.origin + window.location.pathname.replace(/\/?$/, '').replace(/\/[^\/]*$/, '');
+        window.location.replace(_base + '/app.html');
+      } else {
+        // Expired — clear it so login form shows cleanly
+        localStorage.removeItem('forge-session');
+        sessionStorage.removeItem('forge-session-temp');
+      }
     }
   } catch(e) {}
 })();
