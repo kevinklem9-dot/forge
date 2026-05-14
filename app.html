@@ -961,22 +961,11 @@ html,body { height:100%; overflow:hidden; overflow-x:hidden; background:var(--bg
 <div class="toast" id="toast"></div>
 
 <script>
-// Force unregister any broken service workers, then re-register clean one
+// Force service worker update so new design loads for all users
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(regs => {
-    regs.forEach(reg => {
-      // Unregister any SW not pointing to our sw.js, or force update existing
-      reg.update();
-    });
+    regs.forEach(reg => reg.update());
   });
-  // Also clear any bad caches from old SW versions
-  if ('caches' in window) {
-    caches.keys().then(keys => {
-      keys.forEach(key => {
-        if (key !== 'forge-push-only') caches.delete(key);
-      });
-    });
-  }
 }
 
 // ═══════════════════════════════════════════════════════
