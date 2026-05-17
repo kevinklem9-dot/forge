@@ -630,6 +630,23 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,76px);line-heigh
 })();
 
 
+// ── PASSWORD RESET HANDLER ─────────────────────────
+// Supabase redirects to this page with #access_token=...&type=recovery
+(function() {
+  const hash = window.location.hash;
+  if (!hash) return;
+  const params = new URLSearchParams(hash.replace('#', ''));
+  const accessToken = params.get('access_token');
+  const type = params.get('type');
+  if (accessToken && type === 'recovery') {
+    window._resetToken = accessToken;
+    history.replaceState(null, '', location.pathname);
+    // Show reset form once DOM is ready
+    window._showResetForm = true;
+  }
+})();
+
+
 const BACKEND_URL = 'https://forge-production-db97.up.railway.app';
 const SUPABASE_URL = 'https://ozhtiqoregcwxkkxohbk.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96aHRpcW9yZWdjd3hra3hvaGJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjAxMTAsImV4cCI6MjA5MDMzNjExMH0.DrrZLUgLgtBTfSrhDC_acZ48ZrKQdqltBfAi_0-aTeI';
@@ -1425,6 +1442,83 @@ function applyLandingLanguage(code) {
   if (footerLinks[1] && s.footer_terms) footerLinks[1].textContent = s.footer_terms;
   if (footerLinks[2] && s.footer_contact) footerLinks[2].textContent = s.footer_contact;
 }
+
+async function submitPasswordReset() {
+  const newPw = document.getElementById('reset-new-password').value;
+  const confirmPw = document.getElementById('reset-confirm-password').value;
+  const errId = 'reset-modal-error';
+
+  if (!newPw || newPw.length < 6) return showError(errId, 'Password must be at least 6 characters.');
+  if (newPw !== confirmPw) return showError(errId, 'Passwords do not match.');
+  showError(errId, '');
+
+  const btn = document.querySelector('#resetModal .auth-btn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  try {
+    // Use the reset token to update password via Supabase REST
+    const res = await fetch(SUPABASE_URL + '/auth/v1/user', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + window._resetToken
+      },
+      body: JSON.stringify({ password: newPw })
+    });
+    const data = await res.json();
+    btn.disabled = false;
+
+    if (!res.ok || data.error) {
+      return showError(errId, data.error?.message || data.msg || 'Failed to reset password. Try requesting a new link.');
+    }
+
+    // Success — show confirmation and redirect to sign in
+    document.getElementById('resetModal').innerHTML = `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 24px;max-width:400px;width:100%;text-align:center;">
+        <div style="font-size:48px;margin-bottom:16px;">✓</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;color:var(--accent);margin-bottom:12px;">Password Updated</div>
+        <div style="font-size:14px;color:var(--muted);margin-bottom:24px;">Your password has been reset. Sign in with your new password.</div>
+        <button class="auth-btn" onclick="document.getElementById('resetModal').style.display='none'">Sign in</button>
+      </div>
+    `;
+  } catch(e) {
+    btn.disabled = false; btn.textContent = 'Set New Password';
+    showError(errId, 'Connection error. Please try again.');
+  }
+}
+
+// Show reset modal if flagged by hash handler
+document.addEventListener('DOMContentLoaded', () => {
+  if (window._showResetForm) {
+    const modal = document.getElementById('resetModal');
+    if (modal) { modal.style.display = 'flex'; }
+  }
+});
+
 </script>
+
+<!-- Password Reset Modal -->
+<div id="resetModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 24px;max-width:400px;width:100%;position:relative;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;color:var(--accent);margin-bottom:8px;">Reset Password</div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:24px;letter-spacing:0.5px;">Enter your new password below.</div>
+    <div class="field-group"><div class="field-label">New Password</div>
+      <div style="position:relative">
+        <input class="field-input" type="password" id="reset-new-password" placeholder="Min. 6 characters" style="padding-right:44px">
+        <button class="pw-toggle" onclick="togglePw('reset-new-password',this)" type="button">👁</button>
+      </div>
+    </div>
+    <div class="field-group"><div class="field-label">Confirm Password</div>
+      <div style="position:relative">
+        <input class="field-input" type="password" id="reset-confirm-password" placeholder="Repeat new password" style="padding-right:44px">
+        <button class="pw-toggle" onclick="togglePw('reset-confirm-password',this)" type="button">👁</button>
+      </div>
+    </div>
+    <div class="auth-error" id="reset-modal-error"></div>
+    <button class="auth-btn" onclick="submitPasswordReset()" style="margin-top:8px">Set New Password</button>
+  </div>
+</div>
+
 </body>
 </html>
