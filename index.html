@@ -631,17 +631,13 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,76px);line-heigh
 
 
 // ── PASSWORD RESET HANDLER ─────────────────────────
-// Supabase redirects to this page with #access_token=...&type=recovery
+// app.html passes the reset token via ?reset_token= query param
 (function() {
-  const hash = window.location.hash;
-  if (!hash) return;
-  const params = new URLSearchParams(hash.replace('#', ''));
-  const accessToken = params.get('access_token');
-  const type = params.get('type');
-  if (accessToken && type === 'recovery') {
-    window._resetToken = accessToken;
+  const params = new URLSearchParams(window.location.search);
+  const resetToken = params.get('reset_token');
+  if (resetToken) {
+    window._resetToken = decodeURIComponent(resetToken);
     history.replaceState(null, '', location.pathname);
-    // Show reset form once DOM is ready
     window._showResetForm = true;
   }
 })();
