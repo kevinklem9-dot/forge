@@ -607,22 +607,22 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,76px);line-heigh
 <script>
 // ── INSTANT SESSION CHECK ─────────────────────────────
 // If already logged in with Remember Me, skip landing page and go straight to app
+// BUT: never redirect if a password reset token is present
 (function() {
   try {
+    // Skip redirect if this is a password reset link
+    if (new URLSearchParams(window.location.search).get('reset_token')) return;
     const session = JSON.parse(localStorage.getItem('forge-session') || 'null');
     if (session?.access_token && session?.rememberMe) {
-      // Verify token not expired
       const payload = JSON.parse(atob(session.access_token.split('.')[1]));
       const isExpired = payload.exp && (payload.exp * 1000) < Date.now();
       if (!isExpired) {
-        // Valid remembered session — go straight to app
         const loc = window.location;
         const appUrl = loc.pathname.endsWith('/')
           ? loc.origin + loc.pathname + 'app.html'
           : loc.origin + loc.pathname.replace(/\/[^\/]*$/, '/') + 'app.html';
         window.location.replace(appUrl);
       } else {
-        // Expired — clear so login form shows cleanly
         localStorage.removeItem('forge-session');
       }
     }
@@ -1485,12 +1485,18 @@ async function submitPasswordReset() {
 }
 
 // Show reset modal if flagged by hash handler
-document.addEventListener('DOMContentLoaded', () => {
+function _maybeShowResetModal() {
   if (window._showResetForm) {
     const modal = document.getElementById('resetModal');
-    if (modal) { modal.style.display = 'flex'; }
+    if (modal) {
+      modal.style.display = 'flex';
+      modal.style.alignItems = 'center';
+      modal.style.justifyContent = 'center';
+    }
   }
-});
+}
+document.addEventListener('DOMContentLoaded', _maybeShowResetModal);
+window.addEventListener('load', _maybeShowResetModal);
 
 </script>
 
