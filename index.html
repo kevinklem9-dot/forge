@@ -633,14 +633,21 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,76px);line-heigh
 // ── PASSWORD RESET HANDLER ─────────────────────────
 // app.html passes the reset token via ?reset_token= query param
 (function() {
-  const params = new URLSearchParams(window.location.search);
-  const resetToken = params.get('reset_token');
-  console.log('[FORGE] landing search:', window.location.search, 'reset_token:', resetToken);
+  // Check query param (passed from app.html)
+  const qparams = new URLSearchParams(window.location.search);
+  const resetTokenQ = qparams.get('reset_token');
+  // Also check hash directly (Supabase may land here directly)
+  const hashStr = window.location.hash.replace('#','');
+  const hparams = new URLSearchParams(hashStr);
+  const resetTokenH = hparams.get('access_token');
+  const resetType = hparams.get('type');
+  const resetToken = resetTokenQ || (resetType === 'recovery' ? resetTokenH : null);
+  console.log('[FORGE] search reset_token:', resetTokenQ, 'hash type:', resetType, 'hash token:', !!resetTokenH);
   if (resetToken) {
-    window._resetToken = decodeURIComponent(resetToken);
+    window._resetToken = resetToken;
     history.replaceState(null, '', location.pathname);
     window._showResetForm = true;
-    console.log('[FORGE] reset token set, _showResetForm=true');
+    console.log('[FORGE] reset token set, showing modal');
   }
 })();
 
