@@ -983,13 +983,15 @@ const ADMIN_EMAIL = 'kevinklem9@gmail.com';
   try {
     // Check for password reset token in URL hash FIRST before any redirect
     const hash = window.location.hash;
+    console.log('[FORGE] hash:', hash);
     if (hash) {
       const params = new URLSearchParams(hash.replace('#', ''));
       const accessToken = params.get('access_token');
       const type = params.get('type');
+      console.log('[FORGE] type:', type, 'hasToken:', !!accessToken);
       if (accessToken && type === 'recovery') {
-        // Pass reset token to landing page as query param, then redirect
         const landingUrl = window.location.href.replace(/\/app\.html.*$/, '/') + '?reset_token=' + encodeURIComponent(accessToken);
+        console.log('[FORGE] redirecting to:', landingUrl);
         window.location.replace(landingUrl);
         return;
       }

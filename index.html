@@ -635,10 +635,12 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,76px);line-heigh
 (function() {
   const params = new URLSearchParams(window.location.search);
   const resetToken = params.get('reset_token');
+  console.log('[FORGE] landing search:', window.location.search, 'reset_token:', resetToken);
   if (resetToken) {
     window._resetToken = decodeURIComponent(resetToken);
     history.replaceState(null, '', location.pathname);
     window._showResetForm = true;
+    console.log('[FORGE] reset token set, _showResetForm=true');
   }
 })();
 
@@ -1486,6 +1488,7 @@ async function submitPasswordReset() {
 
 // Show reset modal if flagged by hash handler
 function _maybeShowResetModal() {
+  console.log('[FORGE] _maybeShowResetModal called, _showResetForm:', window._showResetForm);
   if (window._showResetForm) {
     const modal = document.getElementById('resetModal');
     if (modal) {
