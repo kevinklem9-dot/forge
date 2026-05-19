@@ -10527,7 +10527,7 @@ function urlBase64ToUint8Array(base64String) {
 
 // ── BOOT — Auto-login ──────────────────────────
 (async () => {
-  const session = JSON.parse(localStorage.getItem('forge-session') || 'null');
+  const session = JSON.parse(localStorage.getItem('forge-session') || sessionStorage.getItem('forge-session-temp') || 'null');
   if (!session?.access_token || !session?.user) {
     localStorage.removeItem('forge-session');
     sessionStorage.removeItem('forge-session-temp');
