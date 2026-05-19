@@ -991,11 +991,20 @@ const ADMIN_EMAIL = 'kevinklem9@gmail.com';
         return;
       }
     }
-    const session = JSON.parse(localStorage.getItem('forge-session') || sessionStorage.getItem('forge-session-temp') || 'null');
-    if (!session?.access_token) {
+    // Check for valid session
+    const raw = localStorage.getItem('forge-session') || sessionStorage.getItem('forge-session-temp');
+    if (!raw) { window.location.replace(window.location.href.replace(/\/app\.html.*$/, '/')); return; }
+    const session = JSON.parse(raw);
+    // Validate session has actual token — clear and redirect if broken
+    if (!session?.access_token || !session?.user) {
+      localStorage.removeItem('forge-session');
+      sessionStorage.removeItem('forge-session-temp');
       window.location.replace(window.location.href.replace(/\/app\.html.*$/, '/'));
+      return;
     }
   } catch(e) {
+    localStorage.removeItem('forge-session');
+    sessionStorage.removeItem('forge-session-temp');
     window.location.replace(window.location.href.replace(/\/app\.html.*$/, '/'));
   }
 })();
@@ -10521,6 +10530,7 @@ function urlBase64ToUint8Array(base64String) {
   const session = JSON.parse(localStorage.getItem('forge-session') || 'null');
   if (!session?.access_token || !session?.user) {
     localStorage.removeItem('forge-session');
+    sessionStorage.removeItem('forge-session-temp');
     window.location.href = window.location.href.replace(/\/app\.html.*$/, '/');
     return;
   }
