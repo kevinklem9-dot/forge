@@ -440,10 +440,10 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,76px);line-heigh
     <h2 class="reveal">Real users. Real results.</h2>
     <p class="section-body reveal" style="margin-bottom:32px">Early access members. Training with FORGE from day one.</p>
     <div class="grid-2 reveal-stagger" id="testimonialGrid">
-      <div class="card"><p class="testimonial-quote">"Built me a full programme in under 2 minutes. I've tried four other apps. This is the first one that felt like it actually knew what I needed."</p><div class="testimonial-attr"><div class="avatar"><img src="/forge-avatars/jm.jpg" alt="" loading="lazy" width="48" height="48"></div><div><div class="attr-name">James M.</div><div class="attr-ctx">Training for football season</div></div></div></div>
-      <div class="card"><p class="testimonial-quote">"The AI checked in after my first session and already adjusted my plan. I've never had an app do that. It actually feels like someone's watching your progress."</p><div class="testimonial-attr"><div class="avatar"><img src="/forge-avatars/sr.jpg" alt="" loading="lazy" width="48" height="48"></div><div><div class="attr-name">Sophie R.</div><div class="attr-ctx">Building around marathon training</div></div></div></div>
-      <div class="card"><p class="testimonial-quote">"I was sceptical about AI coaching. Ten days in and my lifts are already progressing in a way they weren't after three months of doing it myself."</p><div class="testimonial-attr"><div class="avatar"><img src="/forge-avatars/dk.jpg" alt="" loading="lazy" width="48" height="48"></div><div><div class="attr-name">Daniel K.</div><div class="attr-ctx">Intermediate lifter, hypertrophy goal</div></div></div></div>
-      <div class="card"><p class="testimonial-quote">"The nutrition plan it gave me actually works around my training days. Not a generic meal plan — it knows when I train and what I need before and after."</p><div class="testimonial-attr"><div class="avatar"><img src="/forge-avatars/al.jpg" alt="" loading="lazy" width="48" height="48"></div><div><div class="attr-name">Anya L.</div><div class="attr-ctx">Fitness and body composition</div></div></div></div>
+      <div class="card"><p class="testimonial-quote">"Built me a full programme in under 2 minutes. I've tried four other apps. This is the first one that felt like it actually knew what I needed."</p><div class="testimonial-attr"><div class="avatar"></div><div><div class="attr-name">James M.</div><div class="attr-ctx">Training for football season</div></div></div></div>
+      <div class="card"><p class="testimonial-quote">"The AI checked in after my first session and already adjusted my plan. I've never had an app do that. It actually feels like someone's watching your progress."</p><div class="testimonial-attr"><div class="avatar"></div><div><div class="attr-name">Sophie R.</div><div class="attr-ctx">Building around marathon training</div></div></div></div>
+      <div class="card"><p class="testimonial-quote">"I was sceptical about AI coaching. Ten days in and my lifts are already progressing in a way they weren't after three months of doing it myself."</p><div class="testimonial-attr"><div class="avatar"></div><div><div class="attr-name">Daniel K.</div><div class="attr-ctx">Intermediate lifter, hypertrophy goal</div></div></div></div>
+      <div class="card"><p class="testimonial-quote">"The nutrition plan it gave me actually works around my training days. Not a generic meal plan — it knows when I train and what I need before and after."</p><div class="testimonial-attr"><div class="avatar"></div><div><div class="attr-name">Anya L.</div><div class="attr-ctx">Fitness and body composition</div></div></div></div>
     </div>
   </div>
 </section>
@@ -773,23 +773,25 @@ async function doSignup(instance) {
 }
 
 async function doSignin(instance) {
-  const email = document.getElementById(instance + '-signin-email').value.trim();
-  const password = document.getElementById(instance + '-signin-password').value;
-  const rememberMe = document.getElementById(instance + '-remember-me')?.checked ?? true;
-  const errId = instance + '-signin-error';
-
-  if (!email || !password) return showError(errId, 'Please fill in all fields.');
-  showError(errId, '');
-
-  const btn = document.querySelector('#form-signin-' + instance + ' .auth-btn');
-  btn.disabled = true; btn.textContent = 'Signing in...';
-
   try {
+    const email = document.getElementById(instance + '-signin-email').value.trim();
+    const password = document.getElementById(instance + '-signin-password').value;
+    const rememberMe = document.getElementById(instance + '-remember-me')?.checked ?? true;
+    const errId = instance + '-signin-error';
+
+    if (!email || !password) { showError(errId, 'Please fill in all fields.'); return; }
+    showError(errId, '');
+
+    const btn = document.querySelector('#form-signin-' + instance + ' .auth-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Signing in...'; }
+
     const data = await supabaseAuth('token?grant_type=password', { email, password });
-    btn.disabled = false; btn.textContent = 'Sign in';
+
+    if (btn) { btn.disabled = false; btn.textContent = 'Sign in'; }
 
     if (data.error || data.error_description) {
-      return showError(errId, 'Incorrect email or password. Please check and try again.');
+      showError(errId, 'Incorrect email or password. Please check and try again.');
+      return;
     }
 
     const session = {
@@ -802,16 +804,16 @@ async function doSignin(instance) {
     if (rememberMe) {
       localStorage.setItem('forge-session', JSON.stringify(session));
     } else {
-      // No remember me — store in sessionStorage but still mark rememberMe:true
-      // so app.html boot accepts it this session
       sessionStorage.setItem('forge-session-temp', JSON.stringify(session));
       localStorage.removeItem('forge-session');
     }
 
     window.location.href = _getAppUrl();
   } catch(e) {
-    btn.disabled = false; btn.textContent = 'Sign in';
-    showError(errId, 'Connection error — check your internet and try again.');
+    console.error('doSignin error:', e);
+    const btn2 = document.querySelector('#form-signin-' + instance + ' .auth-btn');
+    if (btn2) { btn2.disabled = false; btn2.textContent = 'Sign in'; }
+    showError(instance + '-signin-error', 'Connection error — check your internet and try again.');
   }
 }
 
