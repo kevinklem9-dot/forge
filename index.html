@@ -610,8 +610,9 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,76px);line-heigh
 // BUT: never redirect if a password reset token is present
 (function() {
   try {
-    // Skip redirect if this is a password reset link
+    // Skip redirect if reset token or post-reset hash present
     if (new URLSearchParams(window.location.search).get('reset_token')) return;
+    if (window.location.hash.includes('type=recovery') || window.location.hash.includes('type=signup')) return;
     const session = JSON.parse(localStorage.getItem('forge-session') || 'null');
     if (session?.access_token && session?.rememberMe) {
       const payload = JSON.parse(atob(session.access_token.split('.')[1]));
@@ -810,7 +811,7 @@ async function doSignup(instance) {
     }
   } catch(e) {
     btn.disabled = false; btn.textContent = 'Start your free trial';
-    showError(errId, 'Connection error. Please try again.');
+    showError(errId, 'Connection error — check your internet and try again.');
   }
 }
 
@@ -846,7 +847,12 @@ async function doSignin(instance) {
     btn.disabled = false; btn.textContent = 'Sign in';
 
     if (data.error || data.error_description) {
-      return showError(errId, data.error_description || data.error || 'Invalid email or password.');
+      const errMsg = data.error_description || data.error || 'Invalid email or password.';
+      // Make error message user-friendly
+      const friendlyMsg = errMsg.toLowerCase().includes('invalid') || errMsg.toLowerCase().includes('credentials')
+        ? 'Incorrect email or password. Please check and try again.'
+        : errMsg;
+      return showError(errId, friendlyMsg);
     }
 
     const session = {
@@ -866,7 +872,7 @@ async function doSignin(instance) {
     window.location.href = _getAppUrl();
   } catch(e) {
     btn.disabled = false; btn.textContent = 'Sign in';
-    showError(errId, 'Connection error. Please try again.');
+    showError(errId, 'Connection error — check your internet and try again.');
   }
 }
 
@@ -1489,7 +1495,7 @@ async function submitPasswordReset() {
     `;
   } catch(e) {
     btn.disabled = false; btn.textContent = 'Set New Password';
-    showError(errId, 'Connection error. Please try again.');
+    showError(errId, 'Connection error — check your internet and try again.');
   }
 }
 
