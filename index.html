@@ -2,6 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta property="og:image" content="https://www.klemforge.com/icon-192.png">
+<meta property="og:title" content="FORGE — AI Performance Coach">
+<meta property="og:description" content="Your AI coach that builds your programme, tracks your progress, and adapts as you grow.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FORGE — AI Performance Coach</title>
 <meta name="description" content="Personalised training, full nutrition, and a fitness AI that learns your data and coaches you like it knows you. Free 7-day trial.">
@@ -381,7 +386,7 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,76px);line-heigh
         <button class="auth-btn" onclick="doSignin('hero')">Sign in</button>
         <div class="auth-note">No account yet? <a onclick="switchTab('hero','signup')">Start your free trial</a></div>
         <div id="hero-forgot" style="display:none;margin-top:8px;">
-          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.5px;margin-bottom:12px;line-height:1.6;">Enter your email and we'll send you a reset link.</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:12px;line-height:1.6;">Enter your email and we'll send you a reset link.</div>
           <div class="field-group"><div class="field-label">Email</div><input class="field-input" type="email" id="hero-reset-email" placeholder="your@email.com"></div>
           <div class="auth-error" id="hero-reset-error"></div>
           <button class="auth-btn" onclick="sendResetLanding('hero')">Send Reset Link</button>
@@ -575,7 +580,7 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,76px);line-heigh
           <button class="auth-btn" onclick="doSignin('final')">Sign in</button>
           <div class="auth-note">No account yet? <a onclick="switchTab('final','signup')">Start your free trial</a></div>
           <div id="final-forgot" style="display:none;margin-top:8px;">
-            <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.5px;margin-bottom:12px;line-height:1.6;">Enter your email and we'll send you a reset link.</div>
+            <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:12px;line-height:1.6;">Enter your email and we'll send you a reset link.</div>
             <div class="field-group"><div class="field-label">Email</div><input class="field-input" type="email" id="final-reset-email" placeholder="your@email.com"></div>
             <div class="auth-error" id="final-reset-error"></div>
             <button class="auth-btn" onclick="sendResetLanding('final')">Send Reset Link</button>
@@ -605,54 +610,6 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,76px);line-heigh
 </footer>
 
 <script>
-// ── INSTANT SESSION CHECK ─────────────────────────────
-// If already logged in with Remember Me, skip landing page and go straight to app
-// BUT: never redirect if a password reset token is present
-(function() {
-  try {
-    // Skip redirect if reset token or post-reset hash present
-    if (new URLSearchParams(window.location.search).get('reset_token')) return;
-    if (window.location.hash.includes('type=recovery') || window.location.hash.includes('type=signup')) return;
-    const session = JSON.parse(localStorage.getItem('forge-session') || 'null');
-    if (session?.access_token && session?.rememberMe) {
-      const payload = JSON.parse(atob(session.access_token.split('.')[1]));
-      const isExpired = payload.exp && (payload.exp * 1000) < Date.now();
-      if (!isExpired) {
-        const loc = window.location;
-        const appUrl = loc.pathname.endsWith('/')
-          ? loc.origin + loc.pathname + 'app.html'
-          : loc.origin + loc.pathname.replace(/\/[^\/]*$/, '/') + 'app.html';
-        window.location.replace(appUrl);
-      } else {
-        localStorage.removeItem('forge-session');
-      }
-    }
-  } catch(e) {}
-})();
-
-
-// ── PASSWORD RESET HANDLER ─────────────────────────
-// app.html passes the reset token via ?reset_token= query param
-(function() {
-  // Check query param (passed from app.html)
-  const qparams = new URLSearchParams(window.location.search);
-  const resetTokenQ = qparams.get('reset_token');
-  // Also check hash directly (Supabase may land here directly)
-  const hashStr = window.location.hash.replace('#','');
-  const hparams = new URLSearchParams(hashStr);
-  const resetTokenH = hparams.get('access_token');
-  const resetType = hparams.get('type');
-  const resetToken = resetTokenQ || (resetType === 'recovery' ? resetTokenH : null);
-  console.log('[FORGE] search reset_token:', resetTokenQ, 'hash type:', resetType, 'hash token:', !!resetTokenH);
-  if (resetToken) {
-    window._resetToken = resetToken;
-    history.replaceState(null, '', location.pathname);
-    window._showResetForm = true;
-    console.log('[FORGE] reset token set, showing modal');
-  }
-})();
-
-
 const BACKEND_URL = 'https://forge-production-db97.up.railway.app';
 const SUPABASE_URL = 'https://ozhtiqoregcwxkkxohbk.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96aHRpcW9yZWdjd3hra3hvaGJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjAxMTAsImV4cCI6MjA5MDMzNjExMH0.DrrZLUgLgtBTfSrhDC_acZ48ZrKQdqltBfAi_0-aTeI';
@@ -807,26 +764,11 @@ async function doSignup(instance) {
       const card = btn.closest('.auth-card');
       card.innerHTML = '<div style="text-align:center;padding:20px 0"><div style="font-size:32px;margin-bottom:16px">📬</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:24px;letter-spacing:2px;color:var(--accent);margin-bottom:12px">CHECK YOUR EMAIL</div><div style="font-size:14px;color:var(--muted);line-height:1.7">We sent a confirmation link to <strong style="color:var(--text)">' + email + '</strong>.<br>Click the link to activate your account and start your free trial.</div></div>';
     } else {
-      window.location.href = _getAppUrl();
+      window.location.href = window.location.href.replace(/\/[^\/]*$/, '/app.html');
     }
   } catch(e) {
     btn.disabled = false; btn.textContent = 'Start your free trial';
-    showError(errId, 'Connection error — check your internet and try again.');
-  }
-}
-
-
-function _getAppUrl() {
-  const loc = window.location;
-  // Get the directory containing the current page
-  let path = loc.pathname;
-  // Remove trailing slash or filename
-  if (path.endsWith('/')) {
-    // Already a directory URL like /forge-staging/
-    return loc.origin + path + 'app.html';
-  } else {
-    // Has a filename like /forge-staging/index.html — strip it
-    return loc.origin + path.replace(/\/[^\/]*$/, '/') + 'app.html';
+    showError(errId, 'Connection error. Please try again.');
   }
 }
 
@@ -847,12 +789,7 @@ async function doSignin(instance) {
     btn.disabled = false; btn.textContent = 'Sign in';
 
     if (data.error || data.error_description) {
-      const errMsg = data.error_description || data.error || 'Invalid email or password.';
-      // Make error message user-friendly
-      const friendlyMsg = errMsg.toLowerCase().includes('invalid') || errMsg.toLowerCase().includes('credentials')
-        ? 'Incorrect email or password. Please check and try again.'
-        : errMsg;
-      return showError(errId, friendlyMsg);
+      return showError(errId, 'Incorrect email or password. Please check and try again.');
     }
 
     const session = {
@@ -876,32 +813,54 @@ async function doSignin(instance) {
   }
 }
 
+function _getAppUrl() {
+  const loc = window.location;
+  if (loc.pathname.endsWith('/')) return loc.origin + loc.pathname + 'app.html';
+  return loc.origin + loc.pathname.replace(/\/[^\/]*$/, '/') + 'app.html';
+}
+
+// ── INSTANT SESSION CHECK ─────────────────────────────
+(function() {
+  try {
+    if (new URLSearchParams(window.location.search).get('reset_token')) return;
+    if (window.location.hash.includes('type=recovery')) return;
+    const session = JSON.parse(localStorage.getItem('forge-session') || 'null');
+    if (session?.access_token && session?.rememberMe) {
+      const payload = JSON.parse(atob(session.access_token.split('.')[1]));
+      if (!(payload.exp && payload.exp * 1000 < Date.now())) {
+        window.location.replace(_getAppUrl());
+      } else {
+        localStorage.removeItem('forge-session');
+      }
+    }
+  } catch(e) {}
+})();
+
 function showForgotLanding(instance) {
   const form = document.getElementById('form-signin-' + instance);
-  const forgotPanel = document.getElementById(instance + '-forgot');
-  if (!form || !forgotPanel) return;
-  form.querySelectorAll('.field-group').forEach(el => { if (!forgotPanel.contains(el)) el.style.display = 'none'; });
+  const fp = document.getElementById(instance + '-forgot');
+  if (!form || !fp) return;
+  form.querySelectorAll('.field-group').forEach(el => { if (!fp.contains(el)) el.style.display = 'none'; });
   form.querySelectorAll('.auth-note').forEach(el => el.style.display = 'none');
-  form.querySelectorAll('.auth-btn').forEach(el => { if (!forgotPanel.contains(el)) el.style.display = 'none'; });
-  const rememberRow = form.querySelector('div[style*="space-between"]');
-  if (rememberRow) rememberRow.style.display = 'none';
+  form.querySelectorAll('.auth-btn').forEach(el => { if (!fp.contains(el)) el.style.display = 'none'; });
+  const row = form.querySelector('div[style*="space-between"]');
+  if (row) row.style.display = 'none';
   document.getElementById(instance + '-signin-error').style.display = 'none';
-  forgotPanel.style.display = '';
+  fp.style.display = '';
 }
 
 function hideForgotLanding(instance) {
   const form = document.getElementById('form-signin-' + instance);
-  const forgotPanel = document.getElementById(instance + '-forgot');
-  if (!form || !forgotPanel) return;
-  form.querySelectorAll('.field-group').forEach(el => { if (!forgotPanel.contains(el)) el.style.display = ''; });
+  const fp = document.getElementById(instance + '-forgot');
+  if (!form || !fp) return;
+  form.querySelectorAll('.field-group').forEach(el => { if (!fp.contains(el)) el.style.display = ''; });
   form.querySelectorAll('.auth-note').forEach(el => el.style.display = '');
-  form.querySelectorAll('.auth-btn').forEach(el => { if (!forgotPanel.contains(el)) el.style.display = ''; });
-  const rememberRow = form.querySelector('div[style*="space-between"]');
-  if (rememberRow) rememberRow.style.display = '';
-  forgotPanel.style.display = 'none';
-  const resetEmail = document.getElementById(instance + '-reset-email');
-  if (resetEmail) resetEmail.value = '';
-  showError(instance + '-reset-error', '');
+  form.querySelectorAll('.auth-btn').forEach(el => { if (!fp.contains(el)) el.style.display = ''; });
+  const row = form.querySelector('div[style*="space-between"]');
+  if (row) row.style.display = '';
+  fp.style.display = 'none';
+  const re = document.getElementById(instance + '-reset-email');
+  if (re) re.value = '';
 }
 
 async function sendResetLanding(instance) {
@@ -913,8 +872,7 @@ async function sendResetLanding(instance) {
   btn.disabled = true; btn.textContent = 'Sending...';
   try {
     await fetch(BACKEND_URL + '/api/reset-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ email })
     });
     btn.disabled = false;
@@ -1075,14 +1033,14 @@ const LANDING_STRINGS = {
     hero_eyebrow:'Entrenador de Rendimiento IA',
     hero_h1:"Estás en el gimnasio.<br>Y te lo estás inventando sobre la marcha.",
     hero_sub:"FORGE construye tu programa, sigue tu progreso y se adapta a medida que crecen tus datos. Un entrenador de IA que entrena de verdad. Listo en menos de 2 minutos.",
-    hero_trust:"Sin tarjeta · 7 días gratis · Cancela cuando quieras",
+    hero_trust:"7 días gratis · Cancela cuando quieras · 30 días de garantía",
     nav_trial:"Prueba gratuita",
     auth_tab_signup:"Crear cuenta", auth_tab_signin:"Iniciar sesión",
     auth_name:"Nombre completo", auth_email:"Email", auth_password:"Contraseña",
     auth_code_placeholder:"¿Tienes un código? Introdúcelo aquí",
     auth_tab_note:"Acceso completo. Sin restricciones. Sin compromiso hasta que termine tu prueba.",
     auth_btn:"Empieza tu prueba gratuita",
-    auth_note_below:"No se requiere tarjeta. 7 días gratis, cancela cuando quieras.",
+    auth_note_below:"7 días gratis. Se requiere tarjeta, solo se cobra al finalizar la prueba.",
     auth_no_account:"¿Sin cuenta?", auth_start_trial:"Empieza tu prueba gratuita",
     auth_signin_btn:"Iniciar sesión", auth_name_ph:"Tu nombre", auth_email_ph:"tu@email.com",
     auth_pass_ph:"Mín. 6 caracteres", auth_pass_ph2:"Tu contraseña",
@@ -1147,14 +1105,14 @@ const LANDING_STRINGS = {
     hero_eyebrow:"Coach Performance IA",
     hero_h1:"Tu es à la salle.<br>Et tu improvises.",
     hero_sub:"FORGE construit ton programme, suit tes progrès et s'adapte à mesure que tes données augmentent. Un coach IA qui coache vraiment. Prêt en moins de 2 minutes.",
-    hero_trust:"Sans carte · 7 jours gratuits · Annule quand tu veux",
+    hero_trust:"7 jours gratuits · Annule quand tu veux · Remboursement 30 jours",
     nav_trial:"Essai gratuit",
     auth_tab_signup:"Créer un compte", auth_tab_signin:"Se connecter",
     auth_name:"Nom complet", auth_email:"Email", auth_password:"Mot de passe",
     auth_code_placeholder:"Tu as un code ? Saisis-le ici",
     auth_tab_note:"Accès complet. Rien de verrouillé. Sans engagement jusqu'à la fin de l'essai.",
     auth_btn:"Commencer l'essai gratuit",
-    auth_note_below:"Aucune carte requise. 7 jours gratuits, annule quand tu veux.",
+    auth_note_below:"7 jours gratuits. Carte requise, débitée uniquement après l'essai.",
     auth_no_account:"Pas de compte ?", auth_start_trial:"Commencer l'essai gratuit",
     auth_signin_btn:"Se connecter", auth_name_ph:"Ton prénom", auth_email_ph:"toi@email.com",
     auth_pass_ph:"Min. 6 caractères", auth_pass_ph2:"Ton mot de passe",
@@ -1219,14 +1177,14 @@ const LANDING_STRINGS = {
     hero_eyebrow:"KI-Leistungscoach",
     hero_h1:"Du bist im Gym.<br>Und improvisiertst.",
     hero_sub:"FORGE erstellt dein Programm, verfolgt deinen Fortschritt und passt sich an deine Daten an. Ein KI-Coach, der wirklich coacht. In unter 2 Minuten fertig.",
-    hero_trust:"Keine Karte · 7 Tage kostenlos · Jederzeit kündbar",
+    hero_trust:"7 Tage kostenlos · Jederzeit kündbar · 30 Tage Geld-zurück",
     nav_trial:"Kostenlos testen",
     auth_tab_signup:"Konto erstellen", auth_tab_signin:"Anmelden",
     auth_name:"Vollständiger Name", auth_email:"E-Mail", auth_password:"Passwort",
     auth_code_placeholder:"Hast du einen Code? Hier eingeben",
     auth_tab_note:"Voller Zugang. Nichts gesperrt. Keine Verpflichtung bis zum Testende.",
     auth_btn:"Kostenlose Testversion starten",
-    auth_note_below:"Keine Karte erforderlich. 7 Tage kostenlos, jederzeit kündbar.",
+    auth_note_below:"7 Tage kostenlos. Karte erforderlich, Abbuchung nur nach dem Test.",
     auth_no_account:"Noch kein Konto?", auth_start_trial:"Kostenlose Testversion starten",
     auth_signin_btn:"Anmelden", auth_name_ph:"Dein Name", auth_email_ph:"du@email.com",
     auth_pass_ph:"Min. 6 Zeichen", auth_pass_ph2:"Dein Passwort",
@@ -1453,90 +1411,6 @@ function applyLandingLanguage(code) {
   if (footerLinks[1] && s.footer_terms) footerLinks[1].textContent = s.footer_terms;
   if (footerLinks[2] && s.footer_contact) footerLinks[2].textContent = s.footer_contact;
 }
-
-async function submitPasswordReset() {
-  const newPw = document.getElementById('reset-new-password').value;
-  const confirmPw = document.getElementById('reset-confirm-password').value;
-  const errId = 'reset-modal-error';
-
-  if (!newPw || newPw.length < 6) return showError(errId, 'Password must be at least 6 characters.');
-  if (newPw !== confirmPw) return showError(errId, 'Passwords do not match.');
-  showError(errId, '');
-
-  const btn = document.querySelector('#resetModal .auth-btn');
-  btn.disabled = true; btn.textContent = 'Saving...';
-
-  try {
-    // Use the reset token to update password via Supabase REST
-    const res = await fetch(SUPABASE_URL + '/auth/v1/user', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': 'Bearer ' + window._resetToken
-      },
-      body: JSON.stringify({ password: newPw })
-    });
-    const data = await res.json();
-    btn.disabled = false;
-
-    if (!res.ok || data.error) {
-      return showError(errId, data.error?.message || data.msg || 'Failed to reset password. Try requesting a new link.');
-    }
-
-    // Success — show confirmation and redirect to sign in
-    document.getElementById('resetModal').innerHTML = `
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 24px;max-width:400px;width:100%;text-align:center;">
-        <div style="font-size:48px;margin-bottom:16px;">✓</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;color:var(--accent);margin-bottom:12px;">Password Updated</div>
-        <div style="font-size:14px;color:var(--muted);margin-bottom:24px;">Your password has been reset. Sign in with your new password.</div>
-        <button class="auth-btn" onclick="document.getElementById('resetModal').style.display='none'">Sign in</button>
-      </div>
-    `;
-  } catch(e) {
-    btn.disabled = false; btn.textContent = 'Set New Password';
-    showError(errId, 'Connection error — check your internet and try again.');
-  }
-}
-
-// Show reset modal if flagged by hash handler
-function _maybeShowResetModal() {
-  console.log('[FORGE] _maybeShowResetModal called, _showResetForm:', window._showResetForm);
-  if (window._showResetForm) {
-    const modal = document.getElementById('resetModal');
-    if (modal) {
-      modal.style.display = 'flex';
-      modal.style.alignItems = 'center';
-      modal.style.justifyContent = 'center';
-    }
-  }
-}
-document.addEventListener('DOMContentLoaded', _maybeShowResetModal);
-window.addEventListener('load', _maybeShowResetModal);
-
 </script>
-
-<!-- Password Reset Modal -->
-<div id="resetModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 24px;max-width:400px;width:100%;position:relative;">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;color:var(--accent);margin-bottom:8px;">Reset Password</div>
-    <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:24px;letter-spacing:0.5px;">Enter your new password below.</div>
-    <div class="field-group"><div class="field-label">New Password</div>
-      <div style="position:relative">
-        <input class="field-input" type="password" id="reset-new-password" placeholder="Min. 6 characters" style="padding-right:44px">
-        <button class="pw-toggle" onclick="togglePw('reset-new-password',this)" type="button">👁</button>
-      </div>
-    </div>
-    <div class="field-group"><div class="field-label">Confirm Password</div>
-      <div style="position:relative">
-        <input class="field-input" type="password" id="reset-confirm-password" placeholder="Repeat new password" style="padding-right:44px">
-        <button class="pw-toggle" onclick="togglePw('reset-confirm-password',this)" type="button">👁</button>
-      </div>
-    </div>
-    <div class="auth-error" id="reset-modal-error"></div>
-    <button class="auth-btn" onclick="submitPasswordReset()" style="margin-top:8px">Set New Password</button>
-  </div>
-</div>
-
 </body>
 </html>
