@@ -796,12 +796,14 @@ async function doSignin(instance) {
       access_token: data.access_token,
       refresh_token: data.refresh_token,
       user: { ...data.user, email: data.user?.email || email },
-      rememberMe
+      rememberMe: true
     };
 
     if (rememberMe) {
       localStorage.setItem('forge-session', JSON.stringify(session));
     } else {
+      // No remember me — store in sessionStorage but still mark rememberMe:true
+      // so app.html boot accepts it this session
       sessionStorage.setItem('forge-session-temp', JSON.stringify(session));
       localStorage.removeItem('forge-session');
     }
