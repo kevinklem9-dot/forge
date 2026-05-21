@@ -4046,7 +4046,7 @@ async function sendMessage() {
   const res = await api('/api/chat', 'POST', {
     messages: currentConvMessages.map(m => ({ role: m.role, content: m.content })),
     language: appLanguage
-  });
+  }, 90000);
   removeTyping(loadId);
 
   if (res?.error === 'message_limit_reached') {
@@ -4337,7 +4337,7 @@ async function renderTrialBanner() {
   if ((status === 'cancelled' || status === 'expired') && tier !== 'iron') return;
 
   // Recalculate days left from trialEndsAt for accuracy
-  let daysLeft = 0;
+  let daysLeft = 7;
   if (trialEndsAt) {
     daysLeft = Math.max(0, Math.ceil((new Date(trialEndsAt) - new Date()) / (1000 * 60 * 60 * 24)));
   }
@@ -10535,6 +10535,7 @@ function urlBase64ToUint8Array(base64String) {
 
   const cachedProfile = JSON.parse(localStorage.getItem('forge-cached-profile') || 'null');
   const cachedPlan    = JSON.parse(localStorage.getItem('forge-cached-plan')    || 'null');
+  if (cachedProfile && cachedProfile.id && session.user?.id && cachedProfile.id !== session.user.id) { localStorage.removeItem('forge-cached-profile'); localStorage.removeItem('forge-cached-plan'); }
 
   if (cachedProfile && cachedPlan) {
     // ── INSTANT LAUNCH from cache — but verify not frozen first ──
