@@ -347,8 +347,8 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,76px);line-heigh
 <section class="hero" id="hero">
   <div class="hero-eyebrow reveal" data-i18n="hero_eyebrow">AI Performance Coach</div>
   <h1 class="reveal" data-i18n="hero_h1">You're at the gym.<br>You're making it up as you go.</h1>
-  <p class="hero-sub reveal" data-i18n="hero_sub">FORGE builds your programme, watches your progress, and adapts as your data grows. An AI coach that actually coaches. Built in under 2 minutes.</p>
-  <div class="hero-trust reveal" data-i18n="hero_trust">7-day free trial · Cancel anytime · 30-day money back</div>
+  <p class="hero-sub reveal" data-i18n="hero_sub">FORGE builds your programme, coaches you through every session, and adapts as your data grows. Built in under 2 minutes.</p>
+  <div class="hero-trust reveal" data-i18n="hero_trust">7-day free trial · No card required · Cancel anytime · 30-day money back</div>
 
   <div class="auth-wrap reveal" id="hero-auth">
     <div class="auth-card">
@@ -364,7 +364,7 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,76px);line-heigh
         <div class="field-group" style="margin-top:4px"><input class="field-input" type="text" id="hero-code" placeholder="Have a code? Enter it here" style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
         <div class="auth-error" id="hero-signup-error"></div>
         <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;margin-bottom:10px;letter-spacing:0.5px;">Full access. Nothing locked. No commitment until your trial ends.</div><button class="auth-btn" onclick="doSignup('hero')" style="margin-top:0">Start your free trial</button>
-        <div class="auth-note">7 days free. Card required, charged only after your trial ends.</div>
+        <div class="auth-note">7 days free. No card required, cancel anytime.</div>
       </div>
       <!-- SIGNIN -->
       <div id="form-signin-hero">
@@ -445,8 +445,8 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,76px);line-heigh
 
 <!-- PT ANCHOR BAR -->
 <div class="pt-bar">
-  <div class="pt-bar-line1 reveal">One PT session costs more than <span class="pt-highlight">14 months</span> of FORGE Steel annual.</div>
-  <div class="pt-bar-line2 reveal">Sixty minutes of a trainer's time. Or fourteen months of an AI coach that's online at 2am.</div>
+  <div class="pt-bar-line1 reveal">One PT session costs more than <span class="pt-highlight">a year</span> of FORGE Steel.</div>
+  <div class="pt-bar-line2 reveal">Sixty minutes of a trainer's time. Or twelve months of an AI coach that's online at 2am.</div>
 </div>
 
 <!-- PRICING -->
@@ -559,7 +559,7 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,76px);line-heigh
           <div class="field-group" style="margin-top:4px"><input class="field-input" type="text" id="final-code" placeholder="Have a code? Enter it here" style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
           <div class="auth-error" id="final-signup-error"></div>
           <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;margin-bottom:10px;letter-spacing:0.5px;">Full access. Nothing locked. No commitment until your trial ends.</div><button class="auth-btn" onclick="doSignup('final')" style="margin-top:0">Start your free trial</button>
-          <div class="auth-note">7 days free. Card required, charged only after your trial ends.</div>
+          <div class="auth-note">7 days free. No card required, cancel anytime.</div>
         </div>
         <div id="form-signin-final">
           <div class="field-group"><div class="field-label">Email</div><input class="field-input" type="email" id="final-signin-email" placeholder="your@email.com"></div>
@@ -605,9 +605,9 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,76px);line-heigh
 </footer>
 
 <script>
-const BACKEND_URL = 'https://forge-production-db97.up.railway.app';
-const SUPABASE_URL = 'https://ozhtiqoregcwxkkxohbk.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96aHRpcW9yZWdjd3hra3hvaGJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjAxMTAsImV4cCI6MjA5MDMzNjExMH0.DrrZLUgLgtBTfSrhDC_acZ48ZrKQdqltBfAi_0-aTeI';
+const BACKEND_URL = 'https://forge-staging-production.up.railway.app';
+const SUPABASE_URL = 'https://qxyklijdrbwcsfozovxl.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4eWtsaWpkcmJ3Y3Nmb3pvdnhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3Njg3MTIsImV4cCI6MjA5MjM0NDcxMn0.Db7sjRx986leohzQyVRmM3fhBA-iVaLDV_2WbA6J_Ls';
 
 async function supabaseAuth(endpoint, body) {
   const res = await fetch(`${SUPABASE_URL}/auth/v1/${endpoint}`, {
@@ -885,14 +885,14 @@ const LANDING_STRINGS = {
     hero_eyebrow:'AI Performance Coach',
     hero_h1:"You're at the gym.<br>You're making it up as you go.",
     hero_sub:"FORGE builds your programme, watches your progress, and adapts as your data grows. An AI coach that actually coaches. Built in under 2 minutes.",
-    hero_trust:"7-day free trial · Cancel anytime · 30-day money back",
+    hero_trust:"7-day free trial · No card required · Cancel anytime · 30-day money back",
     nav_trial:"Start free trial",
     auth_tab_signup:"Create account", auth_tab_signin:"Sign in",
     auth_name:"Full Name", auth_email:"Email", auth_password:"Password",
     auth_code_placeholder:"Have a code? Enter it here",
     auth_tab_note:"Full access. Nothing locked. No commitment until your trial ends.",
     auth_btn:"Start your free trial",
-    auth_note_below:"7 days free. Card required, charged only after your trial ends.",
+    auth_note_below:"7 days free. No card required, cancel anytime.",
     auth_no_account:"No account yet?", auth_start_trial:"Start your free trial",
     auth_signin_btn:"Sign in", auth_name_ph:"Your name", auth_email_ph:"your@email.com",
     auth_pass_ph:"Min. 6 characters", auth_pass_ph2:"Your password",
@@ -1357,6 +1357,41 @@ function applyLandingLanguage(code) {
   if (footerLinks[1] && s.footer_terms) footerLinks[1].textContent = s.footer_terms;
   if (footerLinks[2] && s.footer_contact) footerLinks[2].textContent = s.footer_contact;
 }
+
+// FIX 9: PWA install nudge on the landing page — fires 5s after load for new visitors
+// who haven't installed the app or dismissed the prompt. Mirrors the in-app prompt.
+(function () {
+  function isStandalone() {
+    return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+  }
+  function dismissLandingPwa() {
+    try { localStorage.setItem('forge-pwa-dismissed', '1'); } catch (e) {}
+    var el = document.getElementById('pwaInstallPrompt');
+    if (el) el.remove();
+  }
+  window.dismissLandingPwa = dismissLandingPwa;
+  function showLandingPwa() {
+    if (isStandalone()) return;
+    try { if (localStorage.getItem('forge-pwa-dismissed')) return; } catch (e) {}
+    if (document.getElementById('pwaInstallPrompt')) return;
+    var isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    var steps = isIos
+      ? ['Tap the Share button at the bottom of Safari', 'Scroll down and tap Add to Home Screen']
+      : ['Tap the menu in your browser', 'Tap Add to Home screen'];
+    var sheet = document.createElement('div');
+    sheet.id = 'pwaInstallPrompt';
+    sheet.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99998;background:#111;border-top:1px solid #e8ff3d;padding:20px 18px calc(20px + env(safe-area-inset-bottom));color:#fff;font-family:"DM Sans",sans-serif;box-shadow:0 -10px 30px rgba(0,0,0,0.6);';
+    sheet.innerHTML = '<button onclick="dismissLandingPwa()" aria-label="Close" style="position:absolute;top:10px;right:12px;background:transparent;border:none;color:#888;font-size:22px;cursor:pointer;line-height:1;padding:4px 8px;">×</button>'
+      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;letter-spacing:1.5px;color:#e8ff3d;margin-bottom:8px;">INSTALL FORGE</div>'
+      + '<div style="font-size:13px;color:#bbb;margin-bottom:12px;line-height:1.5;">Add FORGE to your home screen for faster access and a fullscreen experience.</div>'
+      + '<ol style="margin:0;padding-left:22px;font-size:13px;line-height:1.7;color:#eee;">' + steps.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ol>';
+    document.body.appendChild(sheet);
+    setTimeout(function () { var el = document.getElementById('pwaInstallPrompt'); if (el) el.remove(); }, 12000);
+  }
+  setTimeout(showLandingPwa, 5000);
+})();
+
 </script>
+  <div style="position:fixed;top:68px;right:14px;z-index:99989;background:rgba(255,107,53,0.15);border:1px solid rgba(255,107,53,0.4);color:#ff6b35;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;padding:3px 7px;border-radius:4px;pointer-events:none;">STAGING</div>
 </body>
 </html>
