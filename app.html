@@ -622,6 +622,16 @@ body.pwa-mode .chat-input-area {
 .session-card summary { list-style:none; cursor:pointer; padding:14px 16px; display:flex; align-items:center; gap:12px; outline:none; }
 .session-card summary::-webkit-details-marker { display:none; }
 .session-card summary:active { background:var(--surface2); }
+/* FIX 4: per-day meal collapsibles on the nutrition Macros tab */
+.day-meals { background:var(--surface); border:1px solid var(--border); border-radius:12px; margin:0 0 8px; overflow:hidden; }
+.day-meals > summary { list-style:none; cursor:pointer; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; outline:none; font-family:'DM Mono',monospace; font-size:11px; letter-spacing:.5px; color:var(--text); text-transform:uppercase; }
+.day-meals > summary::-webkit-details-marker { display:none; }
+.day-meals > summary:active { background:var(--surface2); }
+.day-meals[open] > summary { border-bottom:1px solid var(--border); }
+.day-meals .dm-count { color:var(--muted); font-size:10px; white-space:nowrap; }
+.day-meals .dm-today { color:var(--accent); }
+.day-meals .dm-custom { color:var(--accent); }
+.day-meals .dm-body { padding:12px 14px 4px; }
 .session-meta { flex:1; min-width:0; }
 .session-day { font-size:14px; font-weight:600; color:var(--text); }
 .session-sub { font-size:11px; color:var(--muted); margin-top:2px; font-family:'DM Mono',monospace; letter-spacing:0.5px; }
@@ -4629,11 +4639,32 @@ function renderNutritionPanel() {
     <div class="macro-card fat"><div class="macro-val">${n.fat_g}<span class="macro-unit">g</span></div><div class="macro-lbl">${t('macro_fat')}</div></div>
   `;
 
-  // Daily meals
-  document.getElementById('mealList').innerHTML = renderMealCards(n.meals || []);
+  // Daily meals — FIX 4: show TODAY first (correctly Monday-indexed), then the rest of the
+  // week as collapsed cards. Previously this rendered only the default meals with no day
+  // awareness, so a user with per-day meals saw the wrong day's food on the main tab and had
+  // no way to see the other days here.
+  const _jsDow = new Date().getDay();              // 0=Sun..6=Sat
+  const todayIdx = _jsDow === 0 ? 6 : _jsDow - 1;  // 0=Mon..6=Sun
+  const _dayKeys = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+  const _mealsFor = (i) => getMealsForDay(n.meals, i) || [];
+  const _dayBlock = (i, isToday) => {
+    const dm = _mealsFor(i);
+    const custom = !!(n.weekly_meals && n.weekly_meals[String(i)]);
+    return `
+      <details class="day-meals"${isToday ? ' open' : ''}>
+        <summary>
+          <span>${isToday ? `<span class="dm-today">${t('today')}</span> · ` : ''}${t('day_' + _dayKeys[i])}${custom ? ' <span class="dm-custom">✎</span>' : ''}</span>
+          <span class="dm-count">${dm.length} ${t('meals_label')}</span>
+        </summary>
+        <div class="dm-body">${renderMealCards(dm)}</div>
+      </details>`;
+  };
+  let _mealsHtml = _dayBlock(todayIdx, true);
+  for (let i = 0; i < 7; i++) { if (i !== todayIdx) _mealsHtml += _dayBlock(i, false); }
+  document.getElementById('mealList').innerHTML = _mealsHtml;
 
-  // Init calendar day to today
-  activeNutritionDay = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+  // Init calendar day to today (Monday-based index — Sun=6, else day-1)
+  activeNutritionDay = todayIdx;
 
   // Re-render whichever sub-tab is currently active
   if (activeNutritionTab === 'calendar') renderNutritionCalendar();
@@ -5363,6 +5394,25 @@ function fuzzyMatch(str, query) {
   if (!q) return true;
   return s.includes(q) || q.includes(s) || levenshtein(s, q) <= 2;
 }
+// FIX 5: client-side fuzzy PR match — plural/stem tolerance + Levenshtein for short typos.
+// Used as a fallback when the server's substring search returns nothing (e.g. "curls" when
+// the stored record is "Barbell Curl", or a one-letter typo). Reuses levenshtein() above.
+function prSearchMatch(query, exerciseName) {
+  if (!query) return true;
+  const q = query.toLowerCase().trim();
+  const name = (exerciseName || '').toLowerCase();
+  if (name.includes(q)) return true;
+  // Strip common plural / verb suffixes so "curls"→"curl", "presses"→"press", "flies"→"fly".
+  const stem = q.replace(/ies$/, 'y').replace(/ing$/, '').replace(/ed$/, '').replace(/es$/, '').replace(/s$/, '');
+  if (stem.length > 1 && name.includes(stem)) return true;
+  const words = q.split(/\s+/).filter(Boolean);
+  if (words.length > 1 && words.every(w => name.includes(w))) return true;
+  if (q.length <= 8) {
+    const nameWords = name.split(/\s+/);
+    return nameWords.some(nw => levenshtein(q, nw) <= 1 || (stem.length > 1 && levenshtein(stem, nw) <= 1));
+  }
+  return false;
+}
 
 let _prSearchTimer = null;
 function onPrSearchInput(val) {
@@ -5388,11 +5438,21 @@ function clearPrSearch() {
 async function runPrSearch(q) {
   const resEl = document.getElementById('prSearchResults');
   if (!resEl) return;
-  const res = await api('/api/prs/search?q=' + encodeURIComponent(q));
+  // FIX 5: expand common abbreviations (db→dumbbell, bb→barbell, ohp→overhead press…) for the
+  // server query without altering what the user typed in the input.
+  const serverQ = expandPrAliases(q);
+  const res = await api('/api/prs/search?q=' + encodeURIComponent(serverQ));
   // Ignore stale responses if the user kept typing.
   const cur = (document.getElementById('prSearchInput')?.value || '').trim();
   if (cur !== q) return;
-  const prs = res?.prs || [];
+  let prs = res?.prs || [];
+  // FIX 5: fallback — if the server's substring search found nothing, pull all PRs and filter
+  // locally with stem + Levenshtein tolerance so plurals/typos still match.
+  if (!prs.length) {
+    const all = await api('/api/prs');
+    if ((document.getElementById('prSearchInput')?.value || '').trim() !== q) return;
+    prs = (all?.prs || []).filter(p => prSearchMatch(serverQ, p.exercise_name) || prSearchMatch(q, p.exercise_name));
+  }
   if (!prs.length) {
     resEl.innerHTML = `<div class="empty-state" style="padding:14px 0;">No PRs found for '${escHtml(q)}'</div>`;
     return;
@@ -6275,6 +6335,14 @@ async function sendMessage() {
     if (res.plan_update) {
       await reloadPlan();
       showPlanUpdateBadge(res.plan_update.summary);
+
+      // FIX 1: safety-net second reload. The server clears its translation cache when it
+      // applies a plan_update, but that can land a beat after this response returns. Re-pull
+      // the plan 2s later so a stale server-side translation can't leave the old exercise on screen.
+      setTimeout(async () => {
+        await reloadPlan();
+        if (typeof renderWorkoutPanel === 'function') renderWorkoutPanel();
+      }, 2000);
     }
   } else {
     addMessage('Connection error — check internet connection.', 'ai');
@@ -6291,13 +6359,18 @@ async function reloadPlan() {
   // panels refetch the now-active programme via getActiveProgramme().
   window._logProgrammeCache = null;
   window._planProgrammeCache = null;
+  // FIX 1: clear every plan + translation cache so a coach plan_update can't be masked by a
+  // locally cached (possibly translated) copy of the old plan.
   localStorage.removeItem('forge-cached-plan');
+  localStorage.removeItem('forge-plan-translation');
+  localStorage.removeItem('forge-plan-lang');
+  window._planTranslationCache = null;
+  window._cachedPlan = null;
   await loadPlanInCurrentLanguage(); // re-fetches the plan and re-renders the Plan panel on success
-  // Belt-and-braces: if the Plan panel is open, force it to reflect the now-active
-  // programme even if the plan fetch returned nothing renderable.
-  if (typeof renderWorkoutPanel === 'function' &&
-      document.getElementById('panel-workout')?.classList.contains('active')) {
-    renderWorkoutPanel();
+  // FIX 1: force the workout panel to re-render regardless of which panel is currently
+  // visible, so the updated plan is already painted when the user navigates back to it.
+  if (typeof renderWorkoutPanel === 'function') {
+    setTimeout(() => renderWorkoutPanel(), 300);
   }
 }
 
@@ -6305,13 +6378,20 @@ function showPlanUpdateBadge(summary) {
   // Show a toast and a visible badge in the plan tab
   showToast(t('plan_updated'), 'success');
 
-  // Add a subtle notification dot to the Plan nav button
+  // FIX 3: add the notification dot WITHOUT replacing the button's SVG icon. The old code
+  // overwrote innerHTML with a 🏋️ emoji and never restored the original stroke SVG. Emojis
+  // ignore `currentColor`, so the Plan button rendered in full colour and looked permanently
+  // highlighted/active even after navigating away. Appending an absolutely-positioned dot
+  // keeps the SVG (which respects the active/inactive colour) intact.
   const planBtn = document.getElementById('nav-workout');
-  if (planBtn) {
-    planBtn.innerHTML = `<div class="nav-icon">🏋️<span style="display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;vertical-align:top;margin-top:2px;margin-left:1px"></span></div><div class="nav-label">Plan</div>`;
-    setTimeout(() => {
-      planBtn.innerHTML = `<div class="nav-icon">🏋️</div><div class="nav-label">Plan</div>`;
-    }, 10000);
+  const iconEl = planBtn?.querySelector('.nav-icon');
+  if (iconEl && !iconEl.querySelector('.plan-update-dot')) {
+    iconEl.style.position = 'relative';
+    const dot = document.createElement('span');
+    dot.className = 'plan-update-dot';
+    dot.style.cssText = 'position:absolute;top:-1px;right:-3px;width:7px;height:7px;background:var(--accent);border-radius:50%;pointer-events:none;';
+    iconEl.appendChild(dot);
+    setTimeout(() => { dot.remove(); }, 10000);
   }
 }
 
@@ -8720,6 +8800,8 @@ const STRINGS = {
 
     training_day: 'Training',
     rest_day_short: 'Rest',
+    today: 'Today',
+    meals_label: 'meals',
     stat_days_wk: 'days/wk',
     pr_no_records: 'No records yet.<br>Log your first session.',
     pr_badge: 'PR',
