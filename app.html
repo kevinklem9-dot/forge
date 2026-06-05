@@ -92,6 +92,23 @@
   --red:#cc2222; --green:#1a8a50;
 }
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+/* ── FIX 2: global tap feedback ───────────────────────────────────────────────
+   Press animation (scale, plus a fade on cards/chips) for interactive elements that
+   don't define their own :active transform. `button:active` is intentionally low
+   specificity (0,1,1) so every existing .class:active animation — .nav-btn scale(0.92),
+   .action-btn, .save-btn, .send-btn, .auth-btn, .checkin-btn, .theme-btn, .theme-swatch,
+   .us-btn, .pr-search-clear — wins on specificity and is never overridden. .quick-btn and
+   .day-chip already carry `transition:all` so they're left out of the transition rule. */
+button { transition: transform 0.1s ease, opacity 0.1s ease; }
+button:active { transform: scale(0.97); }
+.ob-continue, .ob-day, .settings-row, .feature-card, .programme-card, .exercise-row {
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+.ob-continue:active, .quick-btn:active, .day-chip:active, .ob-day:active,
+.settings-row:active, .feature-card:active, .programme-card:active, .exercise-row:active {
+  transform: scale(0.97); opacity: 0.85;
+}
 html,body { height:100%; overflow:hidden; overflow-x:hidden; overscroll-behavior:none; background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; max-width:100vw; }
 
 /* ── SCREENS ── */
@@ -483,9 +500,13 @@ nav.bottom-nav, .bottom-nav {
 .action-btn:active { transform:scale(0.96); background:#d4eb1e; }
 .empty-state { text-align:center; color:var(--muted); font-family:'DM Mono',monospace; font-size:12px; padding:32px 24px; line-height:1.8; }
 
-.checkin-btn { background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:8px 14px; font-size:13px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.15s; }
-.checkin-btn.selected { border-color:var(--accent); color:var(--accent); background:rgba(232,255,61,0.08); }
-.checkin-btn:active { transform:scale(0.96); }
+/* FIX 1: post-session check-in buttons. Strong .selected state (accent fill, black text,
+   bold) so the chosen feeling/difficulty is unmistakable. The earlier subtle border-only
+   selected state was silently overridden by a later `!important` ghost-button rule (removed
+   below), which is why a tapped button appeared to show nothing. */
+.checkin-btn { background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:10px; padding:12px 16px; font-size:14px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.15s ease; -webkit-tap-highlight-color:transparent; }
+.checkin-btn:active { transform:scale(0.95); }
+.checkin-btn.selected { background:var(--accent); color:#000; font-weight:700; border-color:var(--accent); }
 
 /* ── CHAT TABS ── */
 .chat-tabs { display:flex; align-items:center; background:var(--surface); border-bottom:1px solid var(--border-muted); padding:0 20px; flex-shrink:0; gap:4px; }
@@ -868,6 +889,8 @@ body.pwa-mode .chat-input-area {
 .loader { display:flex; align-items:center; justify-content:center; padding:40px; }
 .spin { width:24px; height:24px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
 @keyframes spin{to{transform:rotate(360deg)}}
+/* FIX 3: small in-button spinner for the programme-switch loading state (reuses `spin` above) */
+.btn-spinner { display:inline-block; width:12px; height:12px; border:2px solid rgba(0,0,0,0.3); border-top-color:#000; border-radius:50%; animation:spin 0.6s linear infinite; margin-right:6px; vertical-align:middle; }
 </style>
 
 <style id="forge-v2-final">
@@ -937,12 +960,10 @@ body.pwa-mode .bottom-nav {
 /* ── SECONDARY (GHOST) BUTTONS ── */
 /* .ob-back intentionally excluded — the Style B onboarding back button is a
  * borderless "‹ BACK" text button styled in the onboarding block above. */
-.checkin-btn {
-  background: transparent !important;
-  border: 1px solid #333 !important;
-  color: var(--text) !important;
-  border-radius: 10px !important;
-}
+/* FIX 1: removed the `.checkin-btn { …!important }` ghost override that lived here. Its
+   !important background/border/color beat the (non-important) .checkin-btn.selected rule,
+   so a tapped feeling/difficulty button showed no selection. The base + selected styles now
+   live in the single .checkin-btn block above. */
 
 /* ── INPUTS: dark wells · accent focus · #444 placeholder ── */
 .field-input, .log-input, .weight-input, .pr-search-input, .number-input-large {
@@ -4717,7 +4738,7 @@ function renderNutritionDayMeals() {
   const n = userPlan?.nutrition_plan;
   if (!n) return;
   const meals = getMealsForDay(n.meals, activeNutritionDay);
-  const dayName = WEEK_DAYS[activeNutritionDay];
+  const dayName = t('day_' + ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'][activeNutritionDay]);
   const hasCustom = n.weekly_meals?.[String(activeNutritionDay)];
 
   const workoutDay = userPlan?.workout_plan?.days?.[activeNutritionDay];
@@ -6624,11 +6645,11 @@ async function renderTrialBanner() {
   // Bar copy reflects subscription state (mockup shows the trial line)
   let barText;
   if (status === 'trial' && daysLeft > 0) {
-    barText = '🔥 Trial — ' + daysLeft + ' day' + (daysLeft === 1 ? '' : 's') + ' of full access remaining.';
+    barText = t(daysLeft === 1 ? 'trial_banner_remaining_one' : 'trial_banner_remaining', { n: daysLeft });
   } else if (status === 'expired' || (status !== 'trial' && tier === 'iron')) {
-    barText = '🔥 Trial ended — upgrade to keep full access.';
+    barText = t('trial_banner_ended');
   } else {
-    barText = 'Free plan — upgrade for full access.';
+    barText = t('trial_banner_free');
   }
 
   // Compact full-width gradient bar, injected INSIDE #panel-coach at the top of
@@ -7221,18 +7242,18 @@ async function renderProgrammes() {
 
   // Save-current button: disabled at limit (Steel cap). Steel also shows slots used.
   const saveBtn = atLimit
-    ? `<button onclick="programmeLimitToast()" title="You've reached your 3 programme limit on Steel. Upgrade to Forge for unlimited programmes." style="width:100%;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:not-allowed;font-family:'DM Sans',sans-serif;margin-bottom:16px;">Programme limit reached</button>`
-    : `<button onclick="showNewProgrammeModal()" style="width:100%;background:var(--accent);color:#000;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:16px;">+ Save current programme</button>`;
+    ? `<button onclick="programmeLimitToast()" title="You've reached your 3 programme limit on Steel. Upgrade to Forge for unlimited programmes." style="width:100%;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:not-allowed;font-family:'DM Sans',sans-serif;margin-bottom:16px;">${t('prog_limit_reached')}</button>`
+    : `<button onclick="showNewProgrammeModal()" style="width:100%;background:var(--accent);color:#000;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:16px;">${t('prog_save_current')}</button>`;
 
   const slotsLine = (tier === 'steel')
-    ? `<div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.5px;margin-top:14px;text-align:center;">${progs.length} of 3 slots used</div>`
+    ? `<div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.5px;margin-top:14px;text-align:center;">${t('prog_slots_used', { n: progs.length })}</div>`
     : '';
 
   el.innerHTML = `
     <div style="padding:16px;">
       ${saveBtn}
       ${progs.length === 0
-        ? '<div class="empty-state">No saved programmes yet. Tap "Save current programme" to store your active plan.</div>'
+        ? '<div class="empty-state">' + t('prog_empty') + '</div>'
         : progs.map(programmeCard).join('')}
       ${slotsLine}
     </div>`;
@@ -7243,18 +7264,18 @@ function programmeCard(p) {
   // Custom programmes can have their full workouts edited; AI programmes are view-only.
   const isCustom = p.programme_type === 'custom';
   const editOrView = isCustom
-    ? `<button onclick="editProgrammeWorkouts('${p.id}')" style="flex:1;min-width:120px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">Edit workouts</button>`
-    : `<button onclick="viewProgrammeWorkouts('${p.id}')" style="flex:1;min-width:120px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">View</button>`;
+    ? `<button onclick="editProgrammeWorkouts('${p.id}')" style="flex:1;min-width:120px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">${t('prog_edit')}</button>`
+    : `<button onclick="viewProgrammeWorkouts('${p.id}')" style="flex:1;min-width:120px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">${t('prog_view')}</button>`;
   const switchDelete = !p.is_active
-    ? `<button onclick="switchProgramme('${p.id}')" style="flex:1;min-width:120px;background:var(--accent);color:#000;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Switch to this</button>
-          <button onclick="deleteProgramme('${p.id}')" style="background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);color:var(--red);border-radius:8px;padding:9px 16px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">Delete</button>`
+    ? `<button onclick="switchProgramme('${p.id}', this)" style="flex:1;min-width:120px;background:var(--accent);color:#000;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">${t('prog_switch')}</button>
+          <button onclick="deleteProgramme('${p.id}')" style="background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);color:var(--red);border-radius:8px;padding:9px 16px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">${t('prog_delete')}</button>`
     : '';
   return `
     <div style="background:var(--surface);border:1px solid ${p.is_active ? 'var(--accent)' : 'var(--border)'};border-radius:12px;padding:14px;margin-bottom:10px;">
       <div onclick="showRenameProgrammeModal('${p.id}')" style="cursor:pointer;">
         <div style="font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           ${escHtml(p.name)}
-          ${p.is_active ? '<span style="font-size:9px;background:var(--accent);color:#000;padding:2px 8px;border-radius:20px;font-family:DM Mono,monospace;letter-spacing:0.5px;">ACTIVE</span>' : ''}
+          ${p.is_active ? '<span style="font-size:9px;background:var(--accent);color:#000;padding:2px 8px;border-radius:20px;font-family:DM Mono,monospace;letter-spacing:0.5px;">' + t('prog_active') + '</span>' : ''}
           <span style="font-size:12px;color:var(--muted);">✎</span>
         </div>
         ${p.description ? `<div style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.4;">${escHtml(p.description)}</div>` : ''}
@@ -7295,7 +7316,7 @@ function viewProgrammeWorkouts(id) {
       }).join('');
       return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;">'
         + '<div style="font-family:DM Sans,sans-serif;font-size:15px;font-weight:600;color:var(--text);margin-bottom:2px;">' + escHtml(d.label || d.day_name || 'Day') + '</div>'
-        + (exRows || '<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--muted);padding-top:8px;">Rest day</div>')
+        + (exRows || '<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--muted);padding-top:8px;">' + t('prog_rest_day') + '</div>')
         + '</div>';
     }).join('');
     ov.innerHTML = `
@@ -7304,7 +7325,7 @@ function viewProgrammeWorkouts(id) {
         <div style="flex:1;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(prog.name || 'Programme')}</div>
         <div style="width:52px;flex-shrink:0;"></div>
       </div>
-      <div style="flex:1;overflow-y:auto;padding:16px;">${dayBlocks || '<div class="empty-state">No workouts in this programme.</div>'}</div>`;
+      <div style="flex:1;overflow-y:auto;padding:16px;">${dayBlocks || '<div class="empty-state">' + t('prog_no_workouts') + '</div>'}</div>`;
     document.body.appendChild(ov);
   });
 }
@@ -7324,8 +7345,8 @@ function showNewProgrammeModal() {
   modal.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;padding:20px;';
   modal.innerHTML = `
     <div style="background:var(--bg);border-radius:16px;padding:24px;max-width:340px;width:100%;">
-      <div style="font-size:16px;font-weight:700;margin-bottom:4px;">Name this programme</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Saves your current active plan.</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px;">${t('prog_name_title')}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">${t('prog_name_sub')}</div>
       <input id="progNameInput" placeholder="e.g. Bulk Phase, Competition Prep" style="${inStyle}">
       <textarea id="progDescInput" placeholder="Description (optional)" rows="2" style="${inStyle}resize:none;"></textarea>
       <div style="display:flex;gap:10px;">
@@ -7400,19 +7421,41 @@ async function submitRenameProgramme(id) {
   }
 }
 
-async function switchProgramme(id) {
+async function switchProgramme(id, btn) {
   const prog = userProgrammes.find(p => p.id === id);
   const name = prog?.name || 'this programme';
   if (!confirm(`Switch to ${name}? Your current progress and logs are saved. This will replace your active programme.`)) return;
+  // FIX 3: loading state on the switch button so the tap clearly registers during the
+  // activate round-trip + plan reload.
+  const _orig = btn ? btn.innerHTML : null;
+  if (btn) {
+    btn.disabled = true;
+    btn.style.cursor = 'wait';
+    btn.style.opacity = '0.9';
+    btn.innerHTML = '<span class="btn-spinner"></span>Switching...';
+  }
   const res = await api(`/api/programmes/${id}/activate`, 'POST');
   if (res?.ok) {
+    if (btn) {
+      btn.innerHTML = 'Active ✓';
+      btn.style.background = 'var(--green, #44ff88)';
+      btn.style.color = '#000';
+      btn.style.opacity = '1';
+    }
     await reloadPlan();
     // Log panel immediately reflects the newly active programme.
     window._logProgrammeCache = null;
     if (typeof renderLog === 'function' && document.getElementById('panel-log')?.classList.contains('active')) renderLog();
-    renderProgrammes();
     showToast(`Switched to ${name}`, 'success');
+    // Re-render the list a beat later so the "Active ✓" confirmation is visible first.
+    setTimeout(() => { renderProgrammes(); }, 1200);
   } else {
+    if (btn) {
+      btn.innerHTML = _orig;
+      btn.disabled = false;
+      btn.style.cursor = 'pointer';
+      btn.style.opacity = '1';
+    }
     showToast(res?.message || 'Failed to switch programme', 'error');
   }
 }
@@ -7500,7 +7543,7 @@ function renderAccount() {
           </div>
         </div>
         <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px;">${statusText}</div>
-        ${isTrial ? `<div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--amber);margin-top:8px;">${trialDays} ${trialDays === 1 ? 'day' : 'days'} remaining</div>` : ''}
+        ${isTrial ? `<div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--amber);margin-top:8px;">${t(trialDays === 1 ? 'acc_day_remaining_one' : 'acc_days_remaining', { n: trialDays })}</div>` : ''}
 
         ${sub.status === 'active' && sub.renewalDate ? `
         <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
@@ -7548,17 +7591,17 @@ function renderAccount() {
       </div>` : ''}
 
       <!-- FEATURES — user-toggleable app features (above Settings) -->
-      <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;text-transform:uppercase;">FEATURES</div>
+      <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;text-transform:uppercase;">${t('acc_features_header')}</div>
       <div id="featuresSection">${featuresSectionInner()}</div>
 
       <!-- SECTION 3 — Settings rows -->
-      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;">SETTINGS</div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;">${t('acc_settings_header')}</div>
 
       <!-- Row 1 — Notifications (iOS permission flow: request / deep-link to Settings) -->
       <div onclick="handleNotifTap()" style="${_rowStyle}">
         <div style="min-width:0;">
-          <div style="${_rowLabel}">Notifications</div>
-          <div style="${_rowSub}">Workout reminders and updates</div>
+          <div style="${_rowLabel}">${t('acc_notifications')}</div>
+          <div style="${_rowSub}">${t('acc_notifications_sub')}</div>
         </div>
         <div class="notif-toggle ${_notifGranted ? 'on' : ''}" id="notifToggle"></div>
       </div>
@@ -7566,8 +7609,8 @@ function renderAccount() {
       <!-- Row 2 — Dark mode (toggles current dark theme ↔ light; remembers last dark variant) -->
       <div onclick="(()=>{const h=document.documentElement;const c=h.getAttribute('data-theme')||'dark-yellow';if(c==='light'){setTheme(localStorage.getItem('forge_last_dark')||'dark-yellow');}else{localStorage.setItem('forge_last_dark',c);setTheme('light');}renderAccount();})()" style="${_rowStyle}">
         <div style="min-width:0;">
-          <div style="${_rowLabel}">Dark mode</div>
-          <div style="${_rowSub}">Use dark theme</div>
+          <div style="${_rowLabel}">${t('acc_dark_mode')}</div>
+          <div style="${_rowSub}">${t('acc_dark_mode_sub')}</div>
         </div>
         ${_toggle(_isDark)}
       </div>
@@ -7575,8 +7618,8 @@ function renderAccount() {
       <!-- Row 3 — Colour theme (swatch + name, no emoji) -->
       <div onclick="toggleThemeDrawer()" style="${_rowStyle}">
         <div style="min-width:0;">
-          <div style="${_rowLabel}">Colour theme</div>
-          <div style="${_rowSub}">Choose your accent colour</div>
+          <div style="${_rowLabel}">${t('acc_colour_theme')}</div>
+          <div style="${_rowSub}">${t('acc_colour_theme_sub')}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
           <div style="width:16px;height:16px;background:var(--accent);border-radius:4px;"></div>
@@ -7588,8 +7631,8 @@ function renderAccount() {
       <!-- Row 4 — Language (name, no flag) -->
       <div onclick="toggleLangDrawer()" style="${_rowStyle}">
         <div style="min-width:0;">
-          <div style="${_rowLabel}">Language</div>
-          <div style="${_rowSub}">App display language</div>
+          <div style="${_rowLabel}">${t('acc_language')}</div>
+          <div style="${_rowSub}">${t('acc_language_sub')}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
           <span style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted);">${escHtml(_langLabel)}</span>
@@ -7600,8 +7643,8 @@ function renderAccount() {
       <!-- Row — Units (kg / lbs) segmented control -->
       <div style="${_rowStyle}cursor:default;">
         <div style="min-width:0;">
-          <div style="${_rowLabel}">Units</div>
-          <div style="${_rowSub}">Weight measurement system</div>
+          <div style="${_rowLabel}">${t('acc_units')}</div>
+          <div style="${_rowSub}">${t('acc_units_sub')}</div>
         </div>
         <div style="display:flex;background:var(--surface2);border-radius:8px;padding:2px;gap:2px;flex-shrink:0;">
           <button id="unitsKg" onclick="setUnits('kg')" style="padding:4px 10px;border-radius:6px;border:none;font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .15s;background:${_units === 'kg' ? 'var(--accent)' : 'transparent'};color:${_units === 'kg' ? '#000' : 'var(--muted)'};">KG</button>
@@ -7612,8 +7655,8 @@ function renderAccount() {
       <!-- Row — Add to home screen (PWA install instructions, OS-specific) -->
       <div onclick="showAddToHomeScreen()" style="${_rowStyle}">
         <div style="min-width:0;">
-          <div style="${_rowLabel}">Add to home screen</div>
-          <div style="${_rowSub}">Install FORGE as an app on your phone</div>
+          <div style="${_rowLabel}">${t('acc_add_home')}</div>
+          <div style="${_rowSub}">${t('acc_add_home_sub')}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2.5"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
@@ -7625,8 +7668,8 @@ function renderAccount() {
       <!-- Row 5 — Coach plan (coach accounts only) -->
       <div onclick="openCoachPlanUpgrade()" style="${_rowStyle}">
         <div style="min-width:0;">
-          <div style="${_rowLabel}">Coach plan</div>
-          <div style="${_rowSub}">Manage your coaching subscription</div>
+          <div style="${_rowLabel}">${t('acc_coach_plan')}</div>
+          <div style="${_rowSub}">${t('acc_coach_plan_sub')}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
           <span style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted);">${escHtml(_coachPlanName)}</span>
@@ -8605,6 +8648,41 @@ const STRINGS = {
     send_password_reset: 'Send Password Reset Email',
     account_section: 'ACCOUNT',
     sign_out: 'Sign Out',
+    // ── i18n fix: account / programmes / trial-banner keys ──
+    trial_banner_remaining: '🔥 Trial — {n} days of full access remaining.',
+    trial_banner_remaining_one: '🔥 Trial — 1 day of full access remaining.',
+    trial_banner_ended: '🔥 Trial ended — upgrade to keep full access.',
+    acc_notifications: 'Notifications',
+    acc_notifications_sub: 'Workout reminders and updates',
+    acc_dark_mode: 'Dark mode',
+    acc_dark_mode_sub: 'Use dark theme',
+    acc_colour_theme: 'Colour theme',
+    acc_colour_theme_sub: 'Choose your accent colour',
+    acc_language: 'Language',
+    acc_language_sub: 'App display language',
+    acc_units: 'Units',
+    acc_units_sub: 'Weight measurement system',
+    acc_add_home: 'Add to home screen',
+    acc_add_home_sub: 'Install FORGE as an app on your phone',
+    acc_coach_plan: 'Coach plan',
+    acc_coach_plan_sub: 'Manage your coaching subscription',
+    acc_features_header: 'FEATURES',
+    acc_settings_header: 'SETTINGS',
+    acc_days_remaining: '{n} days remaining',
+    acc_day_remaining_one: '1 day remaining',
+    prog_save_current: '+ Save current programme',
+    prog_limit_reached: 'Programme limit reached',
+    prog_slots_used: '{n} of 3 slots used',
+    prog_empty: 'No saved programmes yet. Tap "Save current programme" to store your active plan.',
+    prog_edit: 'Edit workouts',
+    prog_view: 'View',
+    prog_switch: 'Switch to this',
+    prog_delete: 'Delete',
+    prog_active: 'ACTIVE',
+    prog_rest_day: 'Rest day',
+    prog_no_workouts: 'No workouts in this programme.',
+    prog_name_title: 'Name this programme',
+    prog_name_sub: 'Saves your current active plan.',
     exempt_free: 'Exempt (Free)',
     trial_days_left: 'Trial — {n} days left',
     trial_banner_days: '🔥 {n} day{s} left in your free trial — full access until it ends.',
@@ -8981,6 +9059,41 @@ const STRINGS = {
     send_password_reset: 'Enviar Email de Restablecimiento',
     account_section: 'CUENTA',
     sign_out: 'Cerrar Sesión',
+    // ── i18n fix: account / programmes / trial-banner keys ──
+    trial_banner_remaining: '🔥 Prueba — {n} días de acceso completo restantes.',
+    trial_banner_remaining_one: '🔥 Prueba — 1 día de acceso completo restante.',
+    trial_banner_ended: '🔥 Prueba finalizada — mejora para mantener el acceso completo.',
+    acc_notifications: 'Notificaciones',
+    acc_notifications_sub: 'Recordatorios de entrenamiento',
+    acc_dark_mode: 'Modo oscuro',
+    acc_dark_mode_sub: 'Usar tema oscuro',
+    acc_colour_theme: 'Tema de color',
+    acc_colour_theme_sub: 'Elige tu color de acento',
+    acc_language: 'Idioma',
+    acc_language_sub: 'Idioma de la aplicación',
+    acc_units: 'Unidades',
+    acc_units_sub: 'Sistema de medida de peso',
+    acc_add_home: 'Añadir a pantalla de inicio',
+    acc_add_home_sub: 'Instala FORGE como una app en tu teléfono',
+    acc_coach_plan: 'Plan de coach',
+    acc_coach_plan_sub: 'Gestiona tu suscripción de coaching',
+    acc_features_header: 'FUNCIONES',
+    acc_settings_header: 'AJUSTES',
+    acc_days_remaining: '{n} días restantes',
+    acc_day_remaining_one: '1 día restante',
+    prog_save_current: '+ Guardar programa actual',
+    prog_limit_reached: 'Límite de programas alcanzado',
+    prog_slots_used: '{n} de 3 espacios usados',
+    prog_empty: 'Aún no hay programas guardados. Toca "Guardar programa actual" para guardar tu plan activo.',
+    prog_edit: 'Editar entrenamientos',
+    prog_view: 'Ver',
+    prog_switch: 'Cambiar a este',
+    prog_delete: 'Eliminar',
+    prog_active: 'ACTIVO',
+    prog_rest_day: 'Día de descanso',
+    prog_no_workouts: 'No hay entrenamientos en este programa.',
+    prog_name_title: 'Nombra este programa',
+    prog_name_sub: 'Guarda tu plan activo actual.',
     exempt_free: 'Exento (Gratis)',
     trial_days_left: 'Prueba — {n} días restantes',
     trial_banner_days: '🔥 {n} día{s} restante{s} en tu prueba gratuita — acceso completo hasta que termine.',
@@ -9355,6 +9468,41 @@ const STRINGS = {
     send_password_reset: 'Envoyer un Email de Réinitialisation',
     account_section: 'COMPTE',
     sign_out: 'Se Déconnecter',
+    // ── i18n fix: account / programmes / trial-banner keys ──
+    trial_banner_remaining: '🔥 Essai — {n} jours d\'accès complet restants.',
+    trial_banner_remaining_one: '🔥 Essai — 1 jour d\'accès complet restant.',
+    trial_banner_ended: '🔥 Essai terminé — passez à la version supérieure pour conserver l\'accès.',
+    acc_notifications: 'Notifications',
+    acc_notifications_sub: 'Rappels d\'entraînement',
+    acc_dark_mode: 'Mode sombre',
+    acc_dark_mode_sub: 'Utiliser le thème sombre',
+    acc_colour_theme: 'Thème de couleur',
+    acc_colour_theme_sub: 'Choisissez votre couleur d\'accent',
+    acc_language: 'Langue',
+    acc_language_sub: 'Langue d\'affichage de l\'app',
+    acc_units: 'Unités',
+    acc_units_sub: 'Système de mesure du poids',
+    acc_add_home: 'Ajouter à l\'écran d\'accueil',
+    acc_add_home_sub: 'Installez FORGE comme une app sur votre téléphone',
+    acc_coach_plan: 'Plan coach',
+    acc_coach_plan_sub: 'Gérez votre abonnement coaching',
+    acc_features_header: 'FONCTIONNALITÉS',
+    acc_settings_header: 'PARAMÈTRES',
+    acc_days_remaining: '{n} jours restants',
+    acc_day_remaining_one: '1 jour restant',
+    prog_save_current: '+ Enregistrer le programme actuel',
+    prog_limit_reached: 'Limite de programmes atteinte',
+    prog_slots_used: '{n} sur 3 emplacements utilisés',
+    prog_empty: 'Aucun programme enregistré. Appuyez sur « Enregistrer le programme actuel » pour sauvegarder votre plan.',
+    prog_edit: 'Modifier les séances',
+    prog_view: 'Voir',
+    prog_switch: 'Activer celui-ci',
+    prog_delete: 'Supprimer',
+    prog_active: 'ACTIF',
+    prog_rest_day: 'Jour de repos',
+    prog_no_workouts: 'Aucune séance dans ce programme.',
+    prog_name_title: 'Nommez ce programme',
+    prog_name_sub: 'Enregistre votre plan actif actuel.',
     exempt_free: 'Exempté (Gratuit)',
     trial_days_left: 'Essai — {n} jours restants',
     trial_banner_days: '🔥 {n} jour{s} restant{s} dans votre essai gratuit — accès complet jusqu\'à la fin.',
@@ -9729,6 +9877,41 @@ const STRINGS = {
     send_password_reset: 'Passwort-Reset-E-Mail Senden',
     account_section: 'KONTO',
     sign_out: 'Abmelden',
+    // ── i18n fix: account / programmes / trial-banner keys ──
+    trial_banner_remaining: '🔥 Testversion — Noch {n} Tage Vollzugang.',
+    trial_banner_remaining_one: '🔥 Testversion — Noch 1 Tag Vollzugang.',
+    trial_banner_ended: '🔥 Testphase beendet — upgraden, um vollen Zugang zu behalten.',
+    acc_notifications: 'Benachrichtigungen',
+    acc_notifications_sub: 'Trainings-Erinnerungen',
+    acc_dark_mode: 'Dunkelmodus',
+    acc_dark_mode_sub: 'Dunkles Design verwenden',
+    acc_colour_theme: 'Farbthema',
+    acc_colour_theme_sub: 'Wähle deine Akzentfarbe',
+    acc_language: 'Sprache',
+    acc_language_sub: 'App-Anzeigesprache',
+    acc_units: 'Einheiten',
+    acc_units_sub: 'Gewichtsmesssystem',
+    acc_add_home: 'Zum Startbildschirm hinzufügen',
+    acc_add_home_sub: 'Installiere FORGE als App auf deinem Telefon',
+    acc_coach_plan: 'Coach-Plan',
+    acc_coach_plan_sub: 'Verwalte dein Coaching-Abo',
+    acc_features_header: 'FUNKTIONEN',
+    acc_settings_header: 'EINSTELLUNGEN',
+    acc_days_remaining: 'Noch {n} Tage',
+    acc_day_remaining_one: 'Noch 1 Tag',
+    prog_save_current: '+ Aktuelles Programm speichern',
+    prog_limit_reached: 'Programmlimit erreicht',
+    prog_slots_used: '{n} von 3 Plätzen belegt',
+    prog_empty: 'Noch keine gespeicherten Programme. Tippe auf „Aktuelles Programm speichern", um deinen Plan zu sichern.',
+    prog_edit: 'Workouts bearbeiten',
+    prog_view: 'Ansehen',
+    prog_switch: 'Zu diesem wechseln',
+    prog_delete: 'Löschen',
+    prog_active: 'AKTIV',
+    prog_rest_day: 'Ruhetag',
+    prog_no_workouts: 'Keine Workouts in diesem Programm.',
+    prog_name_title: 'Programm benennen',
+    prog_name_sub: 'Speichert deinen aktuell aktiven Plan.',
     exempt_free: 'Befreit (Kostenlos)',
     trial_days_left: 'Testphase — noch {n} Tage',
     trial_banner_days: '🔥 Noch {n} Tag{s} in deiner kostenlosen Testphase — voller Zugang bis zum Ende.',
@@ -10103,6 +10286,41 @@ const STRINGS = {
     send_password_reset: 'Invia Email di Recupero Password',
     account_section: 'ACCOUNT',
     sign_out: 'Esci',
+    // ── i18n fix: account / programmes / trial-banner keys ──
+    trial_banner_remaining: '🔥 Prova — {n} giorni di accesso completo rimasti.',
+    trial_banner_remaining_one: '🔥 Prova — 1 giorno di accesso completo rimasto.',
+    trial_banner_ended: '🔥 Prova terminata — aggiorna per mantenere l\'accesso completo.',
+    acc_notifications: 'Notifiche',
+    acc_notifications_sub: 'Promemoria allenamento',
+    acc_dark_mode: 'Modalità scura',
+    acc_dark_mode_sub: 'Usa tema scuro',
+    acc_colour_theme: 'Tema colore',
+    acc_colour_theme_sub: 'Scegli il colore d\'accento',
+    acc_language: 'Lingua',
+    acc_language_sub: 'Lingua dell\'app',
+    acc_units: 'Unità',
+    acc_units_sub: 'Sistema di misura del peso',
+    acc_add_home: 'Aggiungi alla schermata Home',
+    acc_add_home_sub: 'Installa FORGE come app sul tuo telefono',
+    acc_coach_plan: 'Piano coach',
+    acc_coach_plan_sub: 'Gestisci il tuo abbonamento coaching',
+    acc_features_header: 'FUNZIONI',
+    acc_settings_header: 'IMPOSTAZIONI',
+    acc_days_remaining: '{n} giorni rimasti',
+    acc_day_remaining_one: '1 giorno rimasto',
+    prog_save_current: '+ Salva programma attuale',
+    prog_limit_reached: 'Limite di programmi raggiunto',
+    prog_slots_used: '{n} di 3 slot usati',
+    prog_empty: 'Nessun programma salvato. Tocca "Salva programma attuale" per salvare il tuo piano.',
+    prog_edit: 'Modifica allenamenti',
+    prog_view: 'Visualizza',
+    prog_switch: 'Passa a questo',
+    prog_delete: 'Elimina',
+    prog_active: 'ATTIVO',
+    prog_rest_day: 'Giorno di riposo',
+    prog_no_workouts: 'Nessun allenamento in questo programma.',
+    prog_name_title: 'Dai un nome a questo programma',
+    prog_name_sub: 'Salva il tuo piano attivo attuale.',
     exempt_free: 'Esente (Gratuito)',
     trial_days_left: 'Prova — {n} giorni rimasti',
     trial_banner_days: '🔥 {n} giorno{s} rimasto nella prova gratuita — accesso completo fino alla fine.',
@@ -10477,6 +10695,41 @@ const STRINGS = {
     send_password_reset: 'Enviar Email de Redefinição',
     account_section: 'CONTA',
     sign_out: 'Sair',
+    // ── i18n fix: account / programmes / trial-banner keys ──
+    trial_banner_remaining: '🔥 Avaliação — {n} dias de acesso completo restantes.',
+    trial_banner_remaining_one: '🔥 Avaliação — 1 dia de acesso completo restante.',
+    trial_banner_ended: '🔥 Teste terminado — faça upgrade para manter o acesso completo.',
+    acc_notifications: 'Notificações',
+    acc_notifications_sub: 'Lembretes de treino',
+    acc_dark_mode: 'Modo escuro',
+    acc_dark_mode_sub: 'Usar tema escuro',
+    acc_colour_theme: 'Tema de cor',
+    acc_colour_theme_sub: 'Escolha sua cor de destaque',
+    acc_language: 'Idioma',
+    acc_language_sub: 'Idioma do aplicativo',
+    acc_units: 'Unidades',
+    acc_units_sub: 'Sistema de medida de peso',
+    acc_add_home: 'Adicionar à tela inicial',
+    acc_add_home_sub: 'Instale o FORGE como um app no seu telefone',
+    acc_coach_plan: 'Plano de treinador',
+    acc_coach_plan_sub: 'Gerencie sua assinatura de treinador',
+    acc_features_header: 'RECURSOS',
+    acc_settings_header: 'CONFIGURAÇÕES',
+    acc_days_remaining: '{n} dias restantes',
+    acc_day_remaining_one: '1 dia restante',
+    prog_save_current: '+ Salvar programa atual',
+    prog_limit_reached: 'Limite de programas atingido',
+    prog_slots_used: '{n} de 3 espaços usados',
+    prog_empty: 'Nenhum programa salvo ainda. Toque em "Salvar programa atual" para guardar seu plano.',
+    prog_edit: 'Editar treinos',
+    prog_view: 'Ver',
+    prog_switch: 'Mudar para este',
+    prog_delete: 'Excluir',
+    prog_active: 'ATIVO',
+    prog_rest_day: 'Dia de descanso',
+    prog_no_workouts: 'Nenhum treino neste programa.',
+    prog_name_title: 'Nomeie este programa',
+    prog_name_sub: 'Salva seu plano ativo atual.',
     exempt_free: 'Isento (Gratuito)',
     trial_days_left: 'Teste — {n} dias restantes',
     trial_banner_days: '🔥 {n} dia{s} restante{s} no seu teste gratuito — acesso completo até o fim.',
@@ -13090,6 +13343,19 @@ function setLanguage(code) {
   if (userPlan) {
     loadPlanInCurrentLanguage();
   }
+  // i18n fix: fully re-render whatever panel is on screen so JS-rendered panels (My
+  // Programmes, Account, etc.) — which don't carry data-i18n-key — rebuild in the new language.
+  forceRefreshCurrentPanel();
+}
+
+// Re-render the visible panel by re-running its panel switch, so JS-built content is
+// rebuilt in the newly-selected language (the data-i18n sweep only covers static markup).
+function forceRefreshCurrentPanel() {
+  const panels = ['coach','workout','log','nutrition','progress','account','clients','programmes','my-coach','admin'];
+  panels.forEach(name => {
+    const panel = document.getElementById('panel-' + name);
+    if (panel && panel.style.display !== 'none' && typeof showPanel === 'function') showPanel(name);
+  });
 }
 
 async function loadPlanInCurrentLanguage() {
@@ -15698,7 +15964,7 @@ renderProgrammes = async function () {
     showProgrammeOverLimitModal(progs, limit);
   }
   var createBtn = atLimit
-    ? `<button onclick="programmeLimitToast()" style="width:100%;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:not-allowed;font-family:'DM Sans',sans-serif;margin-bottom:10px;">Programme limit reached</button>`
+    ? `<button onclick="programmeLimitToast()" style="width:100%;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:not-allowed;font-family:'DM Sans',sans-serif;margin-bottom:10px;">${t('prog_limit_reached')}</button>`
     : `<button onclick="startNewProgramme()" style="width:100%;background:var(--accent);color:#000;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">+ Create new AI programme</button>`;
   // "Build my own" — opens the manual custom programme builder (no AI generation).
   // Hidden when at the tier limit, same as the other create buttons.
@@ -15709,7 +15975,7 @@ renderProgrammes = async function () {
     ? ''
     : `<button onclick="showNewProgrammeModal()" style="width:100%;background:transparent;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:16px;">Save current plan as a programme</button>`;
   var slotsLine = (tier === 'steel')
-    ? `<div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.5px;margin-top:14px;text-align:center;">${progs.length} of 3 slots used</div>`
+    ? `<div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.5px;margin-top:14px;text-align:center;">${t('prog_slots_used', { n: progs.length })}</div>`
     : '';
   var archivedSection = archived.length ? `
       <details style="margin-top:20px;">
@@ -16024,16 +16290,25 @@ function showNewProgrammeSuccess(programmeId, name) {
       <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px;color:var(--text);margin-bottom:8px;">Your ${escHtml(name)} programme is ready.</div>
       <div style="font-size:13px;color:var(--muted);max-width:280px;line-height:1.5;margin-bottom:26px;">Switch to it now, or keep your current plan active and switch whenever you like.</div>
       <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px;">
-        <button onclick="activateNewProgramme()" style="width:100%;padding:14px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Switch to this now</button>
+        <button onclick="activateNewProgramme(this)" style="width:100%;padding:14px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Switch to this now</button>
         <button onclick="closeNewProgramme();showPanel('programmes');renderProgrammes();" style="width:100%;padding:13px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">Save for later</button>
       </div>
     </div>`;
 }
 
-async function activateNewProgramme() {
+async function activateNewProgramme(btn) {
   if (!_npLastId) { closeNewProgramme(); return; }
+  // FIX 3: loading state on the switch button during the activate round-trip.
+  var _orig = btn ? btn.innerHTML : null;
+  if (btn) {
+    btn.disabled = true;
+    btn.style.cursor = 'wait';
+    btn.style.opacity = '0.9';
+    btn.innerHTML = '<span class="btn-spinner"></span>Switching...';
+  }
   var res = await api('/api/programmes/' + _npLastId + '/activate', 'POST');
   if (res && res.ok) {
+    if (btn) { btn.innerHTML = 'Active ✓'; btn.style.background = 'var(--green, #44ff88)'; btn.style.color = '#000'; btn.style.opacity = '1'; }
     closeNewProgramme();
     if (typeof reloadPlan === 'function') await reloadPlan();
     // Log panel immediately reflects the newly active programme.
@@ -16042,6 +16317,7 @@ async function activateNewProgramme() {
     showPanel('workout');
     showToast('Switched to ' + _npLastName, 'success');
   } else {
+    if (btn) { btn.innerHTML = _orig; btn.disabled = false; btn.style.cursor = 'pointer'; btn.style.opacity = '1'; }
     showToast((res && res.message) || 'Failed to switch programme', 'error');
   }
 }
