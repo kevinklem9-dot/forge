@@ -1866,6 +1866,12 @@ function selectGlobalLang(code) {
   // Otherwise just update appLanguage and re-render what's on screen
   appLanguage = code;
   localStorage.setItem('forge_language', code);
+  // Persist to the server too when the user is already logged in (e.g. during onboarding),
+  // so the choice survives a reinstall / new device even before reaching the main app.
+  try {
+    const loggedIn = !!(localStorage.getItem('forge-session') || sessionStorage.getItem('forge-session-temp') || (typeof currentUser !== 'undefined' && currentUser));
+    if (loggedIn) api('/api/profile', 'PATCH', { preferred_language: code }).catch(() => {});
+  } catch (e) {}
   loadLanguage();
   applyLanguage();
   // Update the in-app lang button flag
@@ -2445,8 +2451,8 @@ function featuresSectionInner() {
       <div style="display:flex;align-items:center;gap:12px;min-width:0;">
         ${emoji}
         <div style="min-width:0;">
-          <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);">${f.label}</div>
-          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:3px;">${f.sub}</div>
+          <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);">${t('feat_' + f.key + '_label')}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:3px;">${t('feat_' + f.key + '_desc')}</div>
         </div>
       </div>
       ${right}
@@ -2854,8 +2860,8 @@ function renderObStep() {
       return `<div class="ob-option ${on ? 'selected' : ''}" data-feature="${f.key}"${f.locked ? ' data-locked="true"' : ''} style="position:relative;">
         <div class="ob-icon"><span class="ob-icon-emoji">${f.emoji}</span></div>
         <div class="ob-option-txt">
-          <div class="ob-option-label">${f.label}</div>
-          <div class="ob-option-sub">${f.sub}</div>
+          <div class="ob-option-label">${t('feat_' + f.key + '_label')}</div>
+          <div class="ob-option-sub">${t('feat_' + f.key + '_desc')}</div>
         </div>
         ${f.locked ? '<span aria-label="Always on" style="position:absolute;top:10px;right:12px;font-size:13px;opacity:0.75;">🔒</span>' : ''}
       </div>`;
@@ -3448,7 +3454,8 @@ async function loadPlanAndLaunch() {
       localStorage.setItem('forge-cached-profile', JSON.stringify(userProfile));
       document.getElementById('userAvatar').textContent = (userProfile.name || 'U').charAt(0).toUpperCase();
       // Adopt server language preference if no local preference set
-      if (profileRes.profile.preferred_language && !localStorage.getItem('forge_language')) {
+      if (profileRes.profile.preferred_language &&
+          profileRes.profile.preferred_language !== (localStorage.getItem('forge_language') || 'en')) {
         appLanguage = profileRes.profile.preferred_language;
         localStorage.setItem('forge_language', appLanguage);
         applyLanguage();
@@ -3988,17 +3995,17 @@ async function renderReferralSection(container) {
   const referralUrl = `${referralBase}?ref=${code}`;
   container.innerHTML = `
     <div style="margin-top:24px;">
-      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:12px;">SHARE FORGE</div>
-      <div style="font-size:14px;color:var(--text);margin-bottom:16px;line-height:1.6;">Send your link. When a friend subscribes, you get a free month. They get 14 days to try it instead of 7. Steel starts from CHF 9.99/mo annual — less than a coffee a week.</div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:12px;">${t('share_forge_title')}</div>
+      <div style="font-size:14px;color:var(--text);margin-bottom:16px;line-height:1.6;">${t('share_forge_desc')}</div>
       <div style="display:flex;gap:8px;margin-bottom:12px;">
         <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${referralUrl}</div>
-        <button onclick="copyReferralLink('${referralUrl}')" style="background:var(--accent);color:#000;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">Copy</button>
+        <button onclick="copyReferralLink('${referralUrl}')" style="background:var(--accent);color:#000;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">${t('share_copy')}</button>
       </div>
-      <button onclick="shareReferralLink('${referralUrl}')" style="width:100%;padding:13px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:16px;">Share →</button>
+      <button onclick="shareReferralLink('${referralUrl}')" style="width:100%;padding:13px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:16px;">${t('share_share')} →</button>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;justify-content:space-between;text-align:center;">
-        <div><div style="font-size:20px;font-weight:700;color:var(--accent);">${stats.signups || 0}</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">Referred</div></div>
-        <div><div style="font-size:20px;font-weight:700;color:var(--accent);">${stats.conversions || 0}</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">Subscribed</div></div>
-        <div><div style="font-size:20px;font-weight:700;color:var(--accent);">${stats.credits || 0}</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">Free months</div></div>
+        <div><div style="font-size:20px;font-weight:700;color:var(--accent);">${stats.signups || 0}</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">${t('share_referred')}</div></div>
+        <div><div style="font-size:20px;font-weight:700;color:var(--accent);">${stats.conversions || 0}</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">${t('share_subscribed')}</div></div>
+        <div><div style="font-size:20px;font-weight:700;color:var(--accent);">${stats.credits || 0}</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">${t('share_free_months')}</div></div>
       </div>
     </div>
   `;
@@ -5078,21 +5085,21 @@ async function renderStatGrid() {
   // ── 1. The 2x2 stat grid (Sessions / Streak / Last session / PRs) ──
   grid.innerHTML = `
     <div class="stat-card">
-      <div class="stat-lbl">SESSIONS THIS WEEK</div>
+      <div class="stat-lbl">${t('stat_sessions_week')}</div>
       <div class="stat-val">${sessionsThisWeek}</div>
     </div>
     <div class="stat-card">
-      <div class="stat-lbl">CURRENT STREAK</div>
-      <div class="stat-val">${streak}<span style="font-size:14px;color:var(--muted)"> ${streak === 1 ? 'day' : 'days'}</span></div>
-      ${longest ? `<div class="stat-change">best ${longest}</div>` : ''}
+      <div class="stat-lbl">${t('stat_current_streak')}</div>
+      <div class="stat-val">${streak}<span style="font-size:14px;color:var(--muted)"> ${streak === 1 ? t('stat_day') : t('stat_days')}</span></div>
+      ${longest ? `<div class="stat-change">${t('stat_best')} ${longest}</div>` : ''}
     </div>
     <div class="stat-card">
-      <div class="stat-lbl">LAST SESSION</div>
+      <div class="stat-lbl">${t('stat_last_session')}</div>
       <div class="stat-val" style="font-size:20px;line-height:1.2">${escHtml(lastLabel)}</div>
       ${lastDay ? `<div class="stat-change">${escHtml(lastDay)}</div>` : ''}
     </div>
     <div class="stat-card">
-      <div class="stat-lbl">PRS THIS MONTH</div>
+      <div class="stat-lbl">${t('stat_prs_month')}</div>
       <div class="stat-val">${prsThisMonth}</div>
     </div>
   `;
@@ -5114,7 +5121,7 @@ async function renderStatGrid() {
         <div class="stat-lbl">${t('log_bodyweight')}</div>
         <div class="stat-val" id="bodyweightVal">${bwHtml}</div>
         ${diffKg !== null ? `<div class="stat-change ${diffKg >= 0 ? 'up' : 'down'}">${diffKg >= 0 ? '↑' : '↓'} ${diffMag}${displayWeightUnit()}</div>` : ''}
-        <div class="stat-card-hint">View history ›</div>
+        <div class="stat-card-hint">${t('stat_view_history')}</div>
       </div>
     `;
   }
@@ -6821,10 +6828,10 @@ function renderUpgradeSheetContent(highlightTier) {
   const _trialEnd = _sub.trialEndsAt ? new Date(_sub.trialEndsAt) : null;
   const _daysLeft = _trialEnd ? Math.max(0, Math.ceil((_trialEnd - new Date()) / (1000 * 60 * 60 * 24))) : (_sub.trialDaysLeft || 0);
   const _trialActive = _sub.status === 'trial' && _daysLeft > 0;
-  const upgradeHeadline = _trialActive ? 'Upgrade your plan' : 'Your trial has ended.';
+  const upgradeHeadline = _trialActive ? t('upg_plan_headline') : t('upgrade_trial_ended');
   const upgradeSubline = _trialActive
-    ? ('You have ' + _daysLeft + ' day' + (_daysLeft === 1 ? '' : 's') + ' left on your trial. Lock in a plan now.')
-    : 'Keep your progress and continue training.';
+    ? t('upgrade_days_left').replace('{n}', _daysLeft)
+    : t('upgrade_subline_ended');
 
   // Full pricing (never changes)
   const monthly = { iron: 'CHF 9.99', steel: 'CHF 13.99', forge: 'CHF 19.99' };
@@ -6911,7 +6918,7 @@ function renderUpgradeSheetContent(highlightTier) {
       </div>
 
       <!-- PT anchor + testimonial -->
-      <div style="text-align:center;font-size:13px;color:var(--muted);margin:4px 0 12px;">One PT session costs more than 6 months of Steel annual.</div>
+      <div style="text-align:center;font-size:13px;color:var(--muted);margin:4px 0 12px;">${t('upgrade_pt_compare')}</div>
       <div id="upgradeTestimonial" style="border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px;background:var(--surface);">
         <div style="font-size:13px;color:var(--text);line-height:1.6;font-style:italic;" id="upgradeTestimonialQuote">"Built me a full programme in under 2 minutes. I've tried four other apps. This is the first one that felt like it actually knew what I needed."</div>
         <div style="font-size:12px;color:var(--muted);margin-top:8px;" id="upgradeTestimonialAttr">— James, training for football season</div>
@@ -6930,7 +6937,7 @@ function renderUpgradeSheetContent(highlightTier) {
 
       ${renderUpgradeTierCard('steel', '🔩 Steel', activeMonthly.steel, activeAnnual.steel, [
         '__tagline__' + t('feat_steel_tagline'),
-        steelPromo ? '__savings__Save CHF 2/mo versus full price. Locked in forever.' : '',
+        steelPromo ? '__savings__' + t('upgrade_save_forever').replace('{n}', '2') : '',
         t('feat_everything_iron'),
         t('feat_steel_coach'),
         t('feat_steel_weekly'),
@@ -6942,11 +6949,11 @@ function renderUpgradeSheetContent(highlightTier) {
         t('feat_steel_shopping'),
         t('feat_steel_programmes'),
         t('feat_steel_export'),
-      ].filter(Boolean), highlightTier === 'steel' || !highlightTier, true, steelPromo, steelPromo ? monthly.steel : null, steelPromo ? `LAUNCH PRICING — ${steelRemaining} of 500 spots remaining` : null)}
+      ].filter(Boolean), highlightTier === 'steel' || !highlightTier, true, steelPromo, steelPromo ? monthly.steel : null, steelPromo ? t('upgrade_launch_pricing').replace('{n}', steelRemaining) : null)}
 
       ${renderUpgradeTierCard('forge', '🔥 Forge', activeMonthly.forge, activeAnnual.forge, [
         '__tagline__' + t('feat_forge_tagline'),
-        forgePromo ? '__savings__Save CHF 3/mo versus full price. Locked in forever.' : '',
+        forgePromo ? '__savings__' + t('upgrade_save_forever').replace('{n}', '3') : '',
         t('feat_everything_steel'),
         t('feat_forge_monthly'),
         t('feat_forge_video'),
@@ -6954,9 +6961,9 @@ function renderUpgradeSheetContent(highlightTier) {
         '__comingsoon__' + t('feat_forge_wearable'),
         t('feat_forge_support'),
         t('feat_forge_early'),
-      ].filter(Boolean), highlightTier === 'forge', false, forgePromo, forgePromo ? monthly.forge : null, forgePromo ? `LAUNCH PRICING — ${forgeRemaining} of 500 spots remaining` : null)}
+      ].filter(Boolean), highlightTier === 'forge', false, forgePromo, forgePromo ? monthly.forge : null, forgePromo ? t('upgrade_launch_pricing').replace('{n}', forgeRemaining) : null)}
 
-      <button class="us-close" onclick="triggerGracePeriod();document.getElementById('upgradeSheet').remove()">${t('upgrade_close')}</button>
+      <button class="us-close" onclick="this.style.transform='scale(0.9)';setTimeout(()=>{this.style.transform='';triggerGracePeriod();document.getElementById('upgradeSheet')?.remove();},150)">${t('upgrade_close')}</button>
     </div>
   `;
 }
@@ -7492,7 +7499,7 @@ function renderAccount() {
   const tierColour = { iron: 'var(--muted)', steel: 'var(--steel, #7eb8f7)', forge: 'var(--accent)' };
   const displayTier = sub.isExempt ? 'forge' : (sub.tier || 'iron');
   const trialDays = sub.trialEndsAt ? Math.max(0, Math.ceil((new Date(sub.trialEndsAt) - new Date()) / (1000*60*60*24))) : (sub.trialDaysLeft || 0);
-  const statusText = sub.isExempt ? t('exempt_free') : (sub.status === 'trial' ? t('trial_days_left', {n: trialDays}) : (sub.status || 'Trial'));
+  const statusText = sub.isExempt ? t('exempt_free') : (sub.status === 'trial' ? t('trial_days_left', {n: trialDays}) : (sub.status || t('sub_trial_status')));
   const isTrial = sub.status === 'trial';
   const planBadge = sub.isExempt ? 'FREE' : (sub.status === 'lifetime' ? 'LIFETIME' : (sub.status === 'active' ? 'ACTIVE' : 'TRIAL'));
 
@@ -8478,6 +8485,14 @@ const LANGUAGES = [
 // Full UI translation strings
 const STRINGS = {
   en: {
+    /* i18n fix — stat cards / upgrade sheet / share / features / coach */
+    stat_sessions_week: "SESSIONS THIS WEEK", stat_current_streak: "CURRENT STREAK", stat_last_session: "LAST SESSION", stat_prs_month: "PRS THIS MONTH", stat_day: "day", stat_days: "days", stat_best: "best", stat_view_history: "View history ›",
+    upg_plan_headline: "Upgrade your plan", upgrade_trial_ended: "Your trial has ended.", upgrade_days_left: "You have {n} days left on your trial.", upgrade_subline_ended: "Keep your progress and continue training.", upgrade_pt_compare: "One PT session costs more than 6 months of Steel annual.", upgrade_save_forever: "Save CHF {n}/mo vs full price. Locked in forever.", upgrade_launch_pricing: "LAUNCH PRICING — {n} of 500 spots remaining",
+    share_forge_title: "Share FORGE", share_forge_desc: "Send your link. When a friend subscribes, you get a free month. They get 14 days to try it instead of 7. Steel starts from CHF 9.99/mo annual — less than a coffee a week.", share_copy: "Copy", share_share: "Share", share_referred: "Referred", share_subscribed: "Subscribed", share_free_months: "Free months",
+    become_coach_title: "Become a FORGE Coach",
+    feat_plans_label: "AI-Generated Plans", feat_nutrition_label: "Nutrition Tracking", feat_progress_label: "Progress Tracking", feat_prs_label: "Personal Records", feat_coach_label: "Human Coach", feat_logging_label: "Workout Logging",
+    feat_plans_desc: "Custom workout programme built around you", feat_nutrition_desc: "Personalised meal plans and macro targets", feat_progress_desc: "Sessions, streaks, PRs and body metrics", feat_prs_desc: "Track and search your exercise PRs", feat_coach_desc: "Connect with a real coach for guidance", feat_logging_desc: "Log sets, reps and weight each session",
+    sub_trial_status: "Free trial", sub_days_remaining: "{n} days remaining",
     chip_next_session: "Next session", chip_today_recovery: "Today's recovery", chip_program_overview: "Program overview", chip_progress_check: "Progress check", chip_technique_help: "Technique help",
     nav_coach: 'Coach',
     nav_plan: 'Plan',
@@ -8889,6 +8904,14 @@ const STRINGS = {
     expired_sub: 'Your plan and progress are saved. Pick a plan to continue.',
 },
   es: {
+    /* i18n fix — stat cards / upgrade sheet / share / features / coach */
+    stat_sessions_week: "SESIONES ESTA SEMANA", stat_current_streak: "RACHA ACTUAL", stat_last_session: "ÚLTIMA SESIÓN", stat_prs_month: "RÉCORDS ESTE MES", stat_day: "día", stat_days: "días", stat_best: "mejor", stat_view_history: "Ver historial ›",
+    upg_plan_headline: "Mejora tu plan", upgrade_trial_ended: "Tu prueba ha terminado.", upgrade_days_left: "Te quedan {n} días en tu prueba.", upgrade_subline_ended: "Mantén tu progreso y sigue entrenando.", upgrade_pt_compare: "Una sesión de PT cuesta más que 6 meses de Steel anual.", upgrade_save_forever: "Ahorra CHF {n}/mes vs precio completo. Precio garantizado.", upgrade_launch_pricing: "PRECIO DE LANZAMIENTO — {n} de 500 plazas",
+    share_forge_title: "Compartir FORGE", share_forge_desc: "Envía tu enlace. Cuando un amigo se suscribe, consigues un mes gratis. Él obtiene 14 días de prueba en vez de 7. Steel desde CHF 9.99/mes anual — menos que un café a la semana.", share_copy: "Copiar", share_share: "Compartir", share_referred: "Referidos", share_subscribed: "Suscritos", share_free_months: "Meses gratis",
+    become_coach_title: "Conviértete en entrenador FORGE",
+    feat_plans_label: "Planes generados por IA", feat_nutrition_label: "Seguimiento de nutrición", feat_progress_label: "Seguimiento de progreso", feat_prs_label: "Récords personales", feat_coach_label: "Entrenador humano", feat_logging_label: "Registro de entrenamientos",
+    feat_plans_desc: "Programa personalizado construido para ti", feat_nutrition_desc: "Planes de comida y objetivos de macros", feat_progress_desc: "Sesiones, rachas, récords y métricas", feat_prs_desc: "Registra y busca tus récords personales", feat_coach_desc: "Conéctate con un entrenador real", feat_logging_desc: "Registra series, repeticiones y peso",
+    sub_trial_status: "Prueba gratuita", sub_days_remaining: "{n} días restantes",
     chip_next_session: "Próxima sesión", chip_today_recovery: "Recuperación de hoy", chip_program_overview: "Resumen del programa", chip_progress_check: "Control de progreso", chip_technique_help: "Ayuda técnica",
     nav_coach: 'Coach',
     nav_plan: 'Plan',
@@ -9298,6 +9321,14 @@ const STRINGS = {
     expired_sub: 'Tu plan y progreso están guardados. Elige un plan para continuar.',
 },
   fr: {
+    /* i18n fix — stat cards / upgrade sheet / share / features / coach */
+    stat_sessions_week: "SÉANCES CETTE SEMAINE", stat_current_streak: "SÉRIE EN COURS", stat_last_session: "DERNIÈRE SÉANCE", stat_prs_month: "RECORDS CE MOIS", stat_day: "jour", stat_days: "jours", stat_best: "meilleur", stat_view_history: "Voir l'historique ›",
+    upg_plan_headline: "Améliore ton abonnement", upgrade_trial_ended: "Ton essai est terminé.", upgrade_days_left: "Il te reste {n} jours d'essai.", upgrade_subline_ended: "Garde tes progrès et continue l'entraînement.", upgrade_pt_compare: "Une séance de PT coûte plus cher que 6 mois d'abonnement Steel annuel.", upgrade_save_forever: "Économise CHF {n}/mois vs prix normal. Bloqué pour toujours.", upgrade_launch_pricing: "PRIX DE LANCEMENT — {n} places sur 500",
+    share_forge_title: "Partager FORGE", share_forge_desc: "Envoie ton lien. Quand un ami s'abonne, tu gagnes un mois gratuit. Il obtient 14 jours d'essai au lieu de 7. Steel à partir de CHF 9.99/mois en annuel — moins qu'un café par semaine.", share_copy: "Copier", share_share: "Partager", share_referred: "Parrainés", share_subscribed: "Abonnés", share_free_months: "Mois gratuits",
+    become_coach_title: "Deviens un coach FORGE",
+    feat_plans_label: "Plans générés par IA", feat_nutrition_label: "Suivi nutrition", feat_progress_label: "Suivi des progrès", feat_prs_label: "Records personnels", feat_coach_label: "Coach humain", feat_logging_label: "Suivi des séances",
+    feat_plans_desc: "Programme personnalisé conçu pour toi", feat_nutrition_desc: "Plans repas et objectifs de macros", feat_progress_desc: "Séances, séries, records et métriques", feat_prs_desc: "Suis et recherche tes records personnels", feat_coach_desc: "Connecte-toi avec un vrai coach", feat_logging_desc: "Enregistre séries, répétitions et poids",
+    sub_trial_status: "Essai gratuit", sub_days_remaining: "{n} jours restants",
     chip_next_session: "Prochaine séance", chip_today_recovery: "Récupération du jour", chip_program_overview: "Aperçu du programme", chip_progress_check: "Bilan de progression", chip_technique_help: "Aide technique",
     nav_coach: 'Coach',
     nav_plan: 'Plan',
@@ -10116,6 +10147,14 @@ const STRINGS = {
     expired_sub: 'Dein Plan und dein Fortschritt sind gespeichert. Wähle einen Plan, um weiterzumachen.',
 },
   it: {
+    /* i18n fix — stat cards / upgrade sheet / share / features / coach */
+    stat_sessions_week: "SESSIONI QUESTA SETTIMANA", stat_current_streak: "SERIE ATTUALE", stat_last_session: "ULTIMA SESSIONE", stat_prs_month: "RECORD QUESTO MESE", stat_day: "giorno", stat_days: "giorni", stat_best: "migliore", stat_view_history: "Vedi cronologia ›",
+    upg_plan_headline: "Migliora il tuo piano", upgrade_trial_ended: "La tua prova è terminata.", upgrade_days_left: "Hai ancora {n} giorni di prova.", upgrade_subline_ended: "Mantieni i progressi e continua ad allenarti.", upgrade_pt_compare: "Una sessione PT costa più di 6 mesi di Steel annuale.", upgrade_save_forever: "Risparmia CHF {n}/mese vs prezzo pieno. Bloccato per sempre.", upgrade_launch_pricing: "PREZZO DI LANCIO — {n} posti su 500",
+    share_forge_title: "Condividi FORGE", share_forge_desc: "Invia il tuo link. Quando un amico si abbona, ricevi un mese gratis. Lui ottiene 14 giorni di prova invece di 7. Steel da CHF 9.99/mese annuale — meno di un caffè a settimana.", share_copy: "Copia", share_share: "Condividi", share_referred: "Invitati", share_subscribed: "Abbonati", share_free_months: "Mesi gratis",
+    become_coach_title: "Diventa un coach FORGE",
+    feat_plans_label: "Piani generati dall'IA", feat_nutrition_label: "Monitoraggio nutrizione", feat_progress_label: "Monitoraggio progressi", feat_prs_label: "Record personali", feat_coach_label: "Coach umano", feat_logging_label: "Registro allenamenti",
+    feat_plans_desc: "Programma personalizzato costruito per te", feat_nutrition_desc: "Piani alimentari e obiettivi macro", feat_progress_desc: "Sessioni, serie, record e metriche", feat_prs_desc: "Monitora e cerca i tuoi record personali", feat_coach_desc: "Connettiti con un coach reale", feat_logging_desc: "Registra serie, ripetizioni e peso",
+    sub_trial_status: "Prova gratuita", sub_days_remaining: "{n} giorni rimasti",
     chip_next_session: "Prossima sessione", chip_today_recovery: "Recupero di oggi", chip_program_overview: "Panoramica programma", chip_progress_check: "Controllo progressi", chip_technique_help: "Assistenza tecnica",
     nav_coach: 'Coach',
     nav_plan: 'Piano',
@@ -10525,6 +10564,14 @@ const STRINGS = {
     expired_sub: 'Il tuo piano e i progressi sono salvati. Scegli un piano per continuare.',
 },
   pt: {
+    /* i18n fix — stat cards / upgrade sheet / share / features / coach */
+    stat_sessions_week: "SESSÕES ESTA SEMANA", stat_current_streak: "SEQUÊNCIA ATUAL", stat_last_session: "ÚLTIMA SESSÃO", stat_prs_month: "RECORDES ESTE MÊS", stat_day: "dia", stat_days: "dias", stat_best: "melhor", stat_view_history: "Ver histórico ›",
+    upg_plan_headline: "Melhora o teu plano", upgrade_trial_ended: "A tua avaliação terminou.", upgrade_days_left: "Tens ainda {n} dias de avaliação.", upgrade_subline_ended: "Mantém o progresso e continua a treinar.", upgrade_pt_compare: "Uma sessão de PT custa mais do que 6 meses do Steel anual.", upgrade_save_forever: "Poupa CHF {n}/mês vs preço completo. Garantido para sempre.", upgrade_launch_pricing: "PREÇO DE LANÇAMENTO — {n} de 500 lugares",
+    share_forge_title: "Partilhar FORGE", share_forge_desc: "Envia o teu link. Quando um amigo subscreve, ganhas um mês grátis. Ele recebe 14 dias para experimentar em vez de 7. O Steel começa em CHF 9.99/mês anual — menos do que um café por semana.", share_copy: "Copiar", share_share: "Partilhar", share_referred: "Indicados", share_subscribed: "Subscritos", share_free_months: "Meses grátis",
+    become_coach_title: "Torna-te um coach FORGE",
+    feat_plans_label: "Planos gerados por IA", feat_nutrition_label: "Acompanhamento de nutrição", feat_progress_label: "Acompanhamento de progresso", feat_prs_label: "Recordes pessoais", feat_coach_label: "Treinador humano", feat_logging_label: "Registo de treinos",
+    feat_plans_desc: "Programa personalizado construído para ti", feat_nutrition_desc: "Planos alimentares e objetivos de macros", feat_progress_desc: "Sessões, sequências, recordes e métricas", feat_prs_desc: "Acompanha e pesquisa os teus recordes", feat_coach_desc: "Conecta-te com um treinador real", feat_logging_desc: "Regista séries, repetições e peso",
+    sub_trial_status: "Avaliação gratuita", sub_days_remaining: "{n} dias restantes",
     chip_next_session: "Próxima sessão", chip_today_recovery: "Recuperação de hoje", chip_program_overview: "Visão do programa", chip_progress_check: "Verificação de progresso", chip_technique_help: "Ajuda técnica",
     nav_coach: 'Coach',
     nav_plan: 'Plano',
@@ -13315,37 +13362,60 @@ function loadLanguage() {
 }
 
 function setLanguage(code) {
+  if (code === appLanguage) { closeLangDrawer(); return; } // no-op if already on this language
   appLanguage = code;
   localStorage.setItem('forge_language', code);
   const lang = LANGUAGES.find(l => l.code === code) || LANGUAGES[0];
   const btn = document.getElementById('langBtn');
   if (btn) btn.textContent = lang.flag;
-  loadLanguage();
-  applyLanguage();
-  // Save preference to server profile so it persists across devices
-  api('/api/profile', 'PATCH', { preferred_language: code }).catch(() => {});
-  // Re-render all UI string panels immediately (these don't need plan data)
-  if (typeof renderStatGrid === 'function') renderStatGrid();
-  if (typeof initCoach === 'function') initCoach();
+
+  // ── INSTANT (no awaits, no API calls): swap strings + rebuild on-screen UI ──
+  loadLanguage();   // language button flag + drawer swatches
+  applyLanguage();  // static DOM [data-i18n] / [data-i18n-key] sweep
+
+  // Re-render whichever main panel is visible, using already-cached data.
+  const panels = ['coach','workout','log','nutrition','progress','account','clients','programmes','my-coach','admin'];
+  panels.forEach(name => {
+    const panel = document.getElementById('panel-' + name);
+    if (panel && panel.style.display !== 'none' && typeof showPanel === 'function') showPanel(name);
+  });
+
+  // Re-render open overlays (Become a Coach, referral/share) so they translate too.
+  if (typeof refreshOpenOverlays === 'function') refreshOpenOverlays();
+
+  // Persistent chrome that lives outside the panels.
   if (typeof renderTrialBanner === 'function') renderTrialBanner();
-  if (typeof renderLog === 'function' && document.getElementById('panel-log')?.classList.contains('active')) renderLog();
-  if (typeof renderAccount === 'function' && document.getElementById('accountPanel')?.innerHTML) renderAccount();
-  if (typeof renderProgress === 'function' && document.getElementById('panel-progress')?.classList.contains('active')) renderProgress();
-  if (typeof renderWeeklyReview === 'function' && document.getElementById('weeklyReviewSection')) renderWeeklyReview();
-  if (typeof renderMonthlyReview === 'function' && document.getElementById('monthlyReviewSection')) renderMonthlyReview();
-  if (typeof renderMissions === 'function') renderMissions();
-  if (document.getElementById('screen-onboarding')?.classList.contains('active') && typeof renderObStep === 'function') renderObStep();
-  if (document.getElementById('upgradeSheet')) renderUpgradeSheetContent();
   if (typeof renderCoachCounter === 'function') renderCoachCounter();
+  if (typeof renderUpgradeSheetContent === 'function' && document.getElementById('upgradeSheet')) renderUpgradeSheetContent();
+  if (document.getElementById('screen-onboarding')?.classList.contains('active') && typeof renderObStep === 'function') renderObStep();
+
   closeLangDrawer();
   showToast(`${(lang.code || '').toUpperCase()} · ${lang.label}`, 'success');
-  // Reload plan from server in new language — renders workout + nutrition + shopping after fetch
-  if (userPlan) {
+
+  // ── BACKGROUND (non-blocking): persist preference + re-fetch the translated plan ──
+  api('/api/profile', 'PATCH', { preferred_language: code }).catch(() => {});
+  if (userPlan && typeof loadPlanInCurrentLanguage === 'function') {
     loadPlanInCurrentLanguage();
   }
-  // i18n fix: fully re-render whatever panel is on screen so JS-rendered panels (My
-  // Programmes, Account, etc.) — which don't carry data-i18n-key — rebuild in the new language.
-  forceRefreshCurrentPanel();
+}
+
+// Re-render body-level overlays that the panel loop in setLanguage() can't reach, so they
+// rebuild in the newly-selected language. Panels are handled by that loop; this covers the
+// "Become a Coach" setup overlay and the referral/share block when shown outside Account.
+function refreshOpenOverlays() {
+  // Become a Coach setup — a full-screen overlay appended to <body>, not a panel.
+  if (typeof _coachSetupState !== 'undefined' && _coachSetupState &&
+      document.getElementById('coachSetupOverlay') && typeof renderCoachSetup === 'function') {
+    renderCoachSetup();
+  }
+  // Referral/share lives inside the Account panel (#referralSection) and is already rebuilt
+  // when that panel re-renders. Only re-render it standalone if Account is NOT the active
+  // panel, to avoid a duplicate /api/referral fetch.
+  const accountActive = document.getElementById('panel-account')?.classList.contains('active');
+  const refEl = document.getElementById('referralSection');
+  if (!accountActive && refEl && refEl.innerHTML.trim() && typeof renderReferralSection === 'function') {
+    renderReferralSection(refEl);
+  }
 }
 
 // Re-render the visible panel by re-running its panel switch, so JS-built content is
@@ -14996,7 +15066,7 @@ function renderCoachSetup() {
   overlay.innerHTML = `
     <div style="position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:max(env(safe-area-inset-top),44px) 18px 14px;display:flex;align-items:center;gap:10px;z-index:1;">
       <button onclick="closeCoachSetup()" style="background:transparent;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;">×</button>
-      <div style="flex:1;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;color:var(--accent);">BECOME A COACH</div>
+      <div style="flex:1;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;color:var(--accent);">${t('become_coach_title')}</div>
       <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">${_coachSetupState.step === 'profile' ? '1/3' : _coachSetupState.step === 'plan' ? '2/3' : '3/3'}</div>
     </div>
     <div style="padding:24px 18px;flex:1;">${inner}</div>
