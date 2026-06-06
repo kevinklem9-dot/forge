@@ -813,6 +813,53 @@ async function doSignin(instance) {
   }
 }
 
+// ── FORGOT PASSWORD (landing) ─────────────────────────
+function showForgotLanding(prefix) {
+  const f = document.getElementById(prefix + '-forgot');
+  if (f) f.style.display = 'block';
+  const err = document.getElementById(prefix + '-reset-error');
+  if (err) { err.textContent = ''; err.style.display = 'none'; }
+  // Convenience: carry the typed sign-in email over to the reset field.
+  const emailEl = document.getElementById(prefix + '-reset-email');
+  const signinEmail = document.getElementById(prefix + '-signin-email');
+  if (emailEl && signinEmail && !emailEl.value) emailEl.value = signinEmail.value || '';
+}
+
+function hideForgotLanding(prefix) {
+  const f = document.getElementById(prefix + '-forgot');
+  if (f) f.style.display = 'none';
+}
+
+async function sendResetLanding(prefix) {
+  const emailEl = document.getElementById(prefix + '-reset-email');
+  const errEl = document.getElementById(prefix + '-reset-error');
+  const email = (emailEl?.value || '').trim();
+  const show = (msg, color) => { if (errEl) { errEl.textContent = msg; errEl.style.color = color; errEl.style.display = msg ? 'block' : 'none'; } };
+  if (!email) { show('Please enter your email.', '#ff5a5a'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { show('Please enter a valid email address.', '#ff5a5a'); return; }
+  show('', '');
+  const btn = document.querySelector('#' + prefix + '-forgot .auth-btn');
+  const orig = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+  try {
+    const res = await fetch(BACKEND_URL + '/api/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (btn) { btn.disabled = false; btn.textContent = orig || 'Send Reset Link'; }
+    if (res.ok && !data.error) {
+      show('Check your email for a reset link.', '#4ade80'); // success — green
+    } else {
+      show(data.error || 'Could not send reset link. Please try again.', '#ff5a5a'); // error — red
+    }
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = orig || 'Send Reset Link'; }
+    show('Connection error. Please try again.', '#ff5a5a');
+  }
+}
+
 // ── INSTANT SESSION CHECK ─────────────────────────────
 (function() {
   try {
@@ -850,11 +897,18 @@ if (urlParams.get('confirmed') === 'true') {
   setTimeout(() => showError('hero-signin-error', ''), 0);
 }
 
-// Check for ref code in URL
+// Check for ref code in URL — store it + prefill the signup code input.
+// The backend already credits FORGE- referral codes on signup (referred user gets 14 days).
 const refCode = urlParams.get('ref');
 if (refCode) {
-  document.getElementById('hero-code').value = refCode;
-  document.getElementById('final-code').value = refCode;
+  try { localStorage.setItem('forge_referral', refCode); } catch(e) {}
+  const hc = document.getElementById('hero-code'); if (hc) hc.value = refCode;
+  const fc = document.getElementById('final-code'); if (fc) fc.value = refCode;
+  // Referral banner — referred users get 14 days free instead of 7.
+  const refBanner = document.createElement('div');
+  refBanner.style.cssText = "background:#e8ff3d;color:#000;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;text-align:center;padding:10px 16px;letter-spacing:0.5px;line-height:1.5;";
+  refBanner.textContent = 'A friend invited you to FORGE. Sign up for 14 days free.';
+  document.body.insertBefore(refBanner, document.body.firstChild);
 }
 
 // ── INIT ──────────────────────────────────────────────

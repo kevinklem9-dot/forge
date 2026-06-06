@@ -7613,6 +7613,18 @@ function renderAccount() {
         <div class="notif-toggle ${_notifGranted ? 'on' : ''}" id="notifToggle"></div>
       </div>
 
+      <!-- Row — Workout reminder (daily push at a chosen local time) -->
+      <div onclick="openReminderPicker()" style="${_rowStyle}">
+        <div style="min-width:0;">
+          <div style="${_rowLabel}">${t('reminder_setting')}</div>
+          <div style="${_rowSub}">${t('reminder_setting_sub')}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <span style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted);">${userProfile?.reminder_time || t('reminder_set_time')}</span>
+          ${_chev}
+        </div>
+      </div>
+
       <!-- Row 2 — Dark mode (toggles current dark theme ↔ light; remembers last dark variant) -->
       <div onclick="(()=>{const h=document.documentElement;const c=h.getAttribute('data-theme')||'dark-yellow';if(c==='light'){setTheme(localStorage.getItem('forge_last_dark')||'dark-yellow');}else{localStorage.setItem('forge_last_dark',c);setTheme('light');}renderAccount();})()" style="${_rowStyle}">
         <div style="min-width:0;">
@@ -8506,6 +8518,7 @@ const STRINGS = {
     coach_trial_badge: "14-day free trial", coach_commission_label: "Commission rate",
     coach_all_set: "You're all set.", coach_trial_started: "Your 14-day free trial has started.", coach_no_card_until: "No card required until your trial ends.",
     coach_word_plan: "Plan", coach_trial_ends_label: "Trial ends", coach_go_dashboard: "Go to my client dashboard", coach_welcome_dashboard: "Welcome to your coach dashboard.",
+    reminder_setting: "Workout Reminder", reminder_setting_sub: "Daily notification at your chosen time", reminder_set_time: "Set time", reminder_save: "Save reminder", reminder_remove: "Remove reminder", reminder_saved: "Reminder set", reminder_removed: "Reminder removed", reminder_pick_time: "Pick a time first",
     feat_plans_label: "AI-Generated Plans", feat_nutrition_label: "Nutrition Tracking", feat_progress_label: "Progress Tracking", feat_prs_label: "Personal Records", feat_coach_label: "Human Coach", feat_logging_label: "Workout Logging",
     feat_plans_desc: "Custom workout programme built around you", feat_nutrition_desc: "Personalised meal plans and macro targets", feat_progress_desc: "Sessions, streaks, PRs and body metrics", feat_prs_desc: "Track and search your exercise PRs", feat_coach_desc: "Connect with a real coach for guidance", feat_logging_desc: "Log sets, reps and weight each session",
     sub_trial_status: "Free trial", sub_days_remaining: "{n} days remaining",
@@ -8941,6 +8954,7 @@ const STRINGS = {
     coach_trial_badge: "14 días de prueba gratuita", coach_commission_label: "Tasa de comisión",
     coach_all_set: "Todo listo.", coach_trial_started: "Tu prueba gratuita de 14 días ha comenzado.", coach_no_card_until: "Sin tarjeta hasta que termine tu prueba.",
     coach_word_plan: "Plan", coach_trial_ends_label: "La prueba termina", coach_go_dashboard: "Ir a mi panel de clientes", coach_welcome_dashboard: "Bienvenido a tu panel de coach.",
+    reminder_setting: "Recordatorio de entrenamiento", reminder_setting_sub: "Notificación diaria a la hora que elijas", reminder_set_time: "Fijar hora", reminder_save: "Guardar recordatorio", reminder_remove: "Quitar recordatorio", reminder_saved: "Recordatorio activado", reminder_removed: "Recordatorio eliminado", reminder_pick_time: "Elige una hora primero",
     feat_plans_label: "Planes generados por IA", feat_nutrition_label: "Seguimiento de nutrición", feat_progress_label: "Seguimiento de progreso", feat_prs_label: "Récords personales", feat_coach_label: "Entrenador humano", feat_logging_label: "Registro de entrenamientos",
     feat_plans_desc: "Programa personalizado construido para ti", feat_nutrition_desc: "Planes de comida y objetivos de macros", feat_progress_desc: "Sesiones, rachas, récords y métricas", feat_prs_desc: "Registra y busca tus récords personales", feat_coach_desc: "Conéctate con un entrenador real", feat_logging_desc: "Registra series, repeticiones y peso",
     sub_trial_status: "Prueba gratuita", sub_days_remaining: "{n} días restantes",
@@ -9374,6 +9388,7 @@ const STRINGS = {
     coach_trial_badge: "14 jours d'essai gratuit", coach_commission_label: "Taux de commission",
     coach_all_set: "Tout est prêt.", coach_trial_started: "Ton essai gratuit de 14 jours a commencé.", coach_no_card_until: "Sans carte jusqu'à la fin de ton essai.",
     coach_word_plan: "Plan", coach_trial_ends_label: "Fin de l'essai", coach_go_dashboard: "Aller à mon tableau de bord clients", coach_welcome_dashboard: "Bienvenue sur ton tableau de bord coach.",
+    reminder_setting: "Rappel d'entraînement", reminder_setting_sub: "Notification quotidienne à l'heure de ton choix", reminder_set_time: "Définir l'heure", reminder_save: "Enregistrer le rappel", reminder_remove: "Supprimer le rappel", reminder_saved: "Rappel activé", reminder_removed: "Rappel supprimé", reminder_pick_time: "Choisis d'abord une heure",
     feat_plans_label: "Plans générés par IA", feat_nutrition_label: "Suivi nutrition", feat_progress_label: "Suivi des progrès", feat_prs_label: "Records personnels", feat_coach_label: "Coach humain", feat_logging_label: "Suivi des séances",
     feat_plans_desc: "Programme personnalisé conçu pour toi", feat_nutrition_desc: "Plans repas et objectifs de macros", feat_progress_desc: "Séances, séries, records et métriques", feat_prs_desc: "Suis et recherche tes records personnels", feat_coach_desc: "Connecte-toi avec un vrai coach", feat_logging_desc: "Enregistre séries, répétitions et poids",
     sub_trial_status: "Essai gratuit", sub_days_remaining: "{n} jours restants",
@@ -10216,6 +10231,7 @@ const STRINGS = {
     coach_trial_badge: "14 giorni di prova gratuita", coach_commission_label: "Tasso di commissione",
     coach_all_set: "Tutto pronto.", coach_trial_started: "La tua prova gratuita di 14 giorni è iniziata.", coach_no_card_until: "Nessuna carta fino al termine della prova.",
     coach_word_plan: "Piano", coach_trial_ends_label: "Fine della prova", coach_go_dashboard: "Vai alla mia dashboard clienti", coach_welcome_dashboard: "Benvenuto nella tua dashboard coach.",
+    reminder_setting: "Promemoria allenamento", reminder_setting_sub: "Notifica giornaliera all'ora che scegli", reminder_set_time: "Imposta orario", reminder_save: "Salva promemoria", reminder_remove: "Rimuovi promemoria", reminder_saved: "Promemoria impostato", reminder_removed: "Promemoria rimosso", reminder_pick_time: "Scegli prima un orario",
     feat_plans_label: "Piani generati dall'IA", feat_nutrition_label: "Monitoraggio nutrizione", feat_progress_label: "Monitoraggio progressi", feat_prs_label: "Record personali", feat_coach_label: "Coach umano", feat_logging_label: "Registro allenamenti",
     feat_plans_desc: "Programma personalizzato costruito per te", feat_nutrition_desc: "Piani alimentari e obiettivi macro", feat_progress_desc: "Sessioni, serie, record e metriche", feat_prs_desc: "Monitora e cerca i tuoi record personali", feat_coach_desc: "Connettiti con un coach reale", feat_logging_desc: "Registra serie, ripetizioni e peso",
     sub_trial_status: "Prova gratuita", sub_days_remaining: "{n} giorni rimasti",
@@ -10649,6 +10665,7 @@ const STRINGS = {
     coach_trial_badge: "14 dias de avaliação gratuita", coach_commission_label: "Taxa de comissão",
     coach_all_set: "Está tudo pronto.", coach_trial_started: "A tua avaliação gratuita de 14 dias começou.", coach_no_card_until: "Sem cartão até a tua avaliação terminar.",
     coach_word_plan: "Plano", coach_trial_ends_label: "Fim da avaliação", coach_go_dashboard: "Ir para o meu painel de clientes", coach_welcome_dashboard: "Bem-vindo ao teu painel de coach.",
+    reminder_setting: "Lembrete de treino", reminder_setting_sub: "Notificação diária à hora que escolheres", reminder_set_time: "Definir hora", reminder_save: "Guardar lembrete", reminder_remove: "Remover lembrete", reminder_saved: "Lembrete ativado", reminder_removed: "Lembrete removido", reminder_pick_time: "Escolhe primeiro uma hora",
     feat_plans_label: "Planos gerados por IA", feat_nutrition_label: "Acompanhamento de nutrição", feat_progress_label: "Acompanhamento de progresso", feat_prs_label: "Recordes pessoais", feat_coach_label: "Treinador humano", feat_logging_label: "Registo de treinos",
     feat_plans_desc: "Programa personalizado construído para ti", feat_nutrition_desc: "Planos alimentares e objetivos de macros", feat_progress_desc: "Sessões, sequências, recordes e métricas", feat_prs_desc: "Acompanha e pesquisa os teus recordes", feat_coach_desc: "Conecta-te com um treinador real", feat_logging_desc: "Regista séries, repetições e peso",
     sub_trial_status: "Avaliação gratuita", sub_days_remaining: "{n} dias restantes",
@@ -15743,6 +15760,49 @@ function updateNotifToggle(granted) {
 }
 // Tapping requests permission the first time; once granted/denied a web app can't
 // flip it programmatically (esp. iOS), so we explain and deep-link to Settings.
+// ── WORKOUT REMINDER (daily push time preference) ─────
+function openReminderPicker() {
+  const cur = (typeof userProfile !== 'undefined' && userProfile?.reminder_time) ? userProfile.reminder_time : '';
+  document.getElementById('reminderPicker')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'reminderPicker';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.6);display:flex;align-items:flex-end;justify-content:center;';
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+  ov.innerHTML = `
+    <div style="background:var(--bg);border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%;max-width:480px;box-sizing:border-box;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1.5px;color:var(--text);margin-bottom:6px;">${t('reminder_setting')}</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.5;">${t('reminder_setting_sub')}</div>
+      <input type="time" id="reminderTimeInput" value="${cur}" style="width:100%;padding:13px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:16px;font-family:'DM Sans',sans-serif;box-sizing:border-box;margin-bottom:16px;">
+      <button onclick="saveReminder()" style="width:100%;padding:14px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">${t('reminder_save')}</button>
+      ${cur ? `<button onclick="removeReminder()" style="width:100%;padding:12px;background:transparent;border:1px solid var(--border);color:var(--red,#ff4444);border-radius:10px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">${t('reminder_remove')}</button>` : ''}
+    </div>
+  `;
+  document.body.appendChild(ov);
+}
+
+async function saveReminder() {
+  const v = document.getElementById('reminderTimeInput')?.value;
+  if (!v) { showToast(t('reminder_pick_time'), 'error'); return; }
+  const tz = (Intl.DateTimeFormat().resolvedOptions().timeZone) || 'UTC';
+  if (typeof userProfile !== 'undefined' && userProfile) userProfile.reminder_time = v;
+  document.getElementById('reminderPicker')?.remove();
+  showToast(t('reminder_saved'), 'success');
+  if (typeof renderAccount === 'function') renderAccount();
+  api('/api/profile', 'PATCH', { reminder_time: v, reminder_timezone: tz }).then(() => {
+    try { localStorage.setItem('forge-cached-profile', JSON.stringify(userProfile)); } catch(e) {}
+  }).catch(() => {});
+}
+
+async function removeReminder() {
+  if (typeof userProfile !== 'undefined' && userProfile) userProfile.reminder_time = null;
+  document.getElementById('reminderPicker')?.remove();
+  showToast(t('reminder_removed'), 'success');
+  if (typeof renderAccount === 'function') renderAccount();
+  api('/api/profile', 'PATCH', { reminder_time: null }).then(() => {
+    try { localStorage.setItem('forge-cached-profile', JSON.stringify(userProfile)); } catch(e) {}
+  }).catch(() => {});
+}
+
 function handleNotifTap() {
   try {
     if (typeof Notification === 'undefined') {
