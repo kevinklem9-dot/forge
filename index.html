@@ -905,9 +905,21 @@ if (refCode) {
   const hc = document.getElementById('hero-code'); if (hc) hc.value = refCode;
   const fc = document.getElementById('final-code'); if (fc) fc.value = refCode;
   // Referral banner — referred users get 14 days free instead of 7.
+  // Offset by the fixed nav's height so it sits below the nav instead of hidden under it.
+  const navEl = document.querySelector('.nav');
+  const navH = navEl ? navEl.offsetHeight : 60;
   const refBanner = document.createElement('div');
-  refBanner.style.cssText = "background:#e8ff3d;color:#000;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;text-align:center;padding:10px 16px;letter-spacing:0.5px;line-height:1.5;";
-  refBanner.textContent = 'A friend invited you to FORGE. Sign up for 14 days free.';
+  refBanner.style.cssText = "position:relative;z-index:2;margin-top:" + navH + "px;background:#e8ff3d;color:#000;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;text-align:center;padding:10px 44px;letter-spacing:0.5px;line-height:1.5;";
+  const refMsg = document.createElement('span');
+  refMsg.textContent = 'A friend invited you to FORGE. Sign up for 14 days free.';
+  const refDismiss = document.createElement('button');
+  refDismiss.type = 'button';
+  refDismiss.setAttribute('aria-label', 'Dismiss');
+  refDismiss.textContent = '✕';
+  refDismiss.style.cssText = "position:absolute;top:50%;right:10px;transform:translateY(-50%);background:transparent;border:none;color:#000;font-size:16px;font-weight:700;line-height:1;cursor:pointer;padding:4px 8px;";
+  refDismiss.onclick = function(){ refBanner.remove(); };
+  refBanner.appendChild(refMsg);
+  refBanner.appendChild(refDismiss);
   document.body.insertBefore(refBanner, document.body.firstChild);
 }
 
