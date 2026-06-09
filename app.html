@@ -2062,6 +2062,16 @@ async function signUp() {
       return showAuthError(data.error || 'Sign up failed.');
     }
 
+    // FIX (onboarding skip): wipe any stale cache from a previous session so a brand-new
+    // account can never inherit a prior user's cached plan/profile — which would let the
+    // auto-login fast path skip onboarding for the new user.
+    localStorage.removeItem('forge-cached-plan');
+    localStorage.removeItem('forge-cached-profile');
+    localStorage.removeItem('forge-plan-translation');
+    localStorage.removeItem('forge-plan-lang');
+    window._cachedPlan = null;
+    window._cachedProfile = null;
+
     if (data.requires_confirmation) {
       showEmailConfirmationMessage(email);
     }
@@ -2285,14 +2295,30 @@ async function handleSession(session) {
     }
   }
 
-  if (planData) {
-    // Plan exists — go to app
+  if (planData && userProfile?.onboarding_complete === true) {
+    // Plan exists AND onboarding already confirmed — go straight to the app.
     userPlan = planData;
-    if (!userProfile.onboarding_complete) {
-      api('/api/profile', 'PATCH', { onboarding_complete: true }); // fire and forget
-      userProfile.onboarding_complete = true;
-    }
     await loadPlanAndLaunch();
+    return;
+  }
+  if (planData && !userProfile?.onboarding_complete) {
+    // Plan exists but the onboarding flag isn't set. This is either a race (the plan row was
+    // written before the flag) or an empty/placeholder plan. Only skip onboarding when the
+    // plan actually has workout data; otherwise route the user through onboarding.
+    userPlan = planData;
+    const hasWorkout = planData?.workout_plan?.days?.length > 0;
+    if (hasWorkout) {
+      // Real plan — backfill the flag (await so it persists before loadPlanAndLaunch
+      // re-fetches + re-caches the profile), then launch.
+      await api('/api/profile', 'PATCH', { onboarding_complete: true }).catch(() => {});
+      userProfile.onboarding_complete = true;
+      await loadPlanAndLaunch();
+      return;
+    }
+    // Empty plan with no workout data — send to onboarding.
+    obData.name = userProfile.name || '';
+    showScreen('onboarding');
+    renderObStep();
     return;
   }
 
@@ -7730,6 +7756,13 @@ function renderAccount() {
 
       <!-- SECTION 4 — Sign out (last element, with breathing room above) -->
       <button onclick="signOut()" style="width:100%;background:transparent;border:1px solid var(--red);color:var(--red);font-family:'DM Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:1px;border-radius:10px;padding:14px;margin-top:24px;cursor:pointer;">${t('sign_out')}</button>
+
+      <!-- Legal — Privacy Policy + Terms of Service (open in a new tab to preserve app state) -->
+      <div style="margin-top:18px;text-align:center;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.5px;color:var(--muted);">
+        <a href="/privacy.html" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:none;margin:0 8px;">Privacy Policy</a>
+        ·
+        <a href="/terms.html" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:none;margin:0 8px;">Terms of Service</a>
+      </div>
 
     </div>
   `;
@@ -15942,8 +15975,13 @@ function urlBase64ToUint8Array(base64String) {
   const cachedPlan    = JSON.parse(localStorage.getItem('forge-cached-plan')    || 'null');
   if (cachedProfile && cachedProfile.id && session.user?.id && cachedProfile.id !== session.user.id) { localStorage.removeItem('forge-cached-profile'); localStorage.removeItem('forge-cached-plan'); }
 
-  if (cachedProfile && cachedPlan) {
+  if (cachedProfile && cachedPlan && cachedProfile.onboarding_complete === true) {
     // ── INSTANT LAUNCH from cache — but verify not frozen first ──
+    // FIX (onboarding skip): only take the instant-launch fast path when onboarding is
+    // confirmed complete. A cached plan alone is NOT proof onboarding finished (older caches
+    // predating the flag, or a plan row written before the flag was set), so any other case
+    // falls through to the full refresh → handleSession() path below, which re-checks
+    // onboarding properly before launching the app.
     // Quick server check before showing app (lightweight profile call)
     try {
       const quickCheck = await fetch(BACKEND_URL + '/api/profile', {
@@ -16034,7 +16072,8 @@ function urlBase64ToUint8Array(base64String) {
     return;
   }
 
-  // ── No cache — refresh token then do full login ──
+  // ── No cache, OR onboarding not yet confirmed — refresh token then full session check ──
+  // (handleSession re-fetches profile + plan and runs the proper onboarding decision)
   try {
     const refreshed = await sb.auth.refreshSession({ refresh_token: session.refresh_token });
     if (refreshed?.data?.session) {
