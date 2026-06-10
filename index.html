@@ -123,6 +123,14 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,76px);line-heigh
 .auth-note a{color:var(--accent);cursor:pointer;text-decoration:none}
 .auth-note a:hover{text-decoration:underline}
 
+/* ── PASSWORD RESET OVERLAY (Supabase recovery) ── */
+.reset-overlay{position:fixed;inset:0;z-index:2000;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:90px 20px 40px;background:rgba(8,8,8,0.94);backdrop-filter:blur(12px) saturate(140%);-webkit-backdrop-filter:blur(12px) saturate(140%)}
+.reset-overlay.open{display:flex}
+.reset-overlay .auth-wrap{width:100%;max-width:440px}
+.reset-logo{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:6px;color:var(--accent);text-align:center;margin-bottom:24px;text-shadow:0 0 24px rgba(232,255,61,0.3)}
+.reset-title{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:1.5px;color:var(--text);margin-bottom:8px;line-height:1.02}
+.reset-sub{font-size:13px;color:var(--muted2);margin-bottom:22px;line-height:1.6}
+
 /* ── GRIDS / CARDS ── */
 .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:48px}
 .card{background:linear-gradient(180deg,var(--surface),var(--surface3));border:1px solid var(--border);border-radius:14px;padding:32px;position:relative;transition:all .25s ease;overflow:hidden}
@@ -604,6 +612,22 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,76px);line-heigh
   <div class="footer-bottom">© FORGE · Built for athletes who don't make it up as they go.</div>
 </footer>
 
+<!-- ── PASSWORD RESET (Supabase recovery: …/?reset=true#access_token=…&type=recovery) ── -->
+<div id="reset-password-section" class="reset-overlay" role="dialog" aria-modal="true" aria-labelledby="reset-title">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="reset-logo">FORGE</div>
+      <div class="reset-title" id="reset-title">Set a new password</div>
+      <div class="reset-sub">Choose a new password for your account. Minimum 6 characters.</div>
+      <div class="field-group"><div class="field-label">New password</div><div style="position:relative"><input class="field-input" type="password" id="reset-new-password" placeholder="Min. 6 characters" autocomplete="new-password" style="padding-right:44px"><button class="pw-toggle" onclick="togglePw('reset-new-password',this)" type="button" aria-label="Show password">👁</button></div></div>
+      <div class="field-group"><div class="field-label">Confirm password</div><div style="position:relative"><input class="field-input" type="password" id="reset-confirm-password" placeholder="Re-enter new password" autocomplete="new-password" style="padding-right:44px" onkeydown="if(event.key==='Enter')submitNewPassword()"><button class="pw-toggle" onclick="togglePw('reset-confirm-password',this)" type="button" aria-label="Show password">👁</button></div></div>
+      <div class="auth-error" id="reset-password-error"></div>
+      <button class="auth-btn" id="reset-submit-btn" onclick="submitNewPassword()">Update password</button>
+      <div class="auth-note" style="margin-top:14px">Remembered it? <a onclick="closeResetOverlay()">Back to sign in</a></div>
+    </div>
+  </div>
+</div>
+
 <script>
 const BACKEND_URL = 'https://forge-production-db97.up.railway.app';
 const SUPABASE_URL = 'https://ozhtiqoregcwxkkxohbk.supabase.co';
@@ -863,7 +887,8 @@ async function sendResetLanding(prefix) {
 // ── INSTANT SESSION CHECK ─────────────────────────────
 (function() {
   try {
-    if (new URLSearchParams(window.location.search).get('reset_token')) return;
+    const _rq = new URLSearchParams(window.location.search);
+    if (_rq.get('reset_token') || _rq.get('reset') === 'true') return;
     if (window.location.hash.includes('type=recovery')) return;
     const session = JSON.parse(localStorage.getItem('forge-session') || 'null');
     if (session?.access_token && session?.rememberMe) {
@@ -895,6 +920,113 @@ if (urlParams.get('confirmed') === 'true') {
   // Switch to sign in and show message
   switchTab('hero', 'signin');
   setTimeout(() => showError('hero-signin-error', ''), 0);
+}
+
+// ── PASSWORD RESET (Supabase recovery flow) ───────────
+// server.js /api/reset-password sets redirectTo = FRONTEND_URL + '?reset=true', so Supabase
+// returns the user to  …/?reset=true#access_token=<jwt>&type=recovery&refresh_token=…
+// No Supabase JS SDK is loaded on this page, so we update the password over REST:
+//   PUT /auth/v1/user  with the recovery access_token as the Bearer (what updateUser() does).
+(function initPasswordReset() {
+  if (urlParams.get('reset') !== 'true') return;
+  const overlay = document.getElementById('reset-password-section');
+  if (!overlay) return;
+
+  const hashParams = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
+  const accessToken = hashParams.get('access_token');
+
+  if (!accessToken) {
+    // Link expired, already used, or opened without a token — Supabase puts an error in the hash.
+    showResetState('This reset link has expired or has already been used. Request a fresh one and try again.');
+    return;
+  }
+
+  window._resetToken = accessToken;
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('reset-new-password')?.focus(), 120);
+})();
+
+function showResetState(message) {
+  const overlay = document.getElementById('reset-password-section');
+  if (!overlay) return;
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  ['reset-new-password','reset-confirm-password'].forEach(id => {
+    const fg = document.getElementById(id)?.closest('.field-group');
+    if (fg) fg.style.display = 'none';
+  });
+  const err = document.getElementById('reset-password-error'); if (err) err.style.display = 'none';
+  const title = document.getElementById('reset-title'); if (title) title.textContent = 'Reset link expired';
+  const sub = overlay.querySelector('.reset-sub'); if (sub) sub.textContent = message;
+  const btn = document.getElementById('reset-submit-btn');
+  if (btn) { btn.textContent = 'Request a new link'; btn.onclick = requestNewLink; }
+}
+
+function requestNewLink() {
+  closeResetOverlay();
+  if (typeof scrollToAuth === 'function') scrollToAuth();
+  if (typeof showForgotLanding === 'function') showForgotLanding('hero');
+}
+
+function closeResetOverlay(keepUrl) {
+  const overlay = document.getElementById('reset-password-section');
+  if (overlay) overlay.classList.remove('open');
+  document.body.style.overflow = '';
+  if (!keepUrl) { try { history.replaceState(null, '', window.location.pathname); } catch(e) {} }
+  if (typeof switchTab === 'function') switchTab('hero', 'signin');
+}
+
+async function submitNewPassword() {
+  const errId = 'reset-password-error';
+  const pw = (document.getElementById('reset-new-password')?.value) || '';
+  const confirmPw = (document.getElementById('reset-confirm-password')?.value) || '';
+
+  if (!pw || pw.length < 6) return showError(errId, 'Password must be at least 6 characters.');
+  if (pw !== confirmPw) return showError(errId, 'Passwords do not match.');
+  showError(errId, '');
+
+  const token = window._resetToken;
+  if (!token) return showError(errId, 'Your reset link has expired. Please request a new one.');
+
+  const btn = document.getElementById('reset-submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Updating...'; }
+
+  try {
+    const res = await fetch(SUPABASE_URL + '/auth/v1/user', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({ password: pw })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (btn) { btn.disabled = false; btn.textContent = 'Update password'; }
+
+    const errMsg = data.error_description || data.error || data.msg || data.message || '';
+    if (!res.ok || errMsg) {
+      if (res.status === 401 || res.status === 403 || /expired|invalid|jwt|token/i.test(errMsg)) {
+        return showError(errId, 'Your reset link has expired. Please request a new one.');
+      }
+      return showError(errId, errMsg || 'Could not update password. Please try again.');
+    }
+
+    // Success — password changed. Drop the recovery token, clean the URL, send them to sign in.
+    let email = '';
+    try { email = JSON.parse(atob(token.split('.')[1])).email || ''; } catch (e) {}
+    window._resetToken = null;
+    closeResetOverlay();
+    const se = document.getElementById('hero-signin-email');
+    if (se && email) se.value = email;
+    if (typeof showLandingToast === 'function') showLandingToast('✓ Password updated — sign in with your new password.');
+    document.getElementById('hero-auth')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => document.getElementById('hero-signin-password')?.focus(), 450);
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Update password'; }
+    showError(errId, 'Connection error. Please try again.');
+  }
 }
 
 // Check for ref code in URL — store it + prefill the signup code input.
