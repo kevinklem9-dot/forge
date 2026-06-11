@@ -91,6 +91,44 @@
   --accent:#1a1a1a; --accent2:#ff6b35; --text:#1a1a1a; --muted:#888888;
   --red:#cc2222; --green:#1a8a50;
 }
+[data-theme="light-warm"] {
+  --bg: #f5f0e8;
+  --surface: #ede5d5;
+  --surface2: #e5dac8;
+  --border: #d8d0c0;
+  --border-subtle: #e0d8cc;
+  --border-muted: #e8e0d4;
+  --accent: #1a1408;
+  --accent2: #c87820;
+  --accent-pressed: #0d0a04;
+  --text: #1a1408;
+  --muted: #a89070;
+  --input-bg: #ede5d5;
+  --bubble-in-bg: #e5dac8;
+  --bubble-in-text: #2a200c;
+  --bubble-out-bg: #1a1408;
+  --bubble-out-text: #f5f0e8;
+  --red:#cc2222; --green:#1a8a50;
+}
+[data-theme="light-slate"] {
+  --bg: #eef0f2;
+  --surface: #e4e7eb;
+  --surface2: #dde0e4;
+  --border: #cdd0d4;
+  --border-subtle: #d5d8dc;
+  --border-muted: #d8dbe0;
+  --accent: #0d1117;
+  --accent2: #3b82f6;
+  --accent-pressed: #050709;
+  --text: #0d1117;
+  --muted: #6b7280;
+  --input-bg: #e4e7eb;
+  --bubble-in-bg: #dde0e4;
+  --bubble-in-text: #1a1f26;
+  --bubble-out-bg: #0d1117;
+  --bubble-out-text: #eef0f2;
+  --red:#cc2222; --green:#1a8a50;
+}
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
 /* ── FIX 2: global tap feedback ───────────────────────────────────────────────
@@ -511,7 +549,7 @@ nav.bottom-nav, .bottom-nav {
 /* ── CHAT TABS ── */
 .chat-tabs { display:flex; align-items:center; background:var(--surface); border-bottom:1px solid var(--border-muted); padding:0 20px; flex-shrink:0; gap:4px; }
 .chat-tab { display:flex; align-items:center; gap:6px; padding:12px 14px; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--inactive); cursor:pointer; border-bottom:2px solid transparent; transition:all 0.15s; }
-.chat-tab.active { color:var(--text); border-bottom-color:#666666; }
+.chat-tab.active { color:var(--text); border-bottom-color:var(--muted); }
 .chat-tab:active { opacity:0.7; }
 .new-chat-btn { margin-left:auto; background:transparent; border:1px solid var(--border); color:var(--dim); border-radius:6px; padding:5px 10px; font-size:9px; font-family:'DM Mono',monospace; text-transform:uppercase; letter-spacing:1px; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
 .new-chat-btn:active { background:rgba(232,255,61,0.2); }
@@ -548,6 +586,12 @@ nav.bottom-nav, .bottom-nav {
 body.pwa-mode #panel-coach {
   bottom: calc(var(--nav-h) + 18px);
 }
+/* FIX 4: in a browser tab (non-PWA) the real bottom-nav is a few px taller than
+ * --nav-h, so the input pinned to the panel bottom slipped under the nav. Lift the
+ * whole coach panel a touch above the nav. PWA keeps its own +18px clearance above. */
+body:not(.pwa-mode) #panel-coach {
+  bottom: calc(var(--nav-h) + 10px);
+}
 .chat-container { display:flex; flex-direction:column; flex:1; min-height:0; }
 .chat-header { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; flex-shrink:0; background:var(--bg); }
 .trainer-avatar { width:38px; height:38px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
@@ -565,9 +609,10 @@ body.pwa-mode #panel-coach {
 .msg-inner { display:flex; flex-direction:column; gap:4px; }
 .msg-tag { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:1px; }
 .message.user .msg-tag { text-align:right; }
-.msg-bubble { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 14px; font-size:14px; line-height:1.6; }
-.message.user .msg-bubble { background:var(--surface2); }
+.msg-bubble { background:var(--bubble-in-bg, var(--surface2)); color:var(--bubble-in-text, var(--text)); border:1px solid var(--border); border-radius:12px; padding:12px 14px; font-size:14px; line-height:1.6; }
+.message.user .msg-bubble { background:var(--bubble-out-bg, var(--accent)); color:var(--bubble-out-text, var(--bg)); border-color:transparent; }
 .msg-bubble strong { color:var(--accent); }
+.message.user .msg-bubble strong { color:var(--bubble-out-text, var(--bg)); }
 .typing-indicator{display:flex;gap:4px;align-items:center;padding:2px 0}
 .typing-dot{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:typing 1.2s infinite}
 .typing-dot:nth-child(2){animation-delay:.2s}.typing-dot:nth-child(3){animation-delay:.4s}
@@ -580,14 +625,17 @@ body.pwa-mode #panel-coach {
  * position:relative). #chatMessages reserves 150px bottom padding so the last
  * message scrolls clear of the overlaid input. */
 #view-chat { position:relative; min-height:0; }
-#chatMessages { padding-bottom:150px; }
+/* FIX 4: messages clear the overlaid input. Class-based so it tracks install state:
+ * smaller reserve in standalone PWA where the input sits lower. */
+.coach-scroll-area { padding-bottom:130px; }
+.standalone .coach-scroll-area { padding-bottom:70px; }
 .chat-input-area { position:absolute; bottom:0; left:0; right:0; z-index:10; background:var(--bg); border-top:0.5px solid var(--border); padding:8px 12px; padding-bottom:max(env(safe-area-inset-bottom), 4px); padding-top:8px; flex-shrink:0; display:flex; flex-direction:column; gap:8px; }
 body.pwa-mode .chat-input-area {
   padding-bottom: 4px !important;
 }
 .quick-prompts { display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:2px; }
 .quick-prompts::-webkit-scrollbar{display:none}
-.quick-btn { background:var(--surface); border:1px solid #1e1e1e; color:var(--dim); padding:8px 11px; border-radius:8px; font-size:9px; text-transform:uppercase; letter-spacing:1px; cursor:pointer; white-space:nowrap; font-family:'DM Mono',monospace; transition:all .15s; }
+.quick-btn { background:var(--surface); border:1px solid var(--border); color:var(--dim); padding:8px 11px; border-radius:8px; font-size:9px; text-transform:uppercase; letter-spacing:1px; cursor:pointer; white-space:nowrap; font-family:'DM Mono',monospace; transition:all .15s; }
 .quick-btn:active{border-color:var(--accent);color:var(--accent)}
 .input-row { display:flex; gap:8px; align-items:flex-end; }
 .chat-input { flex:1; background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:11px 14px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:13px; resize:none; outline:none; transition:border-color .2s; min-height:56px; max-height:100px; -webkit-appearance:none; }
@@ -1171,6 +1219,14 @@ input:focus, textarea:focus, select:focus { outline: none; }
           <div class="swatch-circle" style="background:linear-gradient(135deg,#f5f5f0 50%,#1a1a1a 50%)"></div>
           <div class="swatch-label">Light</div>
         </div>
+        <div class="theme-swatch" onclick="setTheme('light-warm')">
+          <div class="swatch-circle" style="background:linear-gradient(135deg,#f5f0e8 50%,#1a1408 50%)"></div>
+          <div class="swatch-label">Warm</div>
+        </div>
+        <div class="theme-swatch" onclick="setTheme('light-slate')">
+          <div class="swatch-circle" style="background:linear-gradient(135deg,#eef0f2 50%,#0d1117 50%)"></div>
+          <div class="swatch-label">Slate</div>
+        </div>
       </div>
     </div>
 
@@ -1199,7 +1255,7 @@ input:focus, textarea:focus, select:focus { outline: none; }
                 <div class="trainer-status"><span class="online-dot"></span>ONLINE · Coach</div>
               </div>
             </div>
-            <div class="chat-messages" id="chatMessages">
+            <div class="chat-messages coach-scroll-area" id="chatMessages">
               <div class="message">
                 <div class="msg-avatar">🤖</div>
                 <div class="msg-inner">
@@ -1490,7 +1546,7 @@ const isPWA =
   (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
   window.navigator.standalone === true;
 if (isPWA) {
-  const apply = () => document.body?.classList.add('pwa-mode');
+  const apply = () => document.body?.classList.add('pwa-mode', 'standalone');
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', apply, { once: true });
   } else {
@@ -3513,6 +3569,8 @@ async function loadPlanAndLaunch() {
   api('/api/missions/complete_profile/complete', 'POST').catch(() => {});
   if (userPlan) api('/api/missions/generate_plan/complete', 'POST').catch(() => {});
   setTimeout(() => initPushNotifications(), 3000);
+  // FIX 3: first-login Add-to-Home-Screen prompt (iOS Safari, browser tab, shown once).
+  if (typeof maybeShowA2HSPrompt === 'function') maybeShowA2HSPrompt();
   // Silently remap exercise names to MuscleWiki exact names for video matching
   setTimeout(() => {
     api('/api/exercise/remap-plan', 'POST').then(r => {
@@ -6690,10 +6748,10 @@ async function renderTrialBanner() {
   // and sizes within the panel's own flex column — no JS offset of the fixed panel.
   const banner = document.createElement('div');
   banner.id = 'trialBanner';
-  banner.style.cssText = 'background:linear-gradient(135deg,#1a1a0a 0%,#111100 100%);border-bottom:1px solid #333300;padding:8px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;';
+  banner.style.cssText = 'background:var(--surface);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;';
   banner.innerHTML = `
-    <span style="font-family:'DM Mono',monospace;font-size:10px;color:#999;letter-spacing:1px;">${barText}</span>
-    <button onclick="openUpgradeSheet()" style="background:#e8ff3d;color:#000;font-family:'DM Mono',monospace;font-size:9px;font-weight:700;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;flex-shrink:0;">${t('upgrade')}</button>
+    <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text);letter-spacing:1px;">${barText}</span>
+    <button onclick="openUpgradeSheet()" style="background:var(--accent);color:var(--bg);font-family:'DM Mono',monospace;font-size:9px;font-weight:700;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;flex-shrink:0;">${t('upgrade')}</button>
   `;
   const chatContainer = document.querySelector('#panel-coach .chat-container');
   if (chatContainer) {
@@ -7534,9 +7592,9 @@ function renderAccount() {
   // ── Settings-row values (no emoji) ──
   // Theme → swatch + friendly name; dark-mode toggle = any non-light theme.
   const _curTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('forge_theme') || 'dark-yellow';
-  const _themeNames = { 'dark-yellow':'Default', 'dark-blue':'Ocean', 'dark-green':'Forest', 'midnight':'Midnight', 'light':'Light' };
+  const _themeNames = { 'dark-yellow':'Default', 'dark-blue':'Ocean', 'dark-green':'Forest', 'midnight':'Midnight', 'light':'Light', 'light-warm':'Warm', 'light-slate':'Slate' };
   const _themeName = _themeNames[_curTheme] || 'Default';
-  const _isDark = _curTheme !== 'light';
+  const _isDark = !/^light/.test(_curTheme);
   // Language → its display name (the picker drawer renders 2-letter codes, not flags).
   const _curLang = (typeof LANGUAGES !== 'undefined' && Array.isArray(LANGUAGES)) ? (LANGUAGES.find(l => l.code === appLanguage) || LANGUAGES[0]) : { label: 'English' };
   const _langLabel = _curLang ? _curLang.label : 'English';
@@ -7652,7 +7710,7 @@ function renderAccount() {
       </div>
 
       <!-- Row 2 — Dark mode (toggles current dark theme ↔ light; remembers last dark variant) -->
-      <div onclick="(()=>{const h=document.documentElement;const c=h.getAttribute('data-theme')||'dark-yellow';if(c==='light'){setTheme(localStorage.getItem('forge_last_dark')||'dark-yellow');}else{localStorage.setItem('forge_last_dark',c);setTheme('light');}renderAccount();})()" style="${_rowStyle}">
+      <div onclick="(()=>{const h=document.documentElement;const c=h.getAttribute('data-theme')||'dark-yellow';if(c.indexOf('light')===0){setTheme(localStorage.getItem('forge_last_dark')||'dark-yellow');}else{localStorage.setItem('forge_last_dark',c);setTheme('light');}renderAccount();})()" style="${_rowStyle}">
         <div style="min-width:0;">
           <div style="${_rowLabel}">${t('acc_dark_mode')}</div>
           <div style="${_rowSub}">${t('acc_dark_mode_sub')}</div>
@@ -7861,6 +7919,64 @@ window.showAddToHomeScreen = () => {
   overlay.classList.add('open');
   sheet.classList.add('open');
 };
+
+// ── FIX 3: First-login "Add to Home Screen" auto-prompt ────────────────────────
+// Shows once ever (localStorage 'forge-a2hs-shown'), only in iOS Safari running as a
+// browser tab (not already installed), 3s after the app first loads. Distinct from the
+// manual showAddToHomeScreen() row in Account — this is the unprompted first-run nudge.
+function maybeShowA2HSPrompt() {
+  try {
+    if (localStorage.getItem('forge-a2hs-shown') === '1') return;
+    const ua = navigator.userAgent || '';
+    const isIOS = /iPhone|iPad/.test(ua);
+    const inStandalone = window.navigator.standalone === true;
+    if (!isIOS || inStandalone) return;
+    setTimeout(showA2HSSheet, 3000);
+  } catch (e) { /* localStorage blocked — skip the prompt */ }
+}
+
+function showA2HSSheet() {
+  if (localStorage.getItem('forge-a2hs-shown') === '1') return;
+  if (document.getElementById('a2hsSheet')) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'a2hsOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.5);opacity:0;transition:opacity 0.3s ease';
+
+  const sheet = document.createElement('div');
+  sheet.id = 'a2hsSheet';
+  sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;background:var(--surface);border-top:1px solid var(--border);border-radius:20px 20px 0 0;padding:20px 24px 40px;transform:translateY(100%);transition:transform 0.3s ease';
+
+  const step = (n, text) =>
+    `<div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:14px">
+       <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--bg);font-family:'DM Mono',monospace;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${n}</div>
+       <div style="font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);line-height:1.5">${text}</div>
+     </div>`;
+
+  sheet.innerHTML =
+    '<div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px"></div>' +
+    '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:var(--text);letter-spacing:1px;margin-bottom:8px">Add FORGE to your home screen</div>' +
+    '<div style="font-family:\'DM Sans\',sans-serif;font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:20px">Install FORGE as an app for the best experience — faster, full screen, and push notifications for workout reminders.</div>' +
+    step(1, 'Tap the <strong>Share</strong> button (the box with an arrow) at the bottom of your Safari browser.') +
+    step(2, 'Scroll down and tap <strong>Add to Home Screen</strong>.') +
+    step(3, 'Tap <strong>Add</strong> in the top right corner.') +
+    '<button id="a2hsGotIt" style="width:100%;margin-top:6px;padding:14px;background:var(--accent);color:var(--bg);border:none;border-radius:12px;font-family:\'DM Sans\',sans-serif;font-size:15px;font-weight:600;cursor:pointer">Got it</button>';
+
+  const dismiss = () => {
+    sheet.style.transform = 'translateY(100%)';
+    overlay.style.opacity = '0';
+    try { localStorage.setItem('forge-a2hs-shown', '1'); } catch (e) { /* quota */ }
+    setTimeout(() => { sheet.remove(); overlay.remove(); }, 320);
+  };
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(sheet);
+  overlay.addEventListener('click', dismiss);
+  sheet.querySelector('#a2hsGotIt').addEventListener('click', dismiss);
+
+  // Slide up + fade in after a tick so the initial translated/transparent state paints first.
+  setTimeout(() => { overlay.style.opacity = '1'; sheet.style.transform = 'translateY(0)'; }, 100);
+}
 
 async function checkPendingCoachRequests() {
   const res = await api('/api/my-pending-coach-request');
@@ -8454,16 +8570,27 @@ async function toggleFreezeUser(userId, freeze) {
 // Schedule repair removed — no longer needed
 
 
-const THEMES = ['dark-yellow', 'dark-blue', 'dark-green', 'midnight', 'light'];
+const THEMES = ['dark-yellow', 'dark-blue', 'dark-green', 'midnight', 'light', 'light-warm', 'light-slate'];
 
 function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('forge_theme', theme);
   document.querySelectorAll('.theme-swatch').forEach((s, i) => s.classList.toggle('active', THEMES[i] === theme));
-  const colors = { 'dark-yellow':'#0a0a0a','dark-blue':'#090d1a','dark-green':'#090f0a','midnight':'#05050f','light':'#f5f5f0' };
+  const colors = { 'dark-yellow':'#0a0a0a','dark-blue':'#090d1a','dark-green':'#090f0a','midnight':'#05050f','light':'#f5f5f0','light-warm':'#f5f0e8','light-slate':'#eef0f2' };
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', colors[theme] || '#0a0a0a');
   updateLogoFilter(theme);
   closeThemeDrawer();
+  // Persist to the profile so the theme follows the user across devices.
+  // Fire-and-forget; api() swallows failures (needs a `theme` column server-side to stick).
+  try { api('/api/profile', 'PATCH', { theme }).catch(() => {}); } catch (e) {}
+  // FIX 2: repaint JS-built UI that bakes colours in at render time, so nothing keeps a
+  // stale palette after a theme change. CSS-variable-driven elements update on their own.
+  try { if (typeof renderTrialBanner === 'function') renderTrialBanner(); } catch (e) {}
+  try {
+    if (document.getElementById('panel-coach')?.classList.contains('active') &&
+        typeof renderCoachCounter === 'function') renderCoachCounter();
+  } catch (e) {}
+  try { if (typeof forceRefreshCurrentPanel === 'function') forceRefreshCurrentPanel(); } catch (e) {}
 }
 
 function updateLogoFilter(theme) {
