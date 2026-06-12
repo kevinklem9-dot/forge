@@ -16101,57 +16101,62 @@ async function removeReminder() {
 }
 
 async function handleNotifTap() {
-  if (!('Notification' in window) ||
-      !('serviceWorker' in navigator)) {
-    showToast(t('notif_not_supported'), 'error');
-    return;
-  }
+  try {
+    if (!('Notification' in window) ||
+        !('serviceWorker' in navigator)) {
+      showToast(t('notif_not_supported'), 'error');
+      return;
+    }
 
-  const permission = Notification.permission;
+    const permission = Notification.permission;
 
-  if (permission === 'denied') {
-    showToast(t('notif_enable_instructions'),
-      'info', 6000);
-    return;
-  }
+    if (permission === 'denied') {
+      showToast(t('notif_enable_instructions'),
+        'info', 6000);
+      return;
+    }
 
-  // Check actual subscription state
-  // not just permission
-  const reg = await navigator.serviceWorker.ready;
-  const existingSub = await reg.pushManager
-    .getSubscription();
+    // Check actual subscription state
+    // not just permission
+    const reg = await navigator.serviceWorker.ready;
+    const existingSub = await reg.pushManager
+      .getSubscription();
 
-  if (existingSub) {
-    // HAS subscription — toggle OFF
-    await existingSub.unsubscribe();
-    await api('/api/push/subscribe', 'DELETE',
-      { endpoint: existingSub.endpoint })
-      .catch(() => {});
-    updateNotifToggle(false);
-    showToast(t('notif_disabled'), 'info');
-    return;
-  }
+    if (existingSub) {
+      // HAS subscription — toggle OFF
+      await existingSub.unsubscribe();
+      await api('/api/push/subscribe', 'DELETE',
+        { endpoint: existingSub.endpoint })
+        .catch(() => {});
+      updateNotifToggle(false);
+      showToast(t('notif_disabled'), 'info');
+      return;
+    }
 
-  // NO subscription — toggle ON
-  if (permission === 'granted') {
-    // Permission already granted, just subscribe
-    await initPushNotifications();
-    updateNotifToggle(true);
-    showToast(t('notif_enabled'), 'success');
-    return;
-  }
+    // NO subscription — toggle ON
+    if (permission === 'granted') {
+      // Permission already granted, just subscribe
+      await initPushNotifications();
+      updateNotifToggle(true);
+      showToast(t('notif_enabled'), 'success');
+      return;
+    }
 
-  // Need to request permission first
-  const result =
-    await Notification.requestPermission();
+    // Need to request permission first
+    const result =
+      await Notification.requestPermission();
 
-  if (result === 'granted') {
-    await initPushNotifications();
-    updateNotifToggle(true);
-    showToast(t('notif_enabled'), 'success');
-  } else {
-    updateNotifToggle(false);
-    showToast(t('notif_blocked'), 'info', 6000);
+    if (result === 'granted') {
+      await initPushNotifications();
+      updateNotifToggle(true);
+      showToast(t('notif_enabled'), 'success');
+    } else {
+      updateNotifToggle(false);
+      showToast(t('notif_blocked'), 'info', 6000);
+    }
+  } catch(e) {
+    console.error('[notif] handleNotifTap error:', e);
+    showToast('Notification error: ' + e.message, 'error');
   }
 }
 
