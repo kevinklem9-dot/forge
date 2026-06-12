@@ -7970,6 +7970,15 @@ function renderAccount() {
 
     </div>
   `;
+  // Async: update the notifications toggle from the ACTUAL push subscription state.
+  // renderAccount() runs synchronously and can only read Notification.permission; the
+  // real on/off is whether a pushManager subscription exists.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready
+      .then(reg => reg.pushManager.getSubscription())
+      .then(sub => { updateNotifToggle(!!sub); })
+      .catch(() => {});
+  }
   // Load referral section async
   renderReferralSection(document.getElementById('referralSection'));
   // Load coach sections async
@@ -16077,8 +16086,7 @@ async function removeReminder() {
 async function handleNotifTap() {
   if (!('Notification' in window) ||
       !('serviceWorker' in navigator)) {
-    showToast(t('notif_not_supported'),
-      'error');
+    showToast(t('notif_not_supported'), 'error');
     return;
   }
 
@@ -16090,39 +16098,39 @@ async function handleNotifTap() {
     return;
   }
 
-  if (permission === 'granted') {
-    // Toggle OFF — unsubscribe from push
-    const reg = await navigator.serviceWorker
-      .ready;
-    const sub = await reg.pushManager
-      .getSubscription();
-    if (sub) {
-      await sub.unsubscribe();
-      // Remove from server
-      await api('/api/push/subscribe', 'DELETE',
-        { endpoint: sub.endpoint })
-        .catch(() => {});
-    }
-    // Update toggle UI to off
+  // Check actual subscription state
+  // not just permission
+  const reg = await navigator.serviceWorker.ready;
+  const existingSub = await reg.pushManager
+    .getSubscription();
+
+  if (existingSub) {
+    // HAS subscription — toggle OFF
+    await existingSub.unsubscribe();
+    await api('/api/push/subscribe', 'DELETE',
+      { endpoint: existingSub.endpoint })
+      .catch(() => {});
     updateNotifToggle(false);
-    showToast(t('notif_disabled') ||
-      'Notifications disabled.', 'info');
+    showToast(t('notif_disabled'), 'info');
     return;
   }
 
-  // permission === 'default' — request it
+  // NO subscription — toggle ON
+  if (permission === 'granted') {
+    // Permission already granted, just subscribe
+    await initPushNotifications();
+    updateNotifToggle(true);
+    showToast(t('notif_enabled'), 'success');
+    return;
+  }
+
+  // Need to request permission first
   const result =
     await Notification.requestPermission();
 
   if (result === 'granted') {
     await initPushNotifications();
-    // Update toggle UI to on
     updateNotifToggle(true);
-    // FIX 3: re-render the account panel (if open) so the toggle reflects the new permission.
-    const panel = document.getElementById('panel-account');
-    if (panel && panel.style.display !== 'none') {
-      showPanel('account');
-    }
     showToast(t('notif_enabled'), 'success');
   } else {
     updateNotifToggle(false);
