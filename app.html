@@ -405,7 +405,7 @@ html,body { height:100%; overflow:hidden; overflow-x:hidden; overscroll-behavior
 /* Day picker circles (spec — available) */
 .ob-days { display:flex; gap:6px; padding:0 20px; justify-content:center; }
 .ob-day { width:42px; height:42px; border-radius:50%; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
-.ob-day.selected { background:var(--accent); border-color:var(--accent); color:#000; font-weight:700; }
+.ob-day.selected { background:var(--accent); border-color:var(--accent); color:var(--bg); font-weight:700; }
 
 /* Stepper (spec — available) */
 .ob-stepper { display:flex; align-items:center; justify-content:center; gap:24px; padding:20px; }
@@ -415,7 +415,7 @@ html,body { height:100%; overflow:hidden; overflow-x:hidden; overscroll-behavior
 
 /* Footer + continue button */
 .ob-footer { flex-shrink:0; }
-.ob-continue { margin:16px 20px 0; background:var(--accent); color:#000; font-family:'DM Mono',monospace; font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; border:none; border-radius:14px; padding:16px; width:calc(100% - 40px); cursor:pointer; flex-shrink:0; }
+.ob-continue { margin:16px 20px 0; background:var(--accent); color:var(--bg); font-family:'DM Mono',monospace; font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; border:none; border-radius:14px; padding:16px; width:calc(100% - 40px); cursor:pointer; flex-shrink:0; }
 .ob-continue:disabled { background:var(--border); color:var(--muted); }
 .ob-continue-note { font-family:'DM Sans',sans-serif; font-size:11px; color:var(--muted); text-align:center; margin-top:8px; padding-bottom:4px; }
 
@@ -544,7 +544,7 @@ nav.bottom-nav, .bottom-nav {
    below), which is why a tapped button appeared to show nothing. */
 .checkin-btn { background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:10px; padding:12px 16px; font-size:14px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.15s ease; -webkit-tap-highlight-color:transparent; }
 .checkin-btn:active { transform:scale(0.95); }
-.checkin-btn.selected { background:var(--accent); color:#000; font-weight:700; border-color:var(--accent); }
+.checkin-btn.selected { background:var(--accent); color:var(--bg); font-weight:700; border-color:var(--accent); }
 
 /* ── CHAT TABS ── */
 .chat-tabs { display:flex; align-items:center; background:var(--surface); border-bottom:1px solid var(--border-muted); padding:0 20px; flex-shrink:0; gap:4px; }
@@ -1501,7 +1501,7 @@ input:focus, textarea:focus, select:focus { outline: none; }
         <div id="myCoachThread" style="flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;"></div>
         <div id="myCoachInputBar" style="display:none;flex-shrink:0;padding:10px 14px;background:var(--bg);border-top:1px solid var(--border);gap:8px;align-items:flex-end;">
           <textarea id="myCoachMessageInput" data-testid="message-input" rows="1" placeholder="Message your coach…" style="flex:1;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:18px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;resize:none;max-height:120px;line-height:1.4;box-sizing:border-box;"></textarea>
-          <button onclick="sendMyCoachMessage()" id="myCoachSendBtn" data-testid="message-send-btn" style="padding:10px 18px;background:var(--accent);color:#000;border:none;border-radius:18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Send</button>
+          <button onclick="sendMyCoachMessage()" id="myCoachSendBtn" data-testid="message-send-btn" style="padding:10px 18px;background:var(--accent);color:var(--bg);border:none;border-radius:18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Send</button>
         </div>
       </div>
 
@@ -2541,7 +2541,7 @@ function featuresSectionInner() {
     </div>`;
   }).join('');
   const applyBtn = changed
-    ? `<button id="applyFeaturesBtn" onclick="applyFeatureChanges(this)" style="width:100%;background:var(--accent);color:#000;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;border-radius:10px;padding:14px;margin:4px 0 16px;border:none;cursor:pointer;">Apply changes</button>`
+    ? `<button id="applyFeaturesBtn" onclick="applyFeatureChanges(this)" style="width:100%;background:var(--accent);color:var(--bg);font-family:'DM Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;border-radius:10px;padding:14px;margin:4px 0 16px;border:none;cursor:pointer;">Apply changes</button>`
     : '<div style="height:8px;"></div>';
   return rows + applyBtn;
 }
@@ -2625,7 +2625,7 @@ function showEnableCoachGate(connectionId) {
     </div>
     <div style="padding:22px 20px;flex:1;">
       <div style="font-size:15px;color:var(--text);line-height:1.6;margin-bottom:20px;">A coach wants to connect with you. Enable the Human Coach feature to accept.</div>
-      <button onclick="enableHumanCoachThenAccept('${escHtml(connectionId || '')}')" style="width:100%;padding:14px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">Enable Human Coach</button>
+      <button onclick="enableHumanCoachThenAccept('${escHtml(connectionId || '')}')" style="width:100%;padding:14px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">Enable Human Coach</button>
       <button onclick="document.getElementById('coachRequestOverlay').remove()" style="width:100%;padding:13px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">Not now</button>
     </div>
   `;
@@ -3175,7 +3175,7 @@ function renderObStep() {
       const sel = obData.sport_training_days.includes(d);
       const borderColor = sel ? 'var(--accent)' : 'var(--border)';
       const textColor = sel ? 'var(--accent)' : 'var(--text)';
-      const badge = sel ? '<span style="font-size:11px;background:var(--accent);color:#000;padding:2px 8px;border-radius:20px;font-family:DM Mono,monospace;font-weight:600">SPORT</span>' : '';
+      const badge = sel ? '<span style="font-size:11px;background:var(--accent);color:var(--bg);padding:2px 8px;border-radius:20px;font-family:DM Mono,monospace;font-weight:600">SPORT</span>' : '';
       return '<div class="ob-day-row" data-day="' + d + '" style="background:var(--surface);border:2px solid ' + borderColor + ';border-radius:10px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:all 0.15s;user-select:none;-webkit-user-select:none">'
         + '<span style="font-size:14px;font-weight:600;color:' + textColor + '">' + label + '</span>'
         + badge
@@ -3756,7 +3756,7 @@ function renderCoachTrialExpiredPaywall() {
       ${planCard('starter', 'Starter', ['Up to 10 clients', 'Client dashboard', '10% commission'])}
       ${planCard('pro', 'Pro', ['Up to 30 clients', 'Template library', '15% commission'])}
       ${planCard('elite', 'Elite', ['Unlimited clients', 'Priority support', '20% commission'])}
-      <button id="coachExpiredContinueBtn" onclick="continueCoachAfterTrial()" style="width:100%;padding:14px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:14px;">Continue with ${escHtml(planNames[_coachExpiredState.plan] || 'Pro')}</button>
+      <button id="coachExpiredContinueBtn" onclick="continueCoachAfterTrial()" style="width:100%;padding:14px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:14px;">Continue with ${escHtml(planNames[_coachExpiredState.plan] || 'Pro')}</button>
       <button onclick="downgradeCoachFromExpired()" style="width:100%;margin-top:10px;padding:11px;background:transparent;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;">Downgrade to individual plan</button>
     </div>
   `;
@@ -3973,7 +3973,7 @@ function injectDay7Prompt() {
   wrapper.innerHTML =
     '<div style="margin-bottom:16px;line-height:1.6;">Seven days in. Your first programme is built. Your nutrition plan is live.<br><br>Before we talk about what\'s next — how has this felt so far? I\'d love to hear it.</div>' +
     '<div style="display:flex;gap:8px;margin-top:12px;">' +
-      '<button onclick="openFeedbackModal()" style="flex:1;padding:10px;background:var(--accent);color:#000;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:DM Sans,sans-serif;">Share my experience</button>' +
+      '<button onclick="openFeedbackModal()" style="flex:1;padding:10px;background:var(--accent);color:var(--bg);border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:DM Sans,sans-serif;">Share my experience</button>' +
       '<button onclick="dismissDay7Prompt(this)" style="flex:1;padding:10px;background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:9px;font-size:13px;cursor:pointer;font-family:DM Sans,sans-serif;">Skip for now</button>' +
     '</div>';
   addMessage(wrapper.innerHTML, 'ai');
@@ -3995,7 +3995,7 @@ function openFeedbackModal() {
       <div style="font-family:'DM Sans',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px;">How has FORGE felt so far?</div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Write anything — honest feedback helps.</div>
       <textarea id="feedbackText" style="width:100%;height:120px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;resize:none;box-sizing:border-box;" placeholder="Write anything — honest feedback helps."></textarea>
-      <button onclick="submitFeedback()" style="width:100%;margin-top:12px;padding:13px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Send</button>
+      <button onclick="submitFeedback()" style="width:100%;margin-top:12px;padding:13px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Send</button>
       <button onclick="document.getElementById('feedbackModal').remove()" style="width:100%;margin-top:8px;padding:13px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">Cancel</button>
     </div>
   `;
@@ -4052,7 +4052,7 @@ async function openFoundingMemberPage() {
         ${steelLeft > 0 ? `<button onclick="claimFoundingMember('steel')" style="width:100%;padding:13px;background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Claim Steel Lifetime</button>` : `<button disabled style="width:100%;padding:13px;background:var(--border);color:var(--muted);border:none;border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;cursor:not-allowed;">Sold out</button>`}
       </div>
       <div style="text-align:center;font-size:12px;color:var(--muted);margin:12px 0;">Same 30-day money-back guarantee. Same product. One payment.</div>
-      ` : `<div style="text-align:center;padding:20px;"><button onclick="openUpgradeSheet()" style="padding:13px 24px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">See monthly and annual plans</button></div>`}
+      ` : `<div style="text-align:center;padding:20px;"><button onclick="openUpgradeSheet()" style="padding:13px 24px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">See monthly and annual plans</button></div>`}
       <div style="text-align:center;margin-top:8px;">
         <button onclick="document.getElementById('foundingMemberSheet').remove();openUpgradeSheet();" style="background:transparent;border:none;color:var(--muted);font-size:13px;cursor:pointer;text-decoration:underline;font-family:'DM Sans',sans-serif;">See monthly and annual plans instead</button>
       </div>
@@ -4083,7 +4083,7 @@ async function renderReferralSection(container) {
       <div style="font-size:14px;color:var(--text);margin-bottom:16px;line-height:1.6;">${t('share_forge_desc')}</div>
       <div style="display:flex;gap:8px;margin-bottom:12px;">
         <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${referralUrl}</div>
-        <button onclick="copyReferralLink('${referralUrl}')" style="background:var(--accent);color:#000;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">${t('share_copy')}</button>
+        <button onclick="copyReferralLink('${referralUrl}')" style="background:var(--accent);color:var(--bg);border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">${t('share_copy')}</button>
       </div>
       <button onclick="shareReferralLink('${referralUrl}')" style="width:100%;padding:13px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:16px;">${t('share_share')} →</button>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;justify-content:space-between;text-align:center;">
@@ -4146,6 +4146,88 @@ function checkDay4FoundingNotification() {
 // so the same day-card + exercise rendering serves both sources.
 window._planPanelDays = window._planPanelDays || null;
 
+// ── PLAN PANEL ENRICHMENT (today card · colourful chips · per-day progress · streak) ──
+// Week set-counts are keyed by weekday (0=Mon..6=Sun) so a logged session maps to the
+// plan day with the matching day_index. Streak comes from /api/stats. Both are optional
+// progressive enhancements — the panel renders immediately and these fill in when ready.
+window._planWeekSets = window._planWeekSets || null;   // { [dayIndex]: loggedSetsThisWeek }
+window._planStreak   = (typeof window._planStreak === 'number') ? window._planStreak : null;
+let _planEnrichBusy = false;
+
+function _planIsLight() {
+  return ['light','light-warm','light-slate'].includes(document.documentElement.getAttribute('data-theme'));
+}
+
+// Today's weekday as 0=Mon..6=Sun.
+function _todayIdx() { const d = new Date().getDay(); return d === 0 ? 6 : d - 1; }
+
+// Muscle-group category for an exercise → coloured pill. Derived from the exercise name
+// plus the day's muscle list. Order matters: leg/hinge keywords win before the pull
+// bucket so RDLs / hip thrusts read as Legs, not Pull.
+function _exCategory(name, dayMuscles) {
+  const s = ((name || '') + ' ' + (Array.isArray(dayMuscles) ? dayMuscles.join(' ') : (dayMuscles || ''))).toLowerCase();
+  const has = arr => arr.some(k => s.includes(k));
+  if (has(['cardio','run','bike','sprint','treadmill','rower','rowing machine','conditioning','hiit','jump rope','elliptical'])) return 'cardio';
+  if (has(['squat','lunge','leg ','legs','quad','hamstring','glute','calf','rdl','romanian','hip thrust','leg press','leg curl','leg extension','step up','bulgarian'])) return 'legs';
+  if (has(['core','abs','ab ','plank','crunch','oblique','sit-up','sit up','hanging','knee raise','leg raise','rollout'])) return 'core';
+  if (has(['back','row','pull','lat','bicep','curl','deadlift','chin','pulldown','face pull','shrug','rear delt'])) return 'pull';
+  if (has(['chest','bench','shoulder','press','push','tricep','dip','fly','lateral','ohp','overhead','incline','pec'])) return 'push';
+  return null;
+}
+
+function _categoryPill(cat) {
+  if (!cat) return '';
+  const light = _planIsLight();
+  const SETS = {
+    push:   light ? ['#ddeeff','#1a5ab8'] : ['#1a3a6b','#4d9fff'],
+    pull:   light ? ['#ddf5ea','#1a6b42'] : ['#1a3a2a','#39d98a'],
+    legs:   light ? ['#fff0dd','#8a5000'] : ['#3a2a1a','#ff9500'],
+    core:   light ? ['#f0ddf5','#6a1a8a'] : ['#3a1a3a','#bf9fff'],
+    cardio: light ? ['#ffdde0','#8a1a1a'] : ['#3a1a1a','#ff6b6b'],
+  };
+  const [bg, fg] = SETS[cat];
+  const label = cat.charAt(0).toUpperCase() + cat.slice(1);
+  return `<span class="tag" style="background:${bg};color:${fg};border:none;font-weight:600;">${label}</span>`;
+}
+
+async function loadPlanPanelEnrichment() {
+  // Per-day logged sets for the current week (Mon-anchored).
+  try {
+    const now = new Date();
+    const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - _todayIdx());
+    weekStart.setHours(0,0,0,0);
+    const res = await api('/api/sessions?limit=50');
+    const sessions = res?.sessions || [];
+    const map = {};
+    sessions.forEach(s => {
+      if (!s.logged_at) return;
+      const ld = new Date(s.logged_at);
+      if (ld < weekStart) return;
+      const wd = ld.getDay() === 0 ? 6 : ld.getDay() - 1;
+      const sets = (Array.isArray(s.exercises) ? s.exercises : [])
+        .reduce((n, ex) => n + (Array.isArray(ex.sets_data) ? ex.sets_data.length : 0), 0);
+      map[wd] = (map[wd] || 0) + sets;
+    });
+    window._planWeekSets = map;
+  } catch (e) { /* non-critical */ }
+  // Streak (separate endpoint, also non-critical).
+  try {
+    const st = await api('/api/stats');
+    if (st && typeof st.streak === 'number') window._planStreak = st.streak;
+  } catch (e) { /* non-critical */ }
+}
+
+// Fire-and-forget: refresh enrichment, then re-render the day list once data arrives.
+// Re-renders from the cached days (no programme refetch) so selection is preserved.
+function refreshPlanEnrichment() {
+  if (_planEnrichBusy) return;
+  _planEnrichBusy = true;
+  loadPlanPanelEnrichment().finally(() => {
+    _planEnrichBusy = false;
+    if (window._planPanelDays) renderPlanDays(window._planPanelDays, window._planPanelLabel);
+  });
+}
+
 async function renderWorkoutPanel() {
   const sub = document.getElementById('workout-sub');
   const scroll = document.getElementById('dayScroll');
@@ -4158,6 +4240,7 @@ async function renderWorkoutPanel() {
   if (active && active.type === 'custom' && active.days && active.days.length) {
     if (sub) sub.textContent = '';
     renderPlanDays(active.days, active.name || 'Custom Programme');
+    refreshPlanEnrichment();
     return;
   }
 
@@ -4180,6 +4263,7 @@ async function renderWorkoutPanel() {
   const plan = userPlan.workout_plan;
   if (sub) sub.textContent = (plan.split_name || '') + (plan.split_description ? ' — ' + plan.split_description : '');
   renderPlanDays(plan.days, null);
+  refreshPlanEnrichment();
 }
 
 // Renders the Plan-panel day cards from `days` (custom or AI). `customLabel` (the
@@ -4188,27 +4272,81 @@ async function renderWorkoutPanel() {
 // "day-chip" class + selectDay(i) handler + markup, so renderExercises() is unchanged.
 function renderPlanDays(days, customLabel) {
   window._planPanelDays = days;
+  window._planPanelLabel = customLabel;
   // A custom programme may have fewer days than the weekday-derived default — clamp.
   if (typeof selectedDay !== 'number' || selectedDay >= days.length || selectedDay < 0) selectedDay = 0;
   const scroll = document.getElementById('dayScroll');
+  if (!scroll) return;
+
+  const todayIdx = _todayIdx();
+  const week = window._planWeekSets || {};
+
+  // Streak badge (plan header) — only when a streak is running.
+  const streak = window._planStreak;
+  const streakHtml = (typeof streak === 'number' && streak > 0)
+    ? `<div style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--accent);font-family:'DM Mono',monospace;margin-bottom:12px;">🔥 ${streak} ${t('day_streak').toLowerCase()}</div>`
+    : '';
+
+  // Today's workout card — headline for the panel.
+  const todayDay = days.find(d => d.day_index === todayIdx) || days[todayIdx] || null;
+  let todayHtml = '';
+  if (todayDay) {
+    const tEx = todayDay.exercises?.length || 0;
+    const tSets = (todayDay.exercises || []).reduce((n, e) => n + (parseInt(e.sets) || 0), 0);
+    const tMuscles = Array.isArray(todayDay.muscles) ? todayDay.muscles.join(' · ') : (todayDay.muscles || '');
+    const tTitle = todayDay.label || todayDay.day_name || (tEx ? 'Training' : t('rest'));
+    const tMetaSub = tEx
+      ? `${tEx} ${tEx === 1 ? 'exercise' : 'exercises'} · ${tSets} ${tSets === 1 ? 'set' : 'sets'}`
+      : t('rest_day').replace(/<br>/g, ' ');
+    todayHtml = `<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:12px;padding:16px 18px;margin-bottom:12px;">
+      <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:2px;margin-bottom:6px;">TODAY</div>
+      <div style="font-size:16px;font-weight:600;color:var(--text);">${escHtml(tTitle)}${tMuscles ? ' — ' + escHtml(tMuscles) : ''}</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px;">${tMetaSub}</div>
+    </div>`;
+  }
+
   const labelHtml = customLabel
     ? `<div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;">${escHtml(customLabel)} · CUSTOM</div>`
     : '';
-  if (scroll) scroll.innerHTML = `<div style="width:100%;display:flex;flex-direction:column;gap:10px;">` + labelHtml + days.map((d, i) => {
+
+  scroll.innerHTML = `<div style="width:100%;display:flex;flex-direction:column;gap:10px;">`
+    + streakHtml + todayHtml + labelHtml + days.map((d, i) => {
     const shortName = (d.day_name || '').slice(0, 3).toUpperCase() || ['MON','TUE','WED','THU','FRI','SAT','SUN'][d.day_index] || '—';
     const isRest = !d.exercises?.length;
     const isActive = i === selectedDay;
+    const isToday = typeof d.day_index === 'number' && d.day_index === todayIdx;
     const muscles = Array.isArray(d.muscles) ? d.muscles.join(' · ') : (d.muscles || '');
     const exCount = d.exercises?.length || 0;
-    return `<div class="day-chip ${isActive ? 'active' : ''} ${isRest ? 'rest' : ''}" onclick="selectDay(${i})" style="display:flex;align-items:center;gap:14px;width:100%;min-width:0;text-align:left;padding:14px 16px;border-radius:14px;">
+
+    // Per-state chip colours (#2): active = accent fill w/ --bg text; rest = muted +
+    // dashed border; others = surface2.
+    const chipBg     = isActive ? 'var(--accent)' : (isRest ? 'var(--surface)' : 'var(--surface2)');
+    const chipBorder = isActive ? 'solid var(--accent)' : (isRest ? 'dashed var(--border)' : 'solid var(--border)');
+    const cMain = isActive ? 'var(--bg)' : 'var(--text)';
+    const cSub  = isActive ? 'var(--bg)' : 'var(--muted)';
+
+    // Per-day progress bar (#4): logged sets this week vs planned total. Shown only when
+    // something has been logged for that weekday.
+    const totalSets  = (d.exercises || []).reduce((n, e) => n + (parseInt(e.sets) || 0), 0);
+    const loggedSets = (typeof d.day_index === 'number' ? week[d.day_index] : 0) || 0;
+    const pct = totalSets > 0 ? Math.min(100, Math.round(loggedSets / totalSets * 100)) : 0;
+    const barTrack = isActive ? 'rgba(0,0,0,0.18)' : 'var(--surface2)';
+    const barFill  = isActive ? 'var(--bg)' : 'var(--accent)';
+    const progressHtml = (loggedSets > 0 && totalSets > 0)
+      ? `<div style="height:3px;border-radius:2px;background:${barTrack};margin-top:8px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${barFill};border-radius:2px;"></div></div>
+        <div style="font-family:var(--font-mono);font-size:8px;color:${cSub};letter-spacing:1px;margin-top:3px;${isActive ? 'opacity:0.85;' : ''}">${loggedSets}/${totalSets} sets</div>`
+      : '';
+
+    return `<div class="day-chip ${isActive ? 'active' : ''} ${isRest ? 'rest' : ''}" onclick="selectDay(${i})" style="display:flex;align-items:center;gap:14px;width:100%;min-width:0;text-align:left;padding:14px 16px;border-radius:14px;background:${chipBg};border:1px ${chipBorder};">
       <div style="flex:1;min-width:0;">
-        <div style="font-family:var(--font-mono);font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:2px;">${shortName}</div>
-        <div style="font-family:var(--font-body);font-size:15px;color:var(--text);font-weight:500;margin-top:3px;">${d.label || (isRest ? t('rest') : '—')}</div>
-        ${Array.isArray(d.scheduled_days) && d.scheduled_days.length ? `<div style="font-family:var(--font-mono);font-size:8px;color:var(--muted);letter-spacing:1px;margin-top:4px;">${d.scheduled_days.map(sd => sd.slice(0,3).toUpperCase()).join(' · ')}</div>` : ''}
-        ${muscles ? `<div style="font-family:var(--font-body);font-size:12px;color:var(--muted);margin-top:2px;">${muscles}</div>` : ''}
-        <div style="font-family:var(--font-mono);font-size:9px;color:var(--dim);letter-spacing:1px;margin-top:6px;">${isRest ? t('rest').toUpperCase() : exCount + (exCount === 1 ? ' EXERCISE' : ' EXERCISES')}</div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:${cSub};text-transform:uppercase;letter-spacing:2px;">${shortName}${isToday ? ' · TODAY' : ''}</div>
+        <div style="font-family:var(--font-body);font-size:15px;color:${cMain};font-weight:500;margin-top:3px;">${d.label || (isRest ? t('rest') : '—')}</div>
+        ${Array.isArray(d.scheduled_days) && d.scheduled_days.length ? `<div style="font-family:var(--font-mono);font-size:8px;color:${cSub};letter-spacing:1px;margin-top:4px;">${d.scheduled_days.map(sd => sd.slice(0,3).toUpperCase()).join(' · ')}</div>` : ''}
+        ${muscles ? `<div style="font-family:var(--font-body);font-size:12px;color:${cSub};margin-top:2px;">${muscles}</div>` : ''}
+        <div style="font-family:var(--font-mono);font-size:9px;color:${cSub};letter-spacing:1px;margin-top:6px;">${isRest ? t('rest').toUpperCase() : exCount + (exCount === 1 ? ' EXERCISE' : ' EXERCISES')}</div>
+        ${progressHtml}
       </div>
-      <div style="font-family:var(--font-mono);font-size:18px;color:var(--dim);flex-shrink:0;">›</div>
+      <div style="font-family:var(--font-mono);font-size:18px;color:${cSub};flex-shrink:0;">›</div>
     </div>`;
   }).join('') + `</div>`;
 
@@ -4217,8 +4355,10 @@ function renderPlanDays(days, customLabel) {
 
 function selectDay(idx) {
   selectedDay = idx;
-  document.querySelectorAll('.day-chip').forEach((c, i) => c.classList.toggle('active', i === idx));
-  renderExercises();
+  // Re-render the day list so the active-chip accent styling moves with the selection
+  // (chip colour state now lives in inline styles, not just the .active class).
+  if (window._planPanelDays) renderPlanDays(window._planPanelDays, window._planPanelLabel);
+  else { document.querySelectorAll('.day-chip').forEach((c, i) => c.classList.toggle('active', i === idx)); renderExercises(); }
   // After the day's exercises render, smooth-scroll the list into view. The 150ms
   // delay lets the freshly-rendered exercise cards paint before we scroll to them.
   setTimeout(() => {
@@ -4241,13 +4381,16 @@ function renderExercises() {
 
   // note / rest / rpe are guarded — a custom programme's exercises may carry no note
   // and a null rpe, which would otherwise render an empty note row or "RPE null".
-  el.innerHTML = day.exercises.map((e, i) => `
+  el.innerHTML = day.exercises.map((e, i) => {
+    const catPill = _categoryPill(_exCategory(e.name, day.muscles));
+    return `
     <div class="exercise-card" onclick="showExerciseModal(${i})" style="cursor:pointer">
       <div class="ex-num">${i + 1}</div>
       <div class="ex-body">
         <div class="ex-name">${escHtml(e.name)}</div>
         ${e.note ? `<div class="ex-note">${escHtml(e.note)}</div>` : ''}
         <div class="ex-tags">
+          ${catPill}
           <span class="tag sets">${e.sets} × ${e.reps}</span>
           ${e.rest ? `<span class="tag">${t('rest')} ${e.rest}</span>` : ''}
           ${(e.rpe !== null && e.rpe !== undefined && e.rpe !== '') ? `<span class="tag rpe-${e.rpe}">RPE ${e.rpe}</span>` : ''}
@@ -4255,7 +4398,8 @@ function renderExercises() {
         </div>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -4331,7 +4475,7 @@ async function renderLog() {
     Build a programme first so you have something
     to log against.</div>
   <button onclick="openProgrammes()" style="
-    background:var(--accent);color:#000;
+    background:var(--accent);color:var(--bg);
     font-family:'DM Mono',monospace;font-size:11px;
     font-weight:700;letter-spacing:1.5px;
     text-transform:uppercase;border:none;
@@ -4412,7 +4556,7 @@ function renderSetRow(exIdx, setIdx, setData, totalSets) {
   // v2: set-row styling (mockup Panel 3) — set badge, dark input wells, kg/reps units,
   // accent BW pill. All ids (log-set/lw/lr) + handlers (toggleBodyweight/updateSetData/
   // autoSaveLog/removeSet) preserved; only markup + inline CSS changed.
-  const bwActiveStyle = 'background:var(--accent);color:#000;border:1px solid var(--accent);';
+  const bwActiveStyle = 'background:var(--accent);color:var(--bg);border:1px solid var(--accent);';
   const bwIdleStyle = 'background:var(--surface2);color:var(--dim);border:1px solid var(--border);';
   return `
     <div class="log-set-row" id="log-set-${exIdx}-${setIdx}" style="padding:8px 12px;gap:8px;">
@@ -5009,7 +5153,7 @@ function renderShoppingList() {
           return `<div onclick="toggleShoppingTick('${itemKey.replace(/'/g, '')}')" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity 0.2s;${isTicked ? 'opacity:0.4;' : ''}">
             <div style="display:flex;align-items:center;gap:10px">
               <div style="width:20px;height:20px;border:2px solid ${isTicked ? 'var(--accent)' : 'var(--border)'};border-radius:5px;flex-shrink:0;background:${isTicked ? 'var(--accent)' : 'transparent'};display:flex;align-items:center;justify-content:center;transition:all 0.15s">
-                ${isTicked ? '<span style="color:#000;font-size:13px;font-weight:700;line-height:1">✓</span>' : ''}
+                ${isTicked ? '<span style="color:var(--bg);font-size:13px;font-weight:700;line-height:1">✓</span>' : ''}
               </div>
               <span style="font-size:14px;${isTicked ? 'text-decoration:line-through;color:var(--muted);' : ''}">${item.name}</span>
             </div>
@@ -6767,7 +6911,7 @@ function injectCoachLimitMessage() {
   div.innerHTML = '<strong>' + t('coach_limit_title') + '</strong><br><br>' + t('coach_limit_msg');
   const btn = document.createElement('button');
   btn.textContent = t('coach_limit_btn');
-  btn.style.cssText = 'display:block;width:100%;padding:11px;background:var(--accent);color:#000;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:DM Sans,sans-serif;margin-top:12px;';
+  btn.style.cssText = 'display:block;width:100%;padding:11px;background:var(--accent);color:var(--bg);border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:DM Sans,sans-serif;margin-top:12px;';
   btn.onclick = function() { openUpgradeSheet('steel'); };
   const wrapper = document.createElement('div');
   wrapper.appendChild(div);
@@ -6966,7 +7110,7 @@ function renderUpgradeSheetContent(highlightTier) {
       #upgradeSheet .us-card.us-recommended { border-color:var(--border);background:var(--surface2);box-shadow:0 4px 30px rgba(0,0,0,0.1),0 0 0 1px rgba(0,0,0,0.1) inset;transform:scale(1.02); }
       #upgradeSheet .us-card.us-forge { border-color:rgba(232,255,61,0.3);background:rgba(232,255,61,0.03);box-shadow:0 4px 24px rgba(232,255,61,0.06),0 0 0 1px rgba(232,255,61,0.08) inset; }
       #upgradeSheet .us-badge { position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 12px;border-radius:20px;letter-spacing:1px;white-space:nowrap; }
-      #upgradeSheet .us-badge-current { background:var(--accent);color:#000; }
+      #upgradeSheet .us-badge-current { background:var(--accent);color:var(--bg); }
       #upgradeSheet .us-badge-rec { background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;box-shadow:0 2px 12px rgba(255,215,0,0.4); }
       #upgradeSheet .us-card-row { display:flex;justify-content:space-between;align-items:center;margin-bottom:12px; }
       #upgradeSheet .us-tier-name { font-size:17px;font-weight:700; }
@@ -6981,7 +7125,7 @@ function renderUpgradeSheetContent(highlightTier) {
       #upgradeSheet .us-btn-current { background:var(--surface2);color:var(--muted);border:2px solid var(--accent);cursor:default; }
       #upgradeSheet .us-btn-current:active { transform:none; }
       #upgradeSheet .us-btn-steel { background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;box-shadow:0 4px 20px rgba(255,215,0,0.3); }
-      #upgradeSheet .us-btn-forge { background:var(--accent);color:#000;box-shadow:0 4px 20px rgba(232,255,61,0.2); }
+      #upgradeSheet .us-btn-forge { background:var(--accent);color:var(--bg);box-shadow:0 4px 20px rgba(232,255,61,0.2); }
       #upgradeSheet .us-btn-ghost { background:var(--surface2);color:var(--text);border:1px solid var(--border); }
       #upgradeSheet .us-close { display:block;width:100%;padding:13px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:14px;cursor:pointer;margin-top:8px;font-family:'DM Sans',sans-serif;transition:all 0.15s; }
       #upgradeSheet .us-close:active { transform:scale(0.98); }
@@ -7188,7 +7332,7 @@ async function handleUpgradeClick(tier) {
             : `You're currently on ${currentLabel}. Upgrading to ${newLabel} will be charged on a pro-rated basis immediately.`
           }
         </div>
-        <button onclick="this.closest('div[style]').remove();manageTierSwitch('${tier}')" style="display:block;width:100%;padding:13px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">
+        <button onclick="this.closest('div[style]').remove();manageTierSwitch('${tier}')" style="display:block;width:100%;padding:13px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">
           Manage in billing portal
         </button>
         <button onclick="this.closest('div[style]').remove()" style="display:block;width:100%;padding:12px;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:10px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">
@@ -7244,7 +7388,7 @@ async function handleUpgradeClick(tier) {
       <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">You have ${daysLeft} day${daysLeft === 1 ? '' : 's'} left in your trial. You won't be charged until it ends.</div>
       <div style="display:flex;gap:8px;">
         <button onclick="this.closest('div[style]').remove()" style="flex:1;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">Continue trial</button>
-        <button onclick="this.closest('div[style]').remove();startCheckout('${tier}','${billing}',${isPromo})" style="flex:1;padding:10px;background:var(--accent);color:#000;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Pay now${isPromo ? ' (promo)' : ''}</button>
+        <button onclick="this.closest('div[style]').remove();startCheckout('${tier}','${billing}',${isPromo})" style="flex:1;padding:10px;background:var(--accent);color:var(--bg);border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Pay now${isPromo ? ' (promo)' : ''}</button>
       </div>
     `;
     document.body.appendChild(toast);
@@ -7284,7 +7428,7 @@ function showLockedFeature(featureName, requiredTier) {
       <div style="font-size:36px;margin-bottom:12px;">🔒</div>
       <div style="font-size:18px;font-weight:700;margin-bottom:8px;">${featureName}</div>
       <div style="font-size:14px;color:var(--muted);margin-bottom:20px;">This feature is available on the ${tierLabel} plan and above.</div>
-      <button onclick="document.getElementById('lockedModal').remove();openUpgradeSheet('${requiredTier}')" style="display:block;width:100%;padding:13px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">
+      <button onclick="document.getElementById('lockedModal').remove();openUpgradeSheet('${requiredTier}')" style="display:block;width:100%;padding:13px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">
         Upgrade to ${tierLabel}
       </button>
       <button onclick="document.getElementById('lockedModal').remove()" style="display:block;width:100%;padding:12px;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">
@@ -7334,7 +7478,7 @@ async function renderProgrammes() {
   // Save-current button: disabled at limit (Steel cap). Steel also shows slots used.
   const saveBtn = atLimit
     ? `<button onclick="programmeLimitToast()" title="You've reached your 3 programme limit on Steel. Upgrade to Forge for unlimited programmes." style="width:100%;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:not-allowed;font-family:'DM Sans',sans-serif;margin-bottom:16px;">${t('prog_limit_reached')}</button>`
-    : `<button onclick="showNewProgrammeModal()" style="width:100%;background:var(--accent);color:#000;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:16px;">${t('prog_save_current')}</button>`;
+    : `<button onclick="showNewProgrammeModal()" style="width:100%;background:var(--accent);color:var(--bg);border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:16px;">${t('prog_save_current')}</button>`;
 
   const slotsLine = (tier === 'steel')
     ? `<div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.5px;margin-top:14px;text-align:center;">${t('prog_slots_used', { n: progs.length })}</div>`
@@ -7358,7 +7502,7 @@ function programmeCard(p) {
     ? `<button onclick="editProgrammeWorkouts('${p.id}')" style="flex:1;min-width:120px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">${t('prog_edit')}</button>`
     : `<button onclick="viewProgrammeWorkouts('${p.id}')" style="flex:1;min-width:120px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">${t('prog_view')}</button>`;
   const switchDelete = !p.is_active
-    ? `<button onclick="switchProgramme('${p.id}', this)" style="flex:1;min-width:120px;background:var(--accent);color:#000;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">${t('prog_switch')}</button>
+    ? `<button onclick="switchProgramme('${p.id}', this)" style="flex:1;min-width:120px;background:var(--accent);color:var(--bg);border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">${t('prog_switch')}</button>
           <button onclick="deleteProgramme('${p.id}')" style="background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);color:var(--red);border-radius:8px;padding:9px 16px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">${t('prog_delete')}</button>`
     : '';
   return `
@@ -7366,7 +7510,7 @@ function programmeCard(p) {
       <div onclick="showRenameProgrammeModal('${p.id}')" style="cursor:pointer;">
         <div style="font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           ${escHtml(p.name)}
-          ${p.is_active ? '<span style="font-size:9px;background:var(--accent);color:#000;padding:2px 8px;border-radius:20px;font-family:DM Mono,monospace;letter-spacing:0.5px;">' + t('prog_active') + '</span>' : ''}
+          ${p.is_active ? '<span style="font-size:9px;background:var(--accent);color:var(--bg);padding:2px 8px;border-radius:20px;font-family:DM Mono,monospace;letter-spacing:0.5px;">' + t('prog_active') + '</span>' : ''}
           <span style="font-size:12px;color:var(--muted);">✎</span>
         </div>
         ${p.description ? `<div style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.4;">${escHtml(p.description)}</div>` : ''}
@@ -7441,7 +7585,7 @@ function showNewProgrammeModal() {
       <input id="progNameInput" placeholder="e.g. Bulk Phase, Competition Prep" style="${inStyle}">
       <textarea id="progDescInput" placeholder="Description (optional)" rows="2" style="${inStyle}resize:none;"></textarea>
       <div style="display:flex;gap:10px;">
-        <button onclick="saveCurrentProgramme()" style="flex:1;padding:12px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Save</button>
+        <button onclick="saveCurrentProgramme()" style="flex:1;padding:12px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Save</button>
         <button onclick="document.getElementById('newProgModal').remove()" style="flex:1;padding:12px;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">Cancel</button>
       </div>
     </div>`;
@@ -7487,7 +7631,7 @@ function showRenameProgrammeModal(id) {
       <input id="renameNameInput" placeholder="Programme name" style="${inStyle}">
       <textarea id="renameDescInput" placeholder="Description (optional)" rows="2" style="${inStyle}resize:none;"></textarea>
       <div style="display:flex;gap:10px;">
-        <button onclick="submitRenameProgramme('${id}')" style="flex:1;padding:12px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Save</button>
+        <button onclick="submitRenameProgramme('${id}')" style="flex:1;padding:12px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Save</button>
         <button onclick="document.getElementById('renameProgModal').remove()" style="flex:1;padding:12px;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">Cancel</button>
       </div>
     </div>`;
@@ -7630,7 +7774,7 @@ function renderAccount() {
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
           <div style="display:flex;align-items:center;min-width:0;">
             <span style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;color:var(--text);">${tierLabel[displayTier] || 'Iron'}</span>
-            <span style="font-family:'DM Mono',monospace;font-size:9px;color:#000;background:var(--accent);border-radius:6px;padding:3px 8px;text-transform:uppercase;letter-spacing:0.5px;margin-left:8px;">${planBadge}</span>
+            <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--bg);background:var(--accent);border-radius:6px;padding:3px 8px;text-transform:uppercase;letter-spacing:0.5px;margin-left:8px;">${planBadge}</span>
           </div>
         </div>
         <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px;">${statusText}</div>
@@ -7661,7 +7805,7 @@ function renderAccount() {
           <div style="font-size:11px;color:var(--muted);margin-top:6px;">${t('resets_monthly')}</div>
         </div>` : ''}
 
-        <button onclick="openUpgradeSheet()" style="width:100%;background:var(--accent);color:#000;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;border-radius:10px;padding:14px;margin-top:12px;border:none;cursor:pointer;">${displayTier === 'forge' && sub.isExempt ? t('view_plans') : t('upgrade')}</button>
+        <button onclick="openUpgradeSheet()" style="width:100%;background:var(--accent);color:var(--bg);font-family:'DM Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;border-radius:10px;padding:14px;margin-top:12px;border:none;cursor:pointer;">${displayTier === 'forge' && sub.isExempt ? t('view_plans') : t('upgrade')}</button>
       </div>
 
       ${sub.status === 'active' && sub.stripe_subscription_id ? `
@@ -7669,7 +7813,7 @@ function renderAccount() {
       <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;">SUBSCRIPTION</div>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px;">
         <div style="font-size:13px;color:var(--text);margin-bottom:16px;line-height:1.6;">Upgrade for instant access to new features — you only pay the difference. Cancel anytime, your access continues until the end of your billing period.</div>
-        <button onclick="openUpgradeSheet()" style="width:100%;padding:13px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">
+        <button onclick="openUpgradeSheet()" style="width:100%;padding:13px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">
           ${displayTier === 'forge' ? 'View current plan' : 'Upgrade plan'}
         </button>
         <button onclick="openBillingPortal()" style="width:100%;padding:12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;">
@@ -8006,7 +8150,7 @@ function showCoachRequestBanner(coach) {
       <div style="font-size:13px;color:var(--text);font-weight:600;">${escHtml(coach.name || 'A coach')} wants to be your coach.</div>
       <div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace;">REQUESTED ${escHtml(relTime(coach.requested_at).toUpperCase())}</div>
     </div>
-    <button onclick="openCoachRequestScreen('${escHtml(coach.connection_id || '')}')" style="padding:9px 14px;background:var(--accent);color:#000;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">View request</button>
+    <button onclick="openCoachRequestScreen('${escHtml(coach.connection_id || '')}')" style="padding:9px 14px;background:var(--accent);color:var(--bg);border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">View request</button>
     <button onclick="dismissCoachRequestBanner('${escHtml(coach.connection_id || '')}')" aria-label="Dismiss" style="background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 4px;line-height:1;">×</button>
   `;
   host.insertBefore(bar, host.firstChild);
@@ -8259,7 +8403,7 @@ async function renderAdmin() {
         <div style="font-size:16px;font-weight:600;margin-bottom:8px;">Admin Access</div>
         <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">Enter your admin password to continue.</div>
         <input id="adminPinInput" type="password" placeholder="Admin password" style="width:100%;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;box-sizing:border-box;margin-bottom:12px;" onkeydown="if(event.key==='Enter')checkAdminPin()">
-        <button onclick="checkAdminPin()" style="width:100%;padding:12px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Unlock</button>
+        <button onclick="checkAdminPin()" style="width:100%;padding:12px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Unlock</button>
       </div>
     `;
     setTimeout(() => document.getElementById('adminPinInput')?.focus(), 100);
@@ -8338,7 +8482,7 @@ function renderAdminUserCards(users) {
     const isFrozen = u.is_frozen || false;
     const joinDate = new Date(u.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
     const tierBadge = '<span style="font-size:10px;font-family:DM Mono,monospace;color:' + (tierColour[tier]||'var(--muted)') + ';background:var(--bg);border:1px solid ' + (tierColour[tier]||'var(--border)') + ';padding:2px 7px;border-radius:20px;margin-left:6px">' + (tierIcon[tier]||'') + ' ' + tier.toUpperCase() + '</span>';
-    const exemptBadge = u.is_exempt ? '<span style="font-size:10px;background:var(--accent);color:#000;padding:2px 7px;border-radius:20px;font-family:DM Mono,monospace;margin-left:4px">EXEMPT</span>' : '';
+    const exemptBadge = u.is_exempt ? '<span style="font-size:10px;background:var(--accent);color:var(--bg);padding:2px 7px;border-radius:20px;font-family:DM Mono,monospace;margin-left:4px">EXEMPT</span>' : '';
     const frozenBadge = isFrozen ? '<span style="font-size:10px;background:rgba(100,180,255,0.2);color:#7eb8f7;padding:2px 7px;border-radius:20px;font-family:DM Mono,monospace;margin-left:4px">FROZEN</span>' : '';
 
     return '<div style="background:var(--surface);border:1px solid ' + (isFrozen ? 'rgba(100,180,255,0.3)' : 'var(--border)') + ';border-radius:12px;padding:14px;margin-bottom:8px;">'
@@ -13946,9 +14090,9 @@ function renderMyCoachThread() {
   }
   const unreadCount = msgs.filter(m => m.sender_role === 'coach' && !m.read_at).length;
   const banner = unreadCount > 0
-    ? `<div id="myCoachNewBanner" style="background:var(--accent);color:#000;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:'DM Sans',sans-serif;">
+    ? `<div id="myCoachNewBanner" style="background:var(--accent);color:var(--bg);padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:'DM Sans',sans-serif;">
          <span>${unreadCount} new message${unreadCount === 1 ? '' : 's'} from your coach</span>
-         <button onclick="document.getElementById('myCoachNewBanner')?.remove()" style="background:transparent;border:none;color:#000;font-size:18px;cursor:pointer;line-height:1;padding:0 4px;">×</button>
+         <button onclick="document.getElementById('myCoachNewBanner')?.remove()" style="background:transparent;border:none;color:var(--bg);font-size:18px;cursor:pointer;line-height:1;padding:0 4px;">×</button>
        </div>`
     : '';
   thread.innerHTML = banner + msgs.map(m => renderCoachMessageBubble(m, m.sender_role === 'client')).join('');
@@ -14121,7 +14265,7 @@ function renderCoachClientList() {
         <div style="font-size:42px;margin-bottom:14px;opacity:0.4;">👥</div>
         <div style="font-size:15px;color:var(--text);margin-bottom:6px;">No clients yet.</div>
         <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">Add your first client to get started.</div>
-        <button onclick="openAddClientSheet('add')" style="padding:11px 22px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">Add your first client</button>
+        <button onclick="openAddClientSheet('add')" style="padding:11px 22px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">Add your first client</button>
       </div>`;
   } else {
     el.innerHTML = clients.map(c => {
@@ -14133,7 +14277,7 @@ function renderCoachClientList() {
       const unreadFromClient = _unreadCounts?.client_messages_by_client?.[c.client_id] || 0;
       const showActivityDot = coachHasNewActivity(c.client_id);
       const cornerMessages = unreadFromClient > 0
-        ? `<span style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;background:var(--accent);color:#000;border-radius:50%;font-size:9px;font-family:'DM Mono',monospace;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0;pointer-events:none;border:2px solid var(--bg);">${unreadFromClient > 99 ? '99+' : unreadFromClient}</span>`
+        ? `<span style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;background:var(--accent);color:var(--bg);border-radius:50%;font-size:9px;font-family:'DM Mono',monospace;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0;pointer-events:none;border:2px solid var(--bg);">${unreadFromClient > 99 ? '99+' : unreadFromClient}</span>`
         : '';
       const cornerActivity = (!unreadFromClient && showActivityDot)
         ? `<span title="New activity in the last 48h" style="position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid var(--bg);"></span>`
@@ -14203,7 +14347,7 @@ function openAddClientSheet() {
         <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1.5px;color:var(--accent);margin-bottom:8px;">ADD A CLIENT</div>
         <div style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5;">Enter their email. If they have a FORGE account, we'll send them a connection request. If not, we'll send an invite.</div>
         <input id="addClientEmail" type="email" placeholder="client@example.com" style="width:100%;padding:13px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;box-sizing:border-box;margin-bottom:14px;" oninput="document.getElementById('addClientContinue').disabled = !/.+@.+\\..+/.test(this.value);">
-        <button id="addClientContinue" onclick="submitAddClient()" disabled style="width:100%;padding:13px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;opacity:1;">Continue</button>
+        <button id="addClientContinue" onclick="submitAddClient()" disabled style="width:100%;padding:13px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;opacity:1;">Continue</button>
         <button onclick="document.getElementById('addClientSheet').remove()" style="width:100%;padding:12px;background:transparent;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:8px;">Cancel</button>
       </div>
     </div>`;
@@ -14270,7 +14414,7 @@ async function submitAddClient() {
         <div style="font-size:40px;margin-bottom:14px;">✓</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1.5px;color:var(--accent);margin-bottom:8px;">${res.type === 'existing' ? 'CONNECTION REQUEST SENT' : 'INVITATION SENT'}</div>
         <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:22px;">${escHtml(res.message || '')}</div>
-        <button onclick="document.getElementById('addClientSheet').remove()" style="width:100%;padding:13px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Done</button>
+        <button onclick="document.getElementById('addClientSheet').remove()" style="width:100%;padding:13px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Done</button>
       </div>`;
   }
   await loadCoachClients();
@@ -14286,7 +14430,7 @@ function showCoachSeatLimitAlert(plan, limit) {
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:340px;width:100%;">
       <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1.5px;color:var(--accent);margin-bottom:8px;">SEAT LIMIT REACHED</div>
       <div style="font-size:13px;color:var(--text);margin-bottom:18px;line-height:1.5;">Your ${COACH_PLAN_LABEL[plan] || plan} plan supports ${limit} clients. Upgrade to add more.</div>
-      <button onclick="this.parentElement.parentElement.remove(); openCoachPlanUpgrade();" style="width:100%;padding:12px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;">Upgrade coach plan</button>
+      <button onclick="this.parentElement.parentElement.remove(); openCoachPlanUpgrade();" style="width:100%;padding:12px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;">Upgrade coach plan</button>
       <button onclick="this.parentElement.parentElement.remove()" style="width:100%;padding:11px;background:transparent;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">Maybe later</button>
     </div>`;
   document.body.appendChild(overlay);
@@ -15207,7 +15351,7 @@ function openManualReviewModal(reviewType) {
       <div id="manualReviewCounter" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.5px;margin-top:4px;text-align:right;">0 / 2000</div>
       <div style="display:flex;gap:8px;margin-top:16px;">
         <button onclick="document.getElementById('manualReviewOverlay').remove()" style="flex:1;padding:12px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">Cancel</button>
-        <button onclick="submitManualReview('${reviewType}')" style="flex:1;padding:12px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Save review</button>
+        <button onclick="submitManualReview('${reviewType}')" style="flex:1;padding:12px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Save review</button>
       </div>
     </div>
   `;
@@ -15359,7 +15503,7 @@ function renderCoachSetupProfile() {
     <label style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:0.5px;display:block;margin-bottom:6px;">${t('coach_bio_label')} <span style="color:var(--muted);text-transform:none;letter-spacing:0;">${t('coach_bio_optional')}</span></label>
     <textarea id="csBio" maxlength="150" placeholder="${t('coach_bio_placeholder')}" oninput="_coachSetupState.bio = this.value; document.getElementById('csBioCount').textContent = this.value.length + '/150';" style="width:100%;padding:13px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;box-sizing:border-box;min-height:80px;resize:vertical;">${escHtml(_coachSetupState.bio)}</textarea>
     <div id="csBioCount" style="text-align:right;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:4px;margin-bottom:22px;">${_coachSetupState.bio.length}/150</div>
-    <button onclick="coachSetupNext()" style="width:100%;padding:14px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">${t('coach_setup_continue')}</button>
+    <button onclick="coachSetupNext()" style="width:100%;padding:14px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">${t('coach_setup_continue')}</button>
   `;
 }
 
@@ -15379,7 +15523,7 @@ function renderCoachSetupPlan() {
   };
   const planCard = (id, name, features, recommended) => `
     <div onclick="_coachSetupState.plan = '${id}'; renderCoachSetup();" style="padding:18px;background:var(--surface);border:2px solid ${_coachSetupState.plan === id ? 'var(--accent)' : 'var(--border)'};border-radius:14px;margin-bottom:12px;cursor:pointer;position:relative;">
-      ${recommended ? `<div style="position:absolute;top:-10px;right:14px;background:var(--accent);color:#000;padding:3px 10px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:1px;border-radius:10px;">${t('upgrade_recommended')}</div>` : ''}
+      ${recommended ? `<div style="position:absolute;top:-10px;right:14px;background:var(--accent);color:var(--bg);padding:3px 10px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:1px;border-radius:10px;">${t('upgrade_recommended')}</div>` : ''}
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1.5px;color:var(--accent);">${name}</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--text);">${prices[id][billing]}<span style="font-size:12px;color:var(--muted);font-family:'DM Sans',sans-serif;letter-spacing:0;">${t('upgrade_per_mo')}</span></div>
@@ -15398,7 +15542,7 @@ function renderCoachSetupPlan() {
     ${planCard('pro', t('coach_plan_pro'), [t('coach_plan_clients').replace('{n}','30'), t('coach_feat_everything_starter'), t('coach_feat_priority_notif'), t('coach_feat_templates'), t('coach_feat_commission').replace('{n}','15')], true)}
     ${planCard('elite', t('coach_plan_elite'), [t('coach_unlimited_clients'), t('coach_feat_everything_pro'), t('coach_feat_commission').replace('{n}','20')], false)}
     <div style="font-size:11px;color:var(--muted);margin:14px 0 18px;text-align:center;font-family:'DM Mono',monospace;letter-spacing:0.5px;">${t('coach_billed_separately')}</div>
-    <button onclick="submitCoachSetup()" id="csSubmit" style="width:100%;padding:14px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">${t('coach_setup_confirm')}</button>
+    <button onclick="submitCoachSetup()" id="csSubmit" style="width:100%;padding:14px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">${t('coach_setup_confirm')}</button>
   `;
 }
 
@@ -15446,7 +15590,7 @@ function renderCoachSetupConfirm() {
         <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:6px;">${t('coach_trial_ends_label').toUpperCase()} ${trialEndLabel.toUpperCase()}</div>
       </div>
       <div>
-        <button onclick="closeCoachSetup(); showPanel('clients');" style="padding:14px 24px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">${t('coach_go_dashboard')}</button>
+        <button onclick="closeCoachSetup(); showPanel('clients');" style="padding:14px 24px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">${t('coach_go_dashboard')}</button>
       </div>
     </div>
   `;
@@ -15461,7 +15605,7 @@ function showCoachSetupConfirmation() {
       const btn = document.getElementById('nav-clients');
       if (!btn) return;
       const tip = document.createElement('div');
-      tip.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 16px;border-radius:10px;font-size:12px;font-family:"DM Sans",sans-serif;font-weight:600;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+      tip.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:12px;font-family:"DM Sans",sans-serif;font-weight:600;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
       tip.textContent = t('coach_welcome_dashboard');
       document.body.appendChild(tip);
       setTimeout(() => tip.remove(), 4000);
@@ -15512,7 +15656,7 @@ async function openCoachRequestScreen(connectionId) {
         • Add private notes about your training
       </div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:24px;line-height:1.5;">You can disconnect at any time from Account settings.</div>
-      <button onclick="respondCoachRequest('${connectionId}', 'accept')" style="width:100%;padding:14px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">Accept and connect</button>
+      <button onclick="respondCoachRequest('${connectionId}', 'accept')" style="width:100%;padding:14px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">Accept and connect</button>
       <button onclick="respondCoachRequest('${connectionId}', 'decline')" style="width:100%;padding:13px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">Decline</button>
     </div>
   `;
@@ -15553,7 +15697,7 @@ async function renderAccountCoachSections() {
           <div style="font-size:13px;color:var(--text);font-weight:600;">${escHtml(pendingCoach.name || 'A coach')} wants to be your coach.</div>
           <div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace;">REQUESTED ${relTime(pendingCoach.requested_at).toUpperCase()}</div>
         </div>
-        <button onclick="openCoachRequestScreen('${pendingCoach.connection_id}')" style="padding:9px 14px;background:var(--accent);color:#000;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">View request</button>
+        <button onclick="openCoachRequestScreen('${pendingCoach.connection_id}')" style="padding:9px 14px;background:var(--accent);color:var(--bg);border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">View request</button>
       </div>`;
   }
 
@@ -15612,7 +15756,7 @@ async function renderAccountCoachSections() {
         <div id="coachPlanSeats" style="font-size:12px;color:var(--muted);margin-bottom:14px;font-family:'DM Mono',monospace;">Loading seats…</div>
         ${status === 'trial' ? `<div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5;">Trial — ${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'} remaining. No payment required until your trial ends.</div>` : ''}
         ${renderCoachNotificationSummary()}
-        ${plan !== 'elite' ? `<button onclick="openCoachSetup('plan')" style="width:100%;padding:12px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;">Upgrade plan</button>` : ''}
+        ${plan !== 'elite' ? `<button onclick="openCoachSetup('plan')" style="width:100%;padding:12px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;">Upgrade plan</button>` : ''}
         ${status === 'active' ? `<button onclick="openBillingPortal()" style="width:100%;padding:11px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;">Manage billing</button>` : ''}
         <button onclick="confirmCancelCoachPlan()" style="width:100%;padding:11px;background:transparent;border:1px solid rgba(255,68,68,0.25);color:var(--red, #ff4444);border-radius:10px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">Cancel coach plan</button>
       </div>
@@ -15626,7 +15770,7 @@ async function renderAccountCoachSections() {
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px;">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1.5px;color:var(--accent);margin-bottom:8px;">BECOME A FORGE COACH</div>
         <div style="font-size:13px;color:var(--text);line-height:1.5;margin-bottom:16px;">Give your clients 24/7 AI coaching. Manage their programmes and progress in one place. Earn commission on every client subscription.</div>
-        <button onclick="openCoachSetup()" style="width:100%;padding:13px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Set up coach account</button>
+        <button onclick="openCoachSetup()" style="width:100%;padding:13px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Set up coach account</button>
       </div>`;
   }
 
@@ -15946,7 +16090,7 @@ function openReminderPicker() {
       <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1.5px;color:var(--text);margin-bottom:6px;">${t('reminder_setting')}</div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.5;">${t('reminder_setting_sub')}</div>
       <input type="time" id="reminderTimeInput" value="${cur}" style="width:100%;padding:13px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:16px;font-family:'DM Sans',sans-serif;box-sizing:border-box;margin-bottom:16px;">
-      <button onclick="saveReminder()" style="width:100%;padding:14px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">${t('reminder_save')}</button>
+      <button onclick="saveReminder()" style="width:100%;padding:14px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">${t('reminder_save')}</button>
       ${cur ? `<button onclick="removeReminder()" style="width:100%;padding:12px;background:transparent;border:1px solid var(--border);color:var(--red,#ff4444);border-radius:10px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">${t('reminder_remove')}</button>` : ''}
     </div>
   `;
@@ -16363,7 +16507,7 @@ renderProgrammes = async function () {
   }
   var createBtn = atLimit
     ? `<button onclick="programmeLimitToast()" style="width:100%;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:not-allowed;font-family:'DM Sans',sans-serif;margin-bottom:10px;">${t('prog_limit_reached')}</button>`
-    : `<button onclick="startNewProgramme()" style="width:100%;background:var(--accent);color:#000;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">+ Create new AI programme</button>`;
+    : `<button onclick="startNewProgramme()" style="width:100%;background:var(--accent);color:var(--bg);border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">+ Create new AI programme</button>`;
   // "Build my own" — opens the manual custom programme builder (no AI generation).
   // Hidden when at the tier limit, same as the other create buttons.
   var buildOwnBtn = atLimit
@@ -16401,7 +16545,7 @@ function programmeArchivedCard(p) {
       <div style="font-weight:700;font-size:14px;">${escHtml(p.name)}</div>
       ${p.description ? `<div style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.4;">${escHtml(p.description)}</div>` : ''}
       <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:6px;letter-spacing:0.5px;">ARCHIVED &middot; ${dateStr}</div>
-      <button onclick="restoreProgramme('${p.id}')" style="margin-top:12px;width:100%;background:var(--accent);color:#000;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Restore</button>
+      <button onclick="restoreProgramme('${p.id}')" style="margin-top:12px;width:100%;background:var(--accent);color:var(--bg);border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Restore</button>
     </div>`;
 }
 
@@ -16514,7 +16658,7 @@ function startNewProgramme() {
     <div id="npBody" style="flex:1;overflow-y:auto;padding:14px 18px 18px;"></div>
     <div style="display:flex;gap:10px;padding:12px 18px max(env(safe-area-inset-bottom),16px);border-top:1px solid var(--border);flex-shrink:0;">
       <button id="npBackBtn" onclick="npBack()" style="display:none;flex:0 0 auto;padding:13px 18px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">Back</button>
-      <button id="npNextBtn" onclick="npNext()" style="flex:1;padding:13px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Next</button>
+      <button id="npNextBtn" onclick="npNext()" style="flex:1;padding:13px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Next</button>
     </div>`;
   document.body.appendChild(ov);
   renderNpStep();
@@ -16688,7 +16832,7 @@ function showNewProgrammeSuccess(programmeId, name) {
       <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px;color:var(--text);margin-bottom:8px;">Your ${escHtml(name)} programme is ready.</div>
       <div style="font-size:13px;color:var(--muted);max-width:280px;line-height:1.5;margin-bottom:26px;">Switch to it now, or keep your current plan active and switch whenever you like.</div>
       <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px;">
-        <button onclick="activateNewProgramme(this)" style="width:100%;padding:14px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Switch to this now</button>
+        <button onclick="activateNewProgramme(this)" style="width:100%;padding:14px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Switch to this now</button>
         <button onclick="closeNewProgramme();showPanel('programmes');renderProgrammes();" style="width:100%;padding:13px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">Save for later</button>
       </div>
     </div>`;
@@ -17153,7 +17297,7 @@ function cbExercisePickRow(ex) {
         <div style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--text);">${escHtml(ex.name)}</div>
         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">${prim}${sec}</div>
       </div>
-      <button id="cbAdd-${escHtml(ex.id)}" onclick="cbPickExercise('${ex.id}',this)" style="flex-shrink:0;width:34px;height:34px;border-radius:8px;background:var(--accent);color:#000;border:none;font-size:20px;font-weight:600;cursor:pointer;line-height:1;">+</button>
+      <button id="cbAdd-${escHtml(ex.id)}" onclick="cbPickExercise('${ex.id}',this)" style="flex-shrink:0;width:34px;height:34px;border-radius:8px;background:var(--accent);color:var(--bg);border:none;font-size:20px;font-weight:600;cursor:pointer;line-height:1;">+</button>
     </div>`;
 }
 function cbPickExercise(exId, btn) {
@@ -17183,7 +17327,7 @@ function cbCustomAreaHtml() {
       <div style="display:flex;flex-wrap:wrap;margin-bottom:14px;">${muscleChips}</div>
       <div style="display:flex;gap:8px;">
         <button onclick="cbCloseCustomForm()" style="flex:0 0 auto;padding:10px 16px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">Cancel</button>
-        <button id="cbCustomAddBtn" onclick="cbAddCustomExercise()" ${valid ? '' : 'disabled'} style="flex:1;padding:10px;background:var(--accent);color:#000;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;opacity:${valid ? '1' : '0.4'};">Add</button>
+        <button id="cbCustomAddBtn" onclick="cbAddCustomExercise()" ${valid ? '' : 'disabled'} style="flex:1;padding:10px;background:var(--accent);color:var(--bg);border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;opacity:${valid ? '1' : '0.4'};">Add</button>
       </div>
     </div>`;
 }
@@ -17320,7 +17464,7 @@ function cbShowSaveChoice(programmeId, name) {
       <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;color:var(--text);margin-bottom:6px;">Programme saved</div>
       <div style="font-size:14px;color:var(--muted);line-height:1.5;margin-bottom:22px;font-family:'DM Sans',sans-serif;">Make <strong style="color:var(--text);">${escHtml(name)}</strong> your active programme?</div>
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <button onclick="cbActivateSaved()" style="width:100%;padding:13px;background:var(--accent);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Yes, switch now</button>
+        <button onclick="cbActivateSaved()" style="width:100%;padding:13px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Yes, switch now</button>
         <button onclick="cbFinishSave()" style="width:100%;padding:12px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">Save for later</button>
       </div>
     </div>`;
