@@ -501,7 +501,7 @@ nav.bottom-nav, .bottom-nav {
   border: none;
   cursor: pointer;
   position: relative;
-  color: #555;
+  color: var(--muted);
   transition: all 0.15s;
 }
 .nav-btn.active { color:var(--accent); }
@@ -761,7 +761,7 @@ body.pwa-mode .chat-input-area {
 .streak-label { font-family:'DM Mono',monospace; font-size:9px; color:var(--dim); letter-spacing:2px; margin-top:2px; }
 .streak-best { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); margin-top:6px; }
 .streak-progress { margin-top:10px; }
-.streak-bar-bg { height:5px; background:#1a1a1a; border-radius:3px; overflow:hidden; }
+.streak-bar-bg { height:5px; background:var(--surface2); border-radius:3px; overflow:hidden; }
 .streak-bar-fill { height:100%; background:var(--accent); border-radius:3px; transition:width 0.6s ease; }
 .streak-bar-label { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); margin-top:4px; letter-spacing:1px; }
 
@@ -861,7 +861,7 @@ body.pwa-mode .chat-input-area {
 .notif-toggle { width:44px; height:26px; border-radius:13px; background:var(--border); position:relative; flex-shrink:0; transition:background .2s; cursor:pointer; }
 .notif-toggle.on { background:var(--accent); }
 .notif-toggle::after { content:''; width:20px; height:20px; border-radius:50%; background:var(--muted); position:absolute; top:3px; left:3px; transition:left .2s, background .2s; }
-.notif-toggle.on::after { left:21px; background:#000; }
+.notif-toggle.on::after { left:21px; background:var(--bg); }
 
 /* ── ADHERENCE ── */
 .adherence-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; }
@@ -977,13 +977,13 @@ body.pwa-mode .chat-input-area {
 
 /* ── BOTTOM NAV ── */
 nav.bottom-nav, .bottom-nav {
-  background: #0d0d0d !important;
+  background: var(--bg) !important;
   border-top: 1px solid var(--border-muted) !important;
 }
 body.pwa-mode .bottom-nav {
   padding-bottom: 0px !important;
 }
-.nav-btn { color: var(--dim); }
+.nav-btn { color: var(--muted); }
 .nav-btn.active { color: var(--accent); }
 .nav-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; }
 
@@ -6245,21 +6245,21 @@ function initCoach() {
           <strong style="color:#f0f0f0;font-size:16px;">${g1}</strong>
           <!-- STATUS STRIP (pill cards) -->
           <div style="display:flex;gap:8px;margin:12px 0;">
-            <div style="flex:1;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:10px 8px;text-align:center;">
+            <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center;">
               <div style="font-family:'DM Mono',monospace;font-size:8px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">Training</div>
               <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#e8ff3d;line-height:1;" id="greetingTrainingPct">—</div>
             </div>
-            <div style="flex:1;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:10px 8px;text-align:center;">
+            <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center;">
               <div style="font-family:'DM Mono',monospace;font-size:8px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">Recovery</div>
               <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#44ff88;line-height:1;" id="greetingRecovery">—</div>
             </div>
-            <div style="flex:1;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:10px 8px;text-align:center;">
+            <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center;">
               <div style="font-family:'DM Mono',monospace;font-size:8px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">Next Session</div>
               <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#f0f0f0;line-height:1.2;" id="greetingNextSession">—</div>
             </div>
           </div>
           <!-- READY FOR TODAY (bordered card) -->
-          <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;padding:12px 14px;margin-bottom:12px;">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:12px;">
             <div style="font-family:'DM Mono',monospace;font-size:9px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">Ready For Today</div>
             <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid #222;margin-bottom:8px;">
               <div>
@@ -6951,19 +6951,19 @@ function renderUpgradeSheetContent(highlightTier) {
         padding:24px 20px 40px;max-height:92vh;overflow-y:auto;
       }
       #upgradeSheet .us-sheet::-webkit-scrollbar { display:none; }
-      #upgradeSheet .us-handle { width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px; }
+      #upgradeSheet .us-handle { width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px; }
       #upgradeSheet .us-header { text-align:center;margin-bottom:20px; }
       #upgradeSheet .us-title { font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:3px;color:var(--accent); }
       #upgradeSheet .us-sub { font-size:13px;color:var(--muted);margin-top:6px; }
       #upgradeSheet .us-toggle { display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:20px; }
       #upgradeSheet .us-toggle-label { font-size:13px;font-weight:600; }
       #upgradeSheet .us-pill { width:48px;height:26px;border-radius:13px;position:relative;cursor:pointer;flex-shrink:0;transition:background 0.2s; }
-      #upgradeSheet .us-knob { position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left 0.2s; }
+      #upgradeSheet .us-knob { position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:var(--bg);transition:left 0.2s; }
       #upgradeSheet .us-save-badge { background:rgba(232,255,61,0.12);border:1px solid rgba(232,255,61,0.3);border-radius:10px;padding:2px 8px;font-size:11px;color:var(--accent);font-family:'DM Mono',monospace; }
       #upgradeSheet .us-launch-badge { background:rgba(255,107,53,0.15);border:1px solid rgba(255,107,53,0.5);border-radius:8px;padding:6px 14px;font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:#ff6b35;letter-spacing:0.5px;text-align:center;display:block;width:100%;box-sizing:border-box;margin-bottom:12px; }
       #upgradeSheet .us-card { border:2px solid var(--border);border-radius:14px;padding:18px;margin-bottom:12px;position:relative;background:var(--surface);transition:all 0.2s;box-shadow:0 4px 16px rgba(0,0,0,0.3); }
       #upgradeSheet .us-card.us-current { border-color:var(--border);opacity:0.75; }
-      #upgradeSheet .us-card.us-recommended { border-color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.04);box-shadow:0 4px 30px rgba(255,255,255,0.08),0 0 0 1px rgba(255,255,255,0.06) inset;transform:scale(1.02); }
+      #upgradeSheet .us-card.us-recommended { border-color:var(--border);background:var(--surface2);box-shadow:0 4px 30px rgba(0,0,0,0.1),0 0 0 1px rgba(0,0,0,0.1) inset;transform:scale(1.02); }
       #upgradeSheet .us-card.us-forge { border-color:rgba(232,255,61,0.3);background:rgba(232,255,61,0.03);box-shadow:0 4px 24px rgba(232,255,61,0.06),0 0 0 1px rgba(232,255,61,0.08) inset; }
       #upgradeSheet .us-badge { position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:3px 12px;border-radius:20px;letter-spacing:1px;white-space:nowrap; }
       #upgradeSheet .us-badge-current { background:var(--accent);color:#000; }
@@ -6974,7 +6974,7 @@ function renderUpgradeSheetContent(highlightTier) {
       #upgradeSheet .us-price-period { font-size:11px;color:var(--muted); }
       #upgradeSheet .us-price-annual { font-size:11px; }
       #upgradeSheet .us-features { margin-bottom:14px; }
-      #upgradeSheet .us-feature { display:flex;gap:8px;padding:4px 0;font-size:13px;color:rgba(255,255,255,0.85); }
+      #upgradeSheet .us-feature { display:flex;gap:8px;padding:4px 0;font-size:13px;color:var(--text); }
       #upgradeSheet .us-check { color:var(--accent);flex-shrink:0;font-size:14px; }
       #upgradeSheet .us-btn { display:block;width:100%;padding:13px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;text-align:center;border:none;transition:all 0.15s; }
       #upgradeSheet .us-btn:active { transform:scale(0.98); }
@@ -7149,7 +7149,7 @@ function renderUpgradeTierCard(tier, label, monthly, annual, features, highlight
           return '<div class="us-feature" style="margin-bottom:6px;"><span class="us-check">✓</span><span style="color:var(--accent);font-weight:600;">' + f.replace('__highlight__','') + '</span></div>';
         }
         if (f.startsWith('__comingsoon__')) {
-          return '<div class="us-feature"><span class="us-check">✓</span><span>' + f.replace('__comingsoon__','') + ' <span style="background:rgba(255,255,255,0.08);color:var(--muted);font-size:10px;font-family:DM Mono,monospace;padding:1px 6px;border-radius:4px;letter-spacing:0.5px;">SOON</span></span></div>';
+          return '<div class="us-feature"><span class="us-check">✓</span><span>' + f.replace('__comingsoon__','') + ' <span style="background:var(--surface2);color:var(--muted);font-size:10px;font-family:DM Mono,monospace;padding:1px 6px;border-radius:4px;letter-spacing:0.5px;">SOON</span></span></div>';
         }
         return '<div class="us-feature"><span class="us-check">✓</span><span>' + f + '</span></div>';
       }).join('')}
@@ -7611,7 +7611,7 @@ function renderAccount() {
   const _rowLabel = "font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);";
   const _rowSub = "font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:3px;";
   const _chev = `<span style="color:var(--muted);font-size:16px;flex-shrink:0;">›</span>`;
-  const _toggle = on => `<div style="width:44px;height:26px;border-radius:13px;background:${on ? 'var(--accent)' : 'var(--border)'};position:relative;flex-shrink:0;transition:background .2s;"><div style="width:20px;height:20px;border-radius:50%;background:${on ? '#000' : 'var(--muted)'};position:absolute;top:3px;left:${on ? '21px' : '3px'};transition:left .2s;"></div></div>`;
+  const _toggle = on => `<div style="width:44px;height:26px;border-radius:13px;background:${on ? 'var(--accent)' : 'var(--border)'};position:relative;flex-shrink:0;transition:background .2s;"><div style="width:20px;height:20px;border-radius:50%;background:${on ? 'var(--bg)' : 'var(--muted)'};position:absolute;top:3px;left:${on ? '21px' : '3px'};transition:left .2s;"></div></div>`;
 
   el.innerHTML = `
     <div style="padding:0 18px 24px;">
@@ -8574,6 +8574,11 @@ const THEMES = ['dark-yellow', 'dark-blue', 'dark-green', 'midnight', 'light', '
 
 function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
+  // FIX 7: html/body carry an inline #0a0a0a background from initial load (pre-paint).
+  // Repaint both to the newly-active theme's --bg so light themes aren't framed in black.
+  const _bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  document.body.style.background = _bg;
+  document.documentElement.style.background = _bg;
   localStorage.setItem('forge_theme', theme);
   document.querySelectorAll('.theme-swatch').forEach((s, i) => s.classList.toggle('active', THEMES[i] === theme));
   const colors = { 'dark-yellow':'#0a0a0a','dark-blue':'#090d1a','dark-green':'#090f0a','midnight':'#05050f','light':'#f5f5f0','light-warm':'#f5f0e8','light-slate':'#eef0f2' };
@@ -15777,7 +15782,7 @@ function showPwaPrompt() {
 
   const sheet = document.createElement('div');
   sheet.id = 'pwaInstallPrompt';
-  sheet.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99998;background:#111;border-top:1px solid #e8ff3d;padding:20px 18px;color:#fff;font-family:"DM Sans",sans-serif;box-shadow:0 -10px 30px rgba(0,0,0,0.6);';
+  sheet.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99998;background:var(--surface);border-top:1px solid var(--accent);padding:20px 18px;color:var(--text);font-family:"DM Sans",sans-serif;box-shadow:0 -10px 30px rgba(0,0,0,0.6);';
   sheet.innerHTML = `
     <button onclick="dismissPwaPrompt()" aria-label="Close" style="position:absolute;top:10px;right:12px;background:transparent;border:none;color:#888;font-size:22px;cursor:pointer;line-height:1;padding:4px 8px;">×</button>
     <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;color:#e8ff3d;margin-bottom:8px;">INSTALL FORGE</div>
