@@ -8109,7 +8109,7 @@ function showA2HSSheet() {
   const dismiss = () => {
     sheet.style.transform = 'translateY(100%)';
     overlay.style.opacity = '0';
-    try { localStorage.setItem('forge-a2hs-shown', '1'); } catch (e) { /* quota */ }
+    try { localStorage.setItem('forge-a2hs-shown', '1'); localStorage.setItem('forge-pwa-dismissed', '1'); } catch (e) { /* quota */ }
     setTimeout(() => { sheet.remove(); overlay.remove(); }, 320);
   };
 
@@ -8808,7 +8808,7 @@ const LANGUAGES = [
 // Full UI translation strings
 const STRINGS = {
   en: {
-    notif_enable_instructions: "To enable: Settings → Safari → Notifications → FORGE → Allow", notif_enabled: "Notifications enabled.", notif_not_supported: "Push notifications not supported on this browser.", notif_blocked: "Notifications blocked. Go to Settings → Safari → Notifications → FORGE → Allow",
+    notif_enable_instructions: "To enable: Settings → Safari → Notifications → FORGE → Allow", notif_enabled: "Notifications enabled.", notif_disabled: "Notifications disabled.", notif_not_supported: "Push notifications not supported on this browser.", notif_blocked: "Notifications blocked. Go to Settings → Safari → Notifications → FORGE → Allow",
     /* i18n fix — stat cards / upgrade sheet / share / features / coach */
     stat_sessions_week: "SESSIONS THIS WEEK", stat_current_streak: "CURRENT STREAK", stat_last_session: "LAST SESSION", stat_prs_month: "PRS THIS MONTH", stat_day: "day", stat_days: "days", stat_best: "best", stat_view_history: "View history ›",
     upg_plan_headline: "Upgrade your plan", upgrade_trial_ended: "Your trial has ended.", upgrade_days_left: "You have {n} days left on your trial.", upgrade_subline_ended: "Keep your progress and continue training.", upgrade_pt_compare: "One PT session costs more than 6 months of Steel annual.", upgrade_save_forever: "Save CHF {n}/mo vs full price. Locked in forever.", upgrade_launch_pricing: "LAUNCH PRICING — {n} of 500 spots remaining",
@@ -9245,7 +9245,7 @@ const STRINGS = {
     expired_sub: 'Your plan and progress are saved. Pick a plan to continue.',
 },
   es: {
-    notif_enable_instructions: "Para activar: Ajustes → Safari → Notificaciones → FORGE → Permitir", notif_enabled: "Notificaciones activadas.", notif_not_supported: "Las notificaciones push no están disponibles en este navegador.", notif_blocked: "Notificaciones bloqueadas. Ve a Configuración → Safari → Notificaciones → FORGE → Permitir",
+    notif_enable_instructions: "Para activar: Ajustes → Safari → Notificaciones → FORGE → Permitir", notif_enabled: "Notificaciones activadas.", notif_disabled: "Notificaciones desactivadas.", notif_not_supported: "Las notificaciones push no están disponibles en este navegador.", notif_blocked: "Notificaciones bloqueadas. Ve a Configuración → Safari → Notificaciones → FORGE → Permitir",
     /* i18n fix — stat cards / upgrade sheet / share / features / coach */
     stat_sessions_week: "SESIONES ESTA SEMANA", stat_current_streak: "RACHA ACTUAL", stat_last_session: "ÚLTIMA SESIÓN", stat_prs_month: "RÉCORDS ESTE MES", stat_day: "día", stat_days: "días", stat_best: "mejor", stat_view_history: "Ver historial ›",
     upg_plan_headline: "Mejora tu plan", upgrade_trial_ended: "Tu prueba ha terminado.", upgrade_days_left: "Te quedan {n} días en tu prueba.", upgrade_subline_ended: "Mantén tu progreso y sigue entrenando.", upgrade_pt_compare: "Una sesión de PT cuesta más que 6 meses de Steel anual.", upgrade_save_forever: "Ahorra CHF {n}/mes vs precio completo. Precio garantizado.", upgrade_launch_pricing: "PRECIO DE LANZAMIENTO — {n} de 500 plazas",
@@ -9680,7 +9680,7 @@ const STRINGS = {
     expired_sub: 'Tu plan y progreso están guardados. Elige un plan para continuar.',
 },
   fr: {
-    notif_enable_instructions: "Pour activer: Réglages → Safari → Notifications → FORGE → Autoriser", notif_enabled: "Notifications activées.", notif_not_supported: "Les notifications push ne sont pas disponibles sur ce navigateur.", notif_blocked: "Notifications bloquées. Va dans Réglages → Safari → Notifications → FORGE → Autoriser",
+    notif_enable_instructions: "Pour activer: Réglages → Safari → Notifications → FORGE → Autoriser", notif_enabled: "Notifications activées.", notif_disabled: "Notifications désactivées.", notif_not_supported: "Les notifications push ne sont pas disponibles sur ce navigateur.", notif_blocked: "Notifications bloquées. Va dans Réglages → Safari → Notifications → FORGE → Autoriser",
     /* i18n fix — stat cards / upgrade sheet / share / features / coach */
     stat_sessions_week: "SÉANCES CETTE SEMAINE", stat_current_streak: "SÉRIE EN COURS", stat_last_session: "DERNIÈRE SÉANCE", stat_prs_month: "RECORDS CE MOIS", stat_day: "jour", stat_days: "jours", stat_best: "meilleur", stat_view_history: "Voir l'historique ›",
     upg_plan_headline: "Améliore ton abonnement", upgrade_trial_ended: "Ton essai est terminé.", upgrade_days_left: "Il te reste {n} jours d'essai.", upgrade_subline_ended: "Garde tes progrès et continue l'entraînement.", upgrade_pt_compare: "Une séance de PT coûte plus cher que 6 mois d'abonnement Steel annuel.", upgrade_save_forever: "Économise CHF {n}/mois vs prix normal. Bloqué pour toujours.", upgrade_launch_pricing: "PRIX DE LANCEMENT — {n} places sur 500",
@@ -10115,7 +10115,7 @@ const STRINGS = {
     expired_sub: 'Ton programme et tes progrès sont sauvegardés. Choisis un plan pour continuer.',
 },
   de: {
-    notif_enabled: "Benachrichtigungen aktiviert.", notif_not_supported: "Push-Benachrichtigungen werden auf diesem Browser nicht unterstützt.", notif_blocked: "Benachrichtigungen blockiert. Gehe zu Einstellungen → Safari → Benachrichtigungen → FORGE → Erlauben", notif_enable_instructions: "Zum Aktivieren: Einstellungen → Safari → Benachrichtigungen → FORGE → Erlauben",
+    notif_enabled: "Benachrichtigungen aktiviert.", notif_disabled: "Benachrichtigungen deaktiviert.", notif_not_supported: "Push-Benachrichtigungen werden auf diesem Browser nicht unterstützt.", notif_blocked: "Benachrichtigungen blockiert. Gehe zu Einstellungen → Safari → Benachrichtigungen → FORGE → Erlauben", notif_enable_instructions: "Zum Aktivieren: Einstellungen → Safari → Benachrichtigungen → FORGE → Erlauben",
     chip_next_session: "Nächste Einheit", chip_today_recovery: "Heutige Erholung", chip_program_overview: "Programmübersicht", chip_progress_check: "Fortschrittskontrolle", chip_technique_help: "Technische Hilfe",
     nav_coach: 'Coach',
     nav_plan: 'Plan',
@@ -10525,7 +10525,7 @@ const STRINGS = {
     expired_sub: 'Dein Plan und dein Fortschritt sind gespeichert. Wähle einen Plan, um weiterzumachen.',
 },
   it: {
-    notif_enable_instructions: "Per attivare: Impostazioni → Safari → Notifiche → FORGE → Consenti", notif_enabled: "Notifiche attivate.", notif_not_supported: "Le notifiche push non sono supportate su questo browser.", notif_blocked: "Notifiche bloccate. Vai in Impostazioni → Safari → Notifiche → FORGE → Consenti",
+    notif_enable_instructions: "Per attivare: Impostazioni → Safari → Notifiche → FORGE → Consenti", notif_enabled: "Notifiche attivate.", notif_disabled: "Notifiche disattivate.", notif_not_supported: "Le notifiche push non sono supportate su questo browser.", notif_blocked: "Notifiche bloccate. Vai in Impostazioni → Safari → Notifiche → FORGE → Consenti",
     /* i18n fix — stat cards / upgrade sheet / share / features / coach */
     stat_sessions_week: "SESSIONI QUESTA SETTIMANA", stat_current_streak: "SERIE ATTUALE", stat_last_session: "ULTIMA SESSIONE", stat_prs_month: "RECORD QUESTO MESE", stat_day: "giorno", stat_days: "giorni", stat_best: "migliore", stat_view_history: "Vedi cronologia ›",
     upg_plan_headline: "Migliora il tuo piano", upgrade_trial_ended: "La tua prova è terminata.", upgrade_days_left: "Hai ancora {n} giorni di prova.", upgrade_subline_ended: "Mantieni i progressi e continua ad allenarti.", upgrade_pt_compare: "Una sessione PT costa più di 6 mesi di Steel annuale.", upgrade_save_forever: "Risparmia CHF {n}/mese vs prezzo pieno. Bloccato per sempre.", upgrade_launch_pricing: "PREZZO DI LANCIO — {n} posti su 500",
@@ -10960,7 +10960,7 @@ const STRINGS = {
     expired_sub: 'Il tuo piano e i progressi sono salvati. Scegli un piano per continuare.',
 },
   pt: {
-    notif_enable_instructions: "Para ativar: Definições → Safari → Notificações → FORGE → Permitir", notif_enabled: "Notificações ativadas.", notif_not_supported: "As notificações push não são suportadas neste navegador.", notif_blocked: "Notificações bloqueadas. Vai a Definições → Safari → Notificações → FORGE → Permitir",
+    notif_enable_instructions: "Para ativar: Definições → Safari → Notificações → FORGE → Permitir", notif_enabled: "Notificações ativadas.", notif_disabled: "Notificações desativadas.", notif_not_supported: "As notificações push não são suportadas neste navegador.", notif_blocked: "Notificações bloqueadas. Vai a Definições → Safari → Notificações → FORGE → Permitir",
     /* i18n fix — stat cards / upgrade sheet / share / features / coach */
     stat_sessions_week: "SESSÕES ESTA SEMANA", stat_current_streak: "SEQUÊNCIA ATUAL", stat_last_session: "ÚLTIMA SESSÃO", stat_prs_month: "RECORDES ESTE MÊS", stat_day: "dia", stat_days: "dias", stat_best: "melhor", stat_view_history: "Ver histórico ›",
     upg_plan_headline: "Melhora o teu plano", upgrade_trial_ended: "A tua avaliação terminou.", upgrade_days_left: "Tens ainda {n} dias de avaliação.", upgrade_subline_ended: "Mantém o progresso e continua a treinar.", upgrade_pt_compare: "Uma sessão de PT custa mais do que 6 meses do Steel anual.", upgrade_save_forever: "Poupa CHF {n}/mês vs preço completo. Garantido para sempre.", upgrade_launch_pricing: "PREÇO DE LANÇAMENTO — {n} de 500 lugares",
@@ -15901,53 +15901,10 @@ function isStandalonePwa() {
     || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
 }
 
-function showPwaPrompt() {
-  // Already installed, already dismissed, or prompt already on screen — skip.
-  if (isStandalonePwa()) return;
-  if (localStorage.getItem('forge-pwa-dismissed')) return;
-  if (document.getElementById('pwaInstallPrompt')) return;
-  // FIX 9: never show during onboarding — only once the user is in the main app view.
-  // On a brand-new account the prompt previously fired mid-onboarding (or before the
-  // app rendered) and got lost. Gate it on screen-app being active and onboarding not.
-  if (document.getElementById('screen-onboarding')?.classList.contains('active')) return;
-  if (!document.getElementById('screen-app')?.classList.contains('active')) return;
-
-  // iOS Safari vs everything else (Android Chrome, Samsung Internet, etc.)
-  const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  const steps = isIos
-    ? [
-        "Make sure you're on this page (app.html), then tap the Share button ⬆ at the bottom of Safari",
-        'Scroll down and tap Add to Home Screen ＋',
-      ]
-    : [
-        'Tap the ⋮ menu in your browser',
-        'Tap Add to Home screen',
-      ];
-
-  const sheet = document.createElement('div');
-  sheet.id = 'pwaInstallPrompt';
-  sheet.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99998;background:var(--surface);border-top:1px solid var(--accent);padding:20px 18px;color:var(--text);font-family:"DM Sans",sans-serif;box-shadow:0 -10px 30px rgba(0,0,0,0.6);';
-  sheet.innerHTML = `
-    <button onclick="dismissPwaPrompt()" aria-label="Close" style="position:absolute;top:10px;right:12px;background:transparent;border:none;color:#888;font-size:22px;cursor:pointer;line-height:1;padding:4px 8px;">×</button>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;color:var(--accent);margin-bottom:8px;">INSTALL FORGE</div>
-    <div style="font-size:13px;color:#bbb;margin-bottom:12px;line-height:1.5;">Add FORGE to your home screen for faster access and a fullscreen experience.</div>
-    <ol style="margin:0;padding-left:22px;font-size:13px;line-height:1.7;color:#eee;">
-      ${steps.map(s => `<li>${escHtml(s)}</li>`).join('')}
-    </ol>
-  `;
-  document.body.appendChild(sheet);
-
-  // Auto-dismiss after 12 seconds (no localStorage flag — they might just have ignored it once).
-  setTimeout(() => {
-    const el = document.getElementById('pwaInstallPrompt');
-    if (el) el.remove();
-  }, 12000);
-}
-
-function dismissPwaPrompt() {
-  try { localStorage.setItem('forge-pwa-dismissed', '1'); } catch(e) {}
-  document.getElementById('pwaInstallPrompt')?.remove();
-}
+// showPwaPrompt() / dismissPwaPrompt() removed — the smaller "INSTALL FORGE" bottom banner
+// duplicated the showA2HSSheet() install sheet (the bigger one with the yellow button).
+// A2HS dismissal now also sets forge-pwa-dismissed so nothing here needs to fire. The
+// isStandalonePwa() helper above is intentionally kept (small, may be reused).
 
 // ── APP AUTO-UPDATE ──────────────────────────────────
 let _lastServerVersion = null;
@@ -16010,9 +15967,6 @@ if ('serviceWorker' in navigator) {
 
 // Fire-once boot helpers — call these right after loadPlanAndLaunch returns.
 function bootPostLaunch() {
-  // 4s after launch — PWA install nudge (FIX 9: was 3s; give the app time to fully
-  // render and onboarding to settle before the prompt fires).
-  setTimeout(showPwaPrompt, 4000);
   // 5s after launch — first version check (boot path stays clean)
   setTimeout(checkForUpdate, 5000);
   // Every 30 minutes while open
@@ -16123,24 +16077,36 @@ async function removeReminder() {
 async function handleNotifTap() {
   if (!('Notification' in window) ||
       !('serviceWorker' in navigator)) {
-    showToast(t('notif_not_supported') ||
-      'Push notifications not supported on this browser.', 'error');
+    showToast(t('notif_not_supported'),
+      'error');
     return;
   }
 
   const permission = Notification.permission;
 
   if (permission === 'denied') {
-    // Can't programmatically enable — show manual instructions
-    showToast(t('notif_enable_instructions'), 'info', 6000);
+    showToast(t('notif_enable_instructions'),
+      'info', 6000);
     return;
   }
 
   if (permission === 'granted') {
-    // Already granted — init push
-    await initPushNotifications();
-    showToast(t('notif_enabled') ||
-      'Notifications enabled.', 'success');
+    // Toggle OFF — unsubscribe from push
+    const reg = await navigator.serviceWorker
+      .ready;
+    const sub = await reg.pushManager
+      .getSubscription();
+    if (sub) {
+      await sub.unsubscribe();
+      // Remove from server
+      await api('/api/push/subscribe', 'DELETE',
+        { endpoint: sub.endpoint })
+        .catch(() => {});
+    }
+    // Update toggle UI to off
+    updateNotifToggle(false);
+    showToast(t('notif_disabled') ||
+      'Notifications disabled.', 'info');
     return;
   }
 
@@ -16150,13 +16116,16 @@ async function handleNotifTap() {
 
   if (result === 'granted') {
     await initPushNotifications();
-    showToast(t('notif_enabled') ||
-      'Notifications enabled.', 'success');
-    // Update toggle UI
-    const toggle =
-      document.getElementById('notifToggle');
-    if (toggle) toggle.classList.add('on');
+    // Update toggle UI to on
+    updateNotifToggle(true);
+    // FIX 3: re-render the account panel (if open) so the toggle reflects the new permission.
+    const panel = document.getElementById('panel-account');
+    if (panel && panel.style.display !== 'none') {
+      showPanel('account');
+    }
+    showToast(t('notif_enabled'), 'success');
   } else {
+    updateNotifToggle(false);
     showToast(t('notif_blocked'), 'info', 6000);
   }
 }
@@ -16223,6 +16192,13 @@ async function initPushNotifications() {
     });
     await api('/api/push/subscribe', 'POST', { subscription: sub });
     console.log('Push subscription saved');
+    // FIX 2/3: reflect the new subscription in the toggle, and re-render the account
+    // panel if it's open so _notifGranted is recomputed from the now-granted permission.
+    updateNotifToggle(true);
+    const _acctPanel = document.getElementById('panel-account');
+    if (_acctPanel && _acctPanel.style.display !== 'none') {
+      showPanel('account');
+    }
   } catch (e) {
     console.log('Push setup:', e.message);
   }
