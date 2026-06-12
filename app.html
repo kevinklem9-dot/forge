@@ -3568,7 +3568,24 @@ async function loadPlanAndLaunch() {
   // Background fire-and-forget
   api('/api/missions/complete_profile/complete', 'POST').catch(() => {});
   if (userPlan) api('/api/missions/generate_plan/complete', 'POST').catch(() => {});
-  setTimeout(() => initPushNotifications(), 3000);
+  // On boot: if permission is granted but the push subscription has vanished (browser/OS
+  // eviction, SW reinstall), silently re-register it. Otherwise do nothing.
+  setTimeout(async () => {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      // Check if subscription still exists
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+          // Subscription lost — silently recover
+          console.log('[push] No subscription found — recovering silently');
+          await initPushNotifications();
+        }
+      } catch(e) {
+        console.log('[push] Recovery check:', e);
+      }
+    }
+  }, 3000);
   // FIX 3: first-login Add-to-Home-Screen prompt (iOS Safari, browser tab, shown once).
   if (typeof maybeShowA2HSPrompt === 'function') maybeShowA2HSPrompt();
   // Silently remap exercise names to MuscleWiki exact names for video matching
