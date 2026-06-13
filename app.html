@@ -6606,6 +6606,7 @@ async function sendMessage() {
 
     // If the coach updated the plan, reload it
     if (res.plan_update) {
+      console.log('[plan] Update received:', res.plan_update);
       showPlanUpdateBadge(res.plan_update.summary);
       // Clear all caches
       window._logProgrammeCache = null;
@@ -6618,32 +6619,39 @@ async function sendMessage() {
 
       // Directly fetch and update userPlan — bypasses the api() timeout wrapper.
       try {
+        console.log('[plan] Fetching fresh plan...');
         const session = JSON.parse(localStorage.getItem('forge-session') || sessionStorage.getItem('forge-session-temp') || 'null');
         const token = session?.access_token;
+        console.log('[plan] Token exists:', !!token);
+
         const planRes = await fetch(
           BACKEND_URL + '/api/plan?lang=' +
           encodeURIComponent(appLanguage || 'en'),
           {
             headers: {
               'Content-Type': 'application/json',
-              ...(token ? { Authorization: `Bearer ${token}` } : {})
+              ...(token ? { Authorization: 'Bearer ' + token } : {})
             }
           }
         );
+        console.log('[plan] Fetch status:', planRes.status, planRes.ok);
+
         if (planRes.ok) {
           const planData = await planRes.json();
+          console.log('[plan] Got plan data:', !!planData?.plan, 'exercises day 0:', planData?.plan?.workout_plan?.days?.[0]?.exercises?.length);
+
           if (planData?.plan) {
             userPlan = planData.plan;
             localStorage.setItem(
               'forge-cached-plan',
               JSON.stringify(userPlan));
+            console.log('[plan] userPlan updated, calling renderWorkoutPanel');
             if (typeof renderWorkoutPanel
                 === 'function') {
               renderWorkoutPanel();
-            }
-            if (typeof renderNutritionPanel
-                === 'function') {
-              renderNutritionPanel();
+              console.log('[plan] rendered');
+            } else {
+              console.log('[plan] renderWorkoutPanel not found');
             }
           }
         }
