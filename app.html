@@ -6606,16 +6606,21 @@ async function sendMessage() {
 
     // If the coach updated the plan, reload it
     if (res.plan_update) {
-      await reloadPlan();
       showPlanUpdateBadge(res.plan_update.summary);
-
-      // FIX 1: safety-net second reload. The server clears its translation cache when it
-      // applies a plan_update, but that can land a beat after this response returns. Re-pull
-      // the plan 2s later so a stale server-side translation can't leave the old exercise on screen.
-      setTimeout(async () => {
-        await reloadPlan();
-        if (typeof renderWorkoutPanel === 'function') renderWorkoutPanel();
-      }, 2000);
+      // Clear caches
+      window._logProgrammeCache = null;
+      window._planProgrammeCache = null;
+      localStorage.removeItem('forge-cached-plan');
+      localStorage.removeItem('forge-plan-translation');
+      localStorage.removeItem('forge-plan-lang');
+      window._planTranslationCache = null;
+      window._cachedPlan = null;
+      // Fetch fresh plan and re-render once
+      try {
+        await loadPlanInCurrentLanguage();
+      } catch(e) {
+        console.error('[plan reload]', e);
+      }
     }
   } else {
     addMessage('Connection error — check internet connection.', 'ai');
@@ -6628,22 +6633,17 @@ async function sendMessage() {
 // PLAN RELOAD + UPDATE BADGE
 // ═══════════════════════════════════════════════════════
 async function reloadPlan() {
-  // Active programme may have changed — clear cached programme data so the Plan and Log
-  // panels refetch the now-active programme via getActiveProgramme().
   window._logProgrammeCache = null;
   window._planProgrammeCache = null;
-  // FIX 1: clear every plan + translation cache so a coach plan_update can't be masked by a
-  // locally cached (possibly translated) copy of the old plan.
   localStorage.removeItem('forge-cached-plan');
   localStorage.removeItem('forge-plan-translation');
   localStorage.removeItem('forge-plan-lang');
   window._planTranslationCache = null;
   window._cachedPlan = null;
-  await loadPlanInCurrentLanguage(); // re-fetches the plan and re-renders the Plan panel on success
-  // FIX 1: force the workout panel to re-render regardless of which panel is currently
-  // visible, so the updated plan is already painted when the user navigates back to it.
-  if (typeof renderWorkoutPanel === 'function') {
-    setTimeout(() => renderWorkoutPanel(), 300);
+  try {
+    await loadPlanInCurrentLanguage();
+  } catch(e) {
+    console.error('[reloadPlan]', e);
   }
 }
 
