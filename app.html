@@ -6607,19 +6607,48 @@ async function sendMessage() {
     // If the coach updated the plan, reload it
     if (res.plan_update) {
       showPlanUpdateBadge(res.plan_update.summary);
-      // Clear caches
+      // Clear all caches
       window._logProgrammeCache = null;
       window._planProgrammeCache = null;
+      window._planPanelDays = null;
       localStorage.removeItem('forge-cached-plan');
       localStorage.removeItem('forge-plan-translation');
       localStorage.removeItem('forge-plan-lang');
       window._planTranslationCache = null;
-      window._cachedPlan = null;
-      // Fetch fresh plan and re-render once
+
+      // Directly fetch and update userPlan — bypasses the api() timeout wrapper.
       try {
-        await loadPlanInCurrentLanguage();
+        const session = JSON.parse(localStorage.getItem('forge-session') || sessionStorage.getItem('forge-session-temp') || 'null');
+        const token = session?.access_token;
+        const planRes = await fetch(
+          BACKEND_URL + '/api/plan?lang=' +
+          encodeURIComponent(appLanguage || 'en'),
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {})
+            }
+          }
+        );
+        if (planRes.ok) {
+          const planData = await planRes.json();
+          if (planData?.plan) {
+            userPlan = planData.plan;
+            localStorage.setItem(
+              'forge-cached-plan',
+              JSON.stringify(userPlan));
+            if (typeof renderWorkoutPanel
+                === 'function') {
+              renderWorkoutPanel();
+            }
+            if (typeof renderNutritionPanel
+                === 'function') {
+              renderNutritionPanel();
+            }
+          }
+        }
       } catch(e) {
-        console.error('[plan reload]', e);
+        console.error('[plan update reload]', e);
       }
     }
   } else {
