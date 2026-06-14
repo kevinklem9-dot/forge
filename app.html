@@ -599,7 +599,7 @@ body:not(.pwa-mode) #panel-coach {
 .trainer-status { font-size:11px; color:var(--muted); font-family:'DM Mono',monospace; }
 .online-dot { width:7px; height:7px; background:var(--green); border-radius:50%; display:inline-block; margin-right:5px; animation:pulse 2s infinite; }
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.chat-messages { flex:1; min-height:0; overflow-y:auto; padding:16px 14px; display:flex; flex-direction:column; gap:16px; -webkit-overflow-scrolling:touch; }
+.chat-messages { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:16px 14px; display:flex; flex-direction:column; gap:16px; -webkit-overflow-scrolling:touch; }
 .chat-messages::-webkit-scrollbar{display:none}
 .message { display:flex; gap:10px; max-width:90%; animation:fadeUp .25s ease; }
 .message.user { align-self:flex-end; flex-direction:row-reverse; }
@@ -627,8 +627,8 @@ body:not(.pwa-mode) #panel-coach {
 #view-chat { position:relative; min-height:0; }
 /* FIX 4: messages clear the overlaid input. Class-based so it tracks install state:
  * smaller reserve in standalone PWA where the input sits lower. */
-.coach-scroll-area { padding-bottom:130px; }
-.standalone .coach-scroll-area { padding-bottom:70px; }
+.coach-scroll-area { padding-bottom:140px; }
+.standalone .coach-scroll-area { padding-bottom:120px; }
 .chat-input-area { position:absolute; bottom:0; left:0; right:0; z-index:10; background:var(--bg); border-top:0.5px solid var(--border); padding:8px 12px; padding-bottom:max(env(safe-area-inset-bottom), 4px); padding-top:8px; flex-shrink:0; display:flex; flex-direction:column; gap:8px; }
 body.pwa-mode .chat-input-area {
   padding-bottom: 4px !important;
@@ -1313,6 +1313,14 @@ input:focus, textarea:focus, select:focus { outline: none; }
         </div>
         <div id="logProgrammeLabel" style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;padding:12px 18px 0;display:none;"></div>
         <div class="log-day-bar" id="logDayBar"></div>
+        <!-- FIX 4: session progress (valid sets logged vs total). Shown for workout days, hidden on rest days. -->
+        <div id="logProgressWrap" style="margin:8px 16px;display:none">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:1px;margin-bottom:4px">SESSION PROGRESS</div>
+          <div style="height:4px;background:var(--surface2);border-radius:2px">
+            <div id="logProgressBar" style="height:100%;background:var(--accent);border-radius:2px;transition:width 0.3s;width:0%"></div>
+          </div>
+          <div id="logProgressText" style="font-size:11px;color:var(--muted);margin-top:4px">0 sets logged</div>
+        </div>
         <div class="log-exercise-list" id="logExerciseList"></div>
         <div class="log-actions"><button class="save-btn" onclick="saveLog(this)" data-i18n="log_save">Save Session</button></div>
         <div class="feedback-list" id="logFeedback"></div>
@@ -1388,7 +1396,7 @@ input:focus, textarea:focus, select:focus { outline: none; }
         <!-- 3. BODYWEIGHT LOG CARD (log today's weight) -->
         <div class="section-label" data-i18n-key="log_bodyweight">LOG BODYWEIGHT</div>
         <div class="weight-entry-card">
-          <div class="weight-entry-title">Today's Weight</div>
+          <div class="weight-entry-title" data-i18n-key="todays_weight">Today's Weight</div>
           <div class="weight-input-row">
             <input class="weight-input" id="weightInput" type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" placeholder="e.g. 75.5">
             <button class="action-btn" onclick="saveWeight()">Save</button>
@@ -2331,7 +2339,7 @@ async function handleSession(session) {
   // Fetch plan — retry up to 3 times
   let planData = null;
   for (let i = 0; i < 3; i++) {
-    const planRes = await api('/api/plan');
+    const planRes = await api(`/api/plan?lang=${encodeURIComponent(appLanguage || 'en')}`); // FIX 6: boot in the selected language so nutrition/plan don't flash English
     // planRes.plan can be null (no plan) or an object (has plan)
     // Only retry on null response (network failure), not on explicit null plan
     if (planRes !== null) {
@@ -4184,11 +4192,29 @@ function _todayIdx() { const d = new Date().getDay(); return d === 0 ? 6 : d - 1
 function _exCategory(name, dayMuscles) {
   const s = ((name || '') + ' ' + (Array.isArray(dayMuscles) ? dayMuscles.join(' ') : (dayMuscles || ''))).toLowerCase();
   const has = arr => arr.some(k => s.includes(k));
-  if (has(['cardio','run','bike','sprint','treadmill','rower','rowing machine','conditioning','hiit','jump rope','elliptical'])) return 'cardio';
-  if (has(['squat','lunge','leg ','legs','quad','hamstring','glute','calf','rdl','romanian','hip thrust','leg press','leg curl','leg extension','step up','bulgarian'])) return 'legs';
-  if (has(['core','abs','ab ','plank','crunch','oblique','sit-up','sit up','hanging','knee raise','leg raise','rollout'])) return 'core';
-  if (has(['back','row','pull','lat','bicep','curl','deadlift','chin','pulldown','face pull','shrug','rear delt'])) return 'pull';
-  if (has(['chest','bench','shoulder','press','push','tricep','dip','fly','lateral','ohp','overhead','incline','pec'])) return 'push';
+  // Case-insensitive substring match. Order matters because keywords overlap:
+  //   cardio → core → legs → pull → push.
+  // Core before legs so "hanging leg raise" reads as Core, not Legs.
+  // Legs before pull so hinges (RDL, sumo/Romanian deadlift, good morning) read as Legs.
+  // Disambiguated forms only — never bare 'row'/'jump'/'rope'/'cycle'/'ab', which would
+  // mislabel barbell row, box jump, rope pushdown, bicycle crunch and every cable move.
+  if (has(['cardio','treadmill','elliptical','rower','rowing machine','row erg','erg',
+           'run','running','jog','sprint','hiit','conditioning','burpee','stair',
+           'jump rope','jumping jack','skipping','skip rope','battle rope',
+           'cycling','spin bike','air bike','assault bike','stationary bike','exercise bike','bike',
+           'swim','swimming'])) return 'cardio';
+  if (has(['core','abs','ab ','oblique','plank','crunch','sit-up','sit up','situp',
+           'russian twist','hollow','l-sit','dead bug','toes to bar','knee raise','leg raise',
+           'hanging','rollout','ab wheel','pallof','windshield','flutter','mountain climber'])) return 'core';
+  if (has(['squat','lunge','leg ','legs','leg press','leg curl','leg extension','quad',
+           'hamstring','glute','calf','calves','rdl','romanian','stiff leg','stiff-leg',
+           'hip thrust','hip ','hack','good morning','goblet','split squat','step up','step-up',
+           'bulgarian','sumo','box jump','wall sit','adduct','abduct','pull-through','pull through'])) return 'legs';
+  if (has(['back','row','pull','pullup','pull-up','pulldown','chin','lat','bicep','curl',
+           'deadlift','shrug','face pull','rear delt','reverse fly','rhomboid','preacher'])) return 'pull';
+  if (has(['chest','bench','press','push','pushup','push-up','pushdown','shoulder','overhead',
+           'ohp','military','arnold','tricep','skull','kickback','dip','fly','flye',
+           'lateral','front raise','incline','pec'])) return 'push';
   return null;
 }
 
@@ -4311,19 +4337,19 @@ function renderPlanDays(days, customLabel) {
     const tEx = todayDay.exercises?.length || 0;
     const tSets = (todayDay.exercises || []).reduce((n, e) => n + (parseInt(e.sets) || 0), 0);
     const tMuscles = Array.isArray(todayDay.muscles) ? todayDay.muscles.join(' · ') : (todayDay.muscles || '');
-    const tTitle = todayDay.label || todayDay.day_name || (tEx ? 'Training' : t('rest'));
+    const tTitle = todayDay.label || todayDay.day_name || (tEx ? t('greeting_training') : t('rest'));
     const tMetaSub = tEx
-      ? `${tEx} ${tEx === 1 ? 'exercise' : 'exercises'} · ${tSets} ${tSets === 1 ? 'set' : 'sets'}`
+      ? `${tEx} ${tEx === 1 ? t('unit_exercise') : t('unit_exercises')} · ${tSets} ${tSets === 1 ? t('unit_set') : t('unit_sets')}`
       : t('rest_day').replace(/<br>/g, ' ');
     todayHtml = `<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:12px;padding:16px 18px;margin-bottom:12px;">
-      <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:2px;margin-bottom:6px;">TODAY</div>
+      <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:2px;margin-bottom:6px;">${t('today').toUpperCase()}</div>
       <div style="font-size:16px;font-weight:600;color:var(--text);">${escHtml(tTitle)}${tMuscles ? ' — ' + escHtml(tMuscles) : ''}</div>
       <div style="font-size:13px;color:var(--muted);margin-top:4px;">${tMetaSub}</div>
     </div>`;
   }
 
   const labelHtml = customLabel
-    ? `<div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;">${escHtml(customLabel)} · CUSTOM</div>`
+    ? `<div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;">${escHtml(customLabel)} · ${t('label_custom')}</div>`
     : '';
 
   scroll.innerHTML = `<div style="width:100%;display:flex;flex-direction:column;gap:10px;">`
@@ -4351,16 +4377,16 @@ function renderPlanDays(days, customLabel) {
     const barFill  = isActive ? 'var(--bg)' : 'var(--accent)';
     const progressHtml = (loggedSets > 0 && totalSets > 0)
       ? `<div style="height:3px;border-radius:2px;background:${barTrack};margin-top:8px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${barFill};border-radius:2px;"></div></div>
-        <div style="font-family:var(--font-mono);font-size:8px;color:${cSub};letter-spacing:1px;margin-top:3px;${isActive ? 'opacity:0.85;' : ''}">${loggedSets}/${totalSets} sets</div>`
+        <div style="font-family:var(--font-mono);font-size:8px;color:${cSub};letter-spacing:1px;margin-top:3px;${isActive ? 'opacity:0.85;' : ''}">${loggedSets}/${totalSets} ${t('unit_sets')}</div>`
       : '';
 
     return `<div class="day-chip ${isActive ? 'active' : ''} ${isRest ? 'rest' : ''}" onclick="selectDay(${i})" style="display:flex;align-items:center;gap:14px;width:100%;min-width:0;text-align:left;padding:14px 16px;border-radius:14px;background:${chipBg};border:1px ${chipBorder};">
       <div style="flex:1;min-width:0;">
-        <div style="font-family:var(--font-mono);font-size:9px;color:${cSub};text-transform:uppercase;letter-spacing:2px;">${shortName}${isToday ? ' · TODAY' : ''}</div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:${cSub};text-transform:uppercase;letter-spacing:2px;">${shortName}${isToday ? ' · ' + t('today').toUpperCase() : ''}</div>
         <div style="font-family:var(--font-body);font-size:15px;color:${cMain};font-weight:500;margin-top:3px;">${d.label || (isRest ? t('rest') : '—')}</div>
         ${Array.isArray(d.scheduled_days) && d.scheduled_days.length ? `<div style="font-family:var(--font-mono);font-size:8px;color:${cSub};letter-spacing:1px;margin-top:4px;">${d.scheduled_days.map(sd => sd.slice(0,3).toUpperCase()).join(' · ')}</div>` : ''}
         ${muscles ? `<div style="font-family:var(--font-body);font-size:12px;color:${cSub};margin-top:2px;">${muscles}</div>` : ''}
-        <div style="font-family:var(--font-mono);font-size:9px;color:${cSub};letter-spacing:1px;margin-top:6px;">${isRest ? t('rest').toUpperCase() : exCount + (exCount === 1 ? ' EXERCISE' : ' EXERCISES')}</div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:${cSub};letter-spacing:1px;margin-top:6px;">${isRest ? t('rest').toUpperCase() : exCount + ' ' + (exCount === 1 ? t('unit_exercise').toUpperCase() : t('unit_exercises').toUpperCase())}</div>
         ${progressHtml}
       </div>
       <div style="font-family:var(--font-mono);font-size:18px;color:${cSub};flex-shrink:0;">›</div>
@@ -4525,6 +4551,8 @@ async function renderLog() {
 
   if (!day?.exercises?.length) {
     if (el) el.innerHTML = `<div class="empty-state">${t('rest_day').replace('. ','.<br>')}</div>`;
+    const pw = document.getElementById('logProgressWrap'); // FIX 4: no progress bar on rest days
+    if (pw) pw.style.display = 'none';
     return;
   }
 
@@ -4566,6 +4594,36 @@ function renderLogCards(day) {
       </div>
     `;
   }).join('');
+  // FIX 4: reveal the session-progress bar for this workout day and refresh its fill.
+  const pw = document.getElementById('logProgressWrap');
+  if (pw) pw.style.display = 'block';
+  updateLogProgress();
+}
+
+// FIX 4: session progress = valid logged sets / total target sets across today's workout.
+// A set counts as logged once it has reps AND either a weight or the bodyweight flag —
+// the same rule saveLog() uses to decide what gets persisted. Reads live input values so
+// it updates as the user types, falling back to stored state.
+function updateLogProgress() {
+  const bar = document.getElementById('logProgressBar');
+  const txt = document.getElementById('logProgressText');
+  if (!bar || !txt) return;
+  let total = 0, logged = 0;
+  Object.keys(logSetsState).forEach(k => {
+    const sets = logSetsState[k] || [];
+    total += sets.length;
+    sets.forEach((s, si) => {
+      const isBw = s.is_bw === true;
+      const repsEl = document.getElementById(`lr-${k}-${si}`);
+      const reps = repsEl ? (parseInt(repsEl.value) || 0) : (parseInt(s.reps) || 0);
+      const wEl = document.getElementById(`lw-${k}-${si}`);
+      const weight = isBw ? 0 : (wEl ? (parseFloat(wEl.value) || 0) : (parseFloat(s.weight) || 0));
+      if (reps > 0 && (isBw || weight > 0)) logged++;
+    });
+  });
+  const pct = total > 0 ? Math.round((logged / total) * 100) : 0;
+  bar.style.width = pct + '%';
+  txt.textContent = `${logged} / ${total} sets logged`;
 }
 
 function renderSetRow(exIdx, setIdx, setData, totalSets) {
@@ -4610,6 +4668,7 @@ function updateSetData(exIdx, setIdx, field, value) {
   // Accept comma as decimal separator
   const cleaned = String(value).replace(',', '.');
   logSetsState[exIdx][setIdx][field] = field === 'weight' ? parseFloat(cleaned) || '' : parseInt(cleaned) || '';
+  updateLogProgress(); // FIX 4: reflect this set in the session progress bar
 }
 
 // ── AUTO-SAVE LOG TO LOCALSTORAGE ──────────────
@@ -4671,6 +4730,7 @@ function refreshSetRows(exIdx) {
   const sets = logSetsState[exIdx];
   document.getElementById(`log-sets-${exIdx}`).innerHTML =
     sets.map((s, si) => renderSetRow(exIdx, si, s, sets.length)).join('');
+  updateLogProgress(); // FIX 4: set added/removed/BW-toggled — recompute progress
 }
 
 function selectLogDay(idx) {
@@ -5468,8 +5528,8 @@ function formatSessionDate(iso) {
   const d = (iso + '').split('T')[0];
   const today = new Date().toISOString().split('T')[0];
   const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-  if (d === today) return 'Today';
-  if (d === yesterday) return 'Yesterday';
+  if (d === today) return t('today');
+  if (d === yesterday) return t('yesterday');
   const dt = new Date(iso);
   return dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
@@ -6372,7 +6432,7 @@ window._populateGreetingStats = function () {
       let daysAgo = stats.last_session_days_ago;
       const gl = document.getElementById('greetingLastSession');
       if (gl && lastLabel) {
-        const ago = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : (daysAgo + ' days ago');
+        const ago = daysAgo === 0 ? t('today') : daysAgo === 1 ? t('yesterday') : t('days_ago', { n: daysAgo });
         gl.textContent = lastLabel + ' · ' + ago;
       }
       let ds = daysAgo;
@@ -6407,38 +6467,38 @@ function initCoach() {
           <!-- STATUS STRIP (pill cards) -->
           <div style="display:flex;gap:8px;margin:12px 0;">
             <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center;">
-              <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">Training</div>
+              <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">${t('greeting_training')}</div>
               <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);line-height:1;" id="greetingTrainingPct">—</div>
             </div>
             <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center;">
-              <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">Recovery</div>
+              <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">${t('greeting_recovery')}</div>
               <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);line-height:1;" id="greetingRecovery">—</div>
             </div>
             <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center;">
-              <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">Next Session</div>
+              <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">${t('greeting_next_session')}</div>
               <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--text);line-height:1.2;" id="greetingNextSession">—</div>
             </div>
           </div>
           <!-- READY FOR TODAY (bordered card) -->
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:12px;">
-            <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">Ready For Today</div>
+            <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">${t('greeting_ready_today')}</div>
             <div style="display:flex;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid #222;margin-bottom:8px;">
               <div>
-                <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Today's Focus</div>
+                <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">${t('greeting_today_focus')}</div>
                 <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--accent);font-weight:500;" id="greetingTodayFocus">—</div>
               </div>
               <div style="text-align:right;">
-                <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Duration</div>
+                <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">${t('greeting_duration')}</div>
                 <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);font-weight:500;" id="greetingDuration">—</div>
               </div>
             </div>
             <div style="display:flex;justify-content:space-between;">
               <div>
-                <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Recovery</div>
+                <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">${t('greeting_recovery')}</div>
                 <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--accent);font-weight:500;" id="greetingRecoveryStatus">Good</div>
               </div>
               <div style="text-align:right;">
-                <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Last Completed</div>
+                <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">${t('greeting_last_completed')}</div>
                 <div style="font-family:'DM Sans',sans-serif;font-size:11px;color:var(--muted);" id="greetingLastSession">—</div>
               </div>
             </div>
@@ -8133,6 +8193,10 @@ window.showAddToHomeScreen = () => {
 // manual showAddToHomeScreen() row in Account — this is the unprompted first-run nudge.
 function maybeShowA2HSPrompt() {
   try {
+    // FIX 3: only ever prompt inside the authenticated app (this is called from
+    // loadPlanAndLaunch() after the plan loads) — never on the landing page. The
+    // login guard is defence-in-depth so a stray early call can't fire the sheet.
+    if (typeof currentUser === 'undefined' || !currentUser) return;
     if (localStorage.getItem('forge-a2hs-shown') === '1') return;
     const ua = navigator.userAgent || '';
     const isIOS = /iPhone|iPad/.test(ua);
@@ -8871,6 +8935,12 @@ const LANGUAGES = [
 // Full UI translation strings
 const STRINGS = {
   en: {
+    /* i18n FIX batch — coach CTA / today-relative / weight / plan units / greeting labels. ('today' lives below.) */
+    yesterday: 'Yesterday', days_ago: '{n} days ago', todays_weight: "Today's weight",
+    become_coach_cta_desc: "Give your clients 24/7 AI coaching. Manage their programmes and progress in one place. Earn commission on every client subscription.",
+    become_coach_cta_btn: "Set up coach account",
+    unit_set: 'set', unit_sets: 'sets', unit_exercise: 'exercise', unit_exercises: 'exercises', label_custom: 'Custom',
+    greeting_training: 'Training', greeting_recovery: 'Recovery', greeting_next_session: 'Next Session', greeting_ready_today: 'Ready For Today', greeting_today_focus: "Today's Focus", greeting_duration: 'Duration', greeting_last_completed: 'Last Completed',
     notif_enable_instructions: "To enable: Settings → Safari → Notifications → FORGE → Allow", notif_enabled: "Notifications enabled.", notif_disabled: "Notifications disabled.", notif_not_supported: "Push notifications not supported on this browser.", notif_blocked: "Notifications blocked. Go to Settings → Safari → Notifications → FORGE → Allow",
     /* i18n fix — stat cards / upgrade sheet / share / features / coach */
     stat_sessions_week: "SESSIONS THIS WEEK", stat_current_streak: "CURRENT STREAK", stat_last_session: "LAST SESSION", stat_prs_month: "PRS THIS MONTH", stat_day: "day", stat_days: "days", stat_best: "best", stat_view_history: "View history ›",
@@ -9308,7 +9378,13 @@ const STRINGS = {
     expired_sub: 'Your plan and progress are saved. Pick a plan to continue.',
 },
   es: {
-    notif_enable_instructions: "Para activar: Ajustes → Safari → Notificaciones → FORGE → Permitir", notif_enabled: "Notificaciones activadas.", notif_disabled: "Notificaciones desactivadas.", notif_not_supported: "Las notificaciones push no están disponibles en este navegador.", notif_blocked: "Notificaciones bloqueadas. Ve a Configuración → Safari → Notificaciones → FORGE → Permitir",
+    /* i18n FIX batch */
+    today: 'Hoy', yesterday: 'Ayer', days_ago: 'hace {n} días', todays_weight: 'Peso de hoy',
+    become_coach_cta_desc: "Ofrece a tus clientes entrenamiento con IA 24/7. Gestiona sus programas y progreso en un solo lugar. Gana comisión por cada suscripción de cliente.",
+    become_coach_cta_btn: "Configurar cuenta de coach",
+    unit_set: 'serie', unit_sets: 'series', unit_exercise: 'ejercicio', unit_exercises: 'ejercicios', label_custom: 'Personalizado',
+    greeting_training: 'Entrenamiento', greeting_recovery: 'Recuperación', greeting_next_session: 'Próxima sesión', greeting_ready_today: 'Listo para hoy', greeting_today_focus: 'Enfoque de hoy', greeting_duration: 'Duración', greeting_last_completed: 'Última completada',
+    notif_enable_instructions: "Para activar: Ajustes → Safari → Notificaciones → FORGE →Permitir", notif_enabled: "Notificaciones activadas.", notif_disabled: "Notificaciones desactivadas.", notif_not_supported: "Las notificaciones push no están disponibles en este navegador.", notif_blocked: "Notificaciones bloqueadas. Ve a Configuración → Safari → Notificaciones → FORGE → Permitir",
     /* i18n fix — stat cards / upgrade sheet / share / features / coach */
     stat_sessions_week: "SESIONES ESTA SEMANA", stat_current_streak: "RACHA ACTUAL", stat_last_session: "ÚLTIMA SESIÓN", stat_prs_month: "RÉCORDS ESTE MES", stat_day: "día", stat_days: "días", stat_best: "mejor", stat_view_history: "Ver historial ›",
     upg_plan_headline: "Mejora tu plan", upgrade_trial_ended: "Tu prueba ha terminado.", upgrade_days_left: "Te quedan {n} días en tu prueba.", upgrade_subline_ended: "Mantén tu progreso y sigue entrenando.", upgrade_pt_compare: "Una sesión de PT cuesta más que 6 meses de Steel anual.", upgrade_save_forever: "Ahorra CHF {n}/mes vs precio completo. Precio garantizado.", upgrade_launch_pricing: "PRECIO DE LANZAMIENTO — {n} de 500 plazas",
@@ -9743,7 +9819,13 @@ const STRINGS = {
     expired_sub: 'Tu plan y progreso están guardados. Elige un plan para continuar.',
 },
   fr: {
-    notif_enable_instructions: "Pour activer: Réglages → Safari → Notifications → FORGE → Autoriser", notif_enabled: "Notifications activées.", notif_disabled: "Notifications désactivées.", notif_not_supported: "Les notifications push ne sont pas disponibles sur ce navigateur.", notif_blocked: "Notifications bloquées. Va dans Réglages → Safari → Notifications → FORGE → Autoriser",
+    /* i18n FIX batch */
+    today: "Aujourd'hui", yesterday: 'Hier', days_ago: 'il y a {n} jours', todays_weight: "Poids d'aujourd'hui",
+    become_coach_cta_desc: "Offrez à vos clients un coaching IA 24h/24 et 7j/7. Gérez leurs programmes et leur progression au même endroit. Gagnez une commission sur chaque abonnement client.",
+    become_coach_cta_btn: "Configurer le compte coach",
+    unit_set: 'série', unit_sets: 'séries', unit_exercise: 'exercice', unit_exercises: 'exercices', label_custom: 'Personnalisé',
+    greeting_training: 'Entraînement', greeting_recovery: 'Récupération', greeting_next_session: 'Prochaine séance', greeting_ready_today: "Prêt pour aujourd'hui", greeting_today_focus: 'Objectif du jour', greeting_duration: 'Durée', greeting_last_completed: 'Dernière terminée',
+    notif_enable_instructions: "Pour activer: Réglages → Safari → Notifications → FORGE →Autoriser", notif_enabled: "Notifications activées.", notif_disabled: "Notifications désactivées.", notif_not_supported: "Les notifications push ne sont pas disponibles sur ce navigateur.", notif_blocked: "Notifications bloquées. Va dans Réglages → Safari → Notifications → FORGE → Autoriser",
     /* i18n fix — stat cards / upgrade sheet / share / features / coach */
     stat_sessions_week: "SÉANCES CETTE SEMAINE", stat_current_streak: "SÉRIE EN COURS", stat_last_session: "DERNIÈRE SÉANCE", stat_prs_month: "RECORDS CE MOIS", stat_day: "jour", stat_days: "jours", stat_best: "meilleur", stat_view_history: "Voir l'historique ›",
     upg_plan_headline: "Améliore ton abonnement", upgrade_trial_ended: "Ton essai est terminé.", upgrade_days_left: "Il te reste {n} jours d'essai.", upgrade_subline_ended: "Garde tes progrès et continue l'entraînement.", upgrade_pt_compare: "Une séance de PT coûte plus cher que 6 mois d'abonnement Steel annuel.", upgrade_save_forever: "Économise CHF {n}/mois vs prix normal. Bloqué pour toujours.", upgrade_launch_pricing: "PRIX DE LANCEMENT — {n} places sur 500",
@@ -10178,6 +10260,12 @@ const STRINGS = {
     expired_sub: 'Ton programme et tes progrès sont sauvegardés. Choisis un plan pour continuer.',
 },
   de: {
+    /* i18n FIX batch */
+    today: 'Heute', yesterday: 'Gestern', days_ago: 'vor {n} Tagen', todays_weight: 'Heutiges Gewicht',
+    become_coach_cta_desc: "Biete deinen Klienten KI-Coaching rund um die Uhr. Verwalte ihre Programme und Fortschritte an einem Ort. Verdiene Provision bei jedem Klienten-Abo.",
+    become_coach_cta_btn: "Coach-Konto einrichten",
+    unit_set: 'Satz', unit_sets: 'Sätze', unit_exercise: 'Übung', unit_exercises: 'Übungen', label_custom: 'Eigenes',
+    greeting_training: 'Training', greeting_recovery: 'Erholung', greeting_next_session: 'Nächste Einheit', greeting_ready_today: 'Bereit für heute', greeting_today_focus: 'Fokus heute', greeting_duration: 'Dauer', greeting_last_completed: 'Zuletzt absolviert',
     notif_enabled: "Benachrichtigungen aktiviert.", notif_disabled: "Benachrichtigungen deaktiviert.", notif_not_supported: "Push-Benachrichtigungen werden auf diesem Browser nicht unterstützt.", notif_blocked: "Benachrichtigungen blockiert. Gehe zu Einstellungen → Safari → Benachrichtigungen → FORGE → Erlauben", notif_enable_instructions: "Zum Aktivieren: Einstellungen → Safari → Benachrichtigungen → FORGE → Erlauben",
     chip_next_session: "Nächste Einheit", chip_today_recovery: "Heutige Erholung", chip_program_overview: "Programmübersicht", chip_progress_check: "Fortschrittskontrolle", chip_technique_help: "Technische Hilfe",
     nav_coach: 'Coach',
@@ -10588,7 +10676,13 @@ const STRINGS = {
     expired_sub: 'Dein Plan und dein Fortschritt sind gespeichert. Wähle einen Plan, um weiterzumachen.',
 },
   it: {
-    notif_enable_instructions: "Per attivare: Impostazioni → Safari → Notifiche → FORGE → Consenti", notif_enabled: "Notifiche attivate.", notif_disabled: "Notifiche disattivate.", notif_not_supported: "Le notifiche push non sono supportate su questo browser.", notif_blocked: "Notifiche bloccate. Vai in Impostazioni → Safari → Notifiche → FORGE → Consenti",
+    /* i18n FIX batch */
+    today: 'Oggi', yesterday: 'Ieri', days_ago: '{n} giorni fa', todays_weight: 'Peso di oggi',
+    become_coach_cta_desc: "Offri ai tuoi clienti coaching IA 24/7. Gestisci i loro programmi e progressi in un unico posto. Guadagna una commissione su ogni abbonamento cliente.",
+    become_coach_cta_btn: "Configura account coach",
+    unit_set: 'serie', unit_sets: 'serie', unit_exercise: 'esercizio', unit_exercises: 'esercizi', label_custom: 'Personalizzato',
+    greeting_training: 'Allenamento', greeting_recovery: 'Recupero', greeting_next_session: 'Prossima sessione', greeting_ready_today: 'Pronto per oggi', greeting_today_focus: 'Focus di oggi', greeting_duration: 'Durata', greeting_last_completed: 'Ultima completata',
+    notif_enable_instructions: "Per attivare: Impostazioni → Safari → Notifiche → FORGE →Consenti", notif_enabled: "Notifiche attivate.", notif_disabled: "Notifiche disattivate.", notif_not_supported: "Le notifiche push non sono supportate su questo browser.", notif_blocked: "Notifiche bloccate. Vai in Impostazioni → Safari → Notifiche → FORGE → Consenti",
     /* i18n fix — stat cards / upgrade sheet / share / features / coach */
     stat_sessions_week: "SESSIONI QUESTA SETTIMANA", stat_current_streak: "SERIE ATTUALE", stat_last_session: "ULTIMA SESSIONE", stat_prs_month: "RECORD QUESTO MESE", stat_day: "giorno", stat_days: "giorni", stat_best: "migliore", stat_view_history: "Vedi cronologia ›",
     upg_plan_headline: "Migliora il tuo piano", upgrade_trial_ended: "La tua prova è terminata.", upgrade_days_left: "Hai ancora {n} giorni di prova.", upgrade_subline_ended: "Mantieni i progressi e continua ad allenarti.", upgrade_pt_compare: "Una sessione PT costa più di 6 mesi di Steel annuale.", upgrade_save_forever: "Risparmia CHF {n}/mese vs prezzo pieno. Bloccato per sempre.", upgrade_launch_pricing: "PREZZO DI LANCIO — {n} posti su 500",
@@ -11023,6 +11117,12 @@ const STRINGS = {
     expired_sub: 'Il tuo piano e i progressi sono salvati. Scegli un piano per continuare.',
 },
   pt: {
+    /* i18n FIX batch */
+    today: 'Hoje', yesterday: 'Ontem', days_ago: 'há {n} dias', todays_weight: 'Peso de hoje',
+    become_coach_cta_desc: "Ofereça aos seus clientes treino com IA 24/7. Faça a gestão dos seus programas e progresso num só lugar. Ganhe comissão em cada subscrição de cliente.",
+    become_coach_cta_btn: "Configurar conta de treinador",
+    unit_set: 'série', unit_sets: 'séries', unit_exercise: 'exercício', unit_exercises: 'exercícios', label_custom: 'Personalizado',
+    greeting_training: 'Treino', greeting_recovery: 'Recuperação', greeting_next_session: 'Próxima sessão', greeting_ready_today: 'Pronto para hoje', greeting_today_focus: 'Foco de hoje', greeting_duration: 'Duração', greeting_last_completed: 'Última concluída',
     notif_enable_instructions: "Para ativar: Definições → Safari → Notificações → FORGE → Permitir", notif_enabled: "Notificações ativadas.", notif_disabled: "Notificações desativadas.", notif_not_supported: "As notificações push não são suportadas neste navegador.", notif_blocked: "Notificações bloqueadas. Vai a Definições → Safari → Notificações → FORGE → Permitir",
     /* i18n fix — stat cards / upgrade sheet / share / features / coach */
     stat_sessions_week: "SESSÕES ESTA SEMANA", stat_current_streak: "SEQUÊNCIA ATUAL", stat_last_session: "ÚLTIMA SESSÃO", stat_prs_month: "RECORDES ESTE MÊS", stat_day: "dia", stat_days: "dias", stat_best: "melhor", stat_view_history: "Ver histórico ›",
@@ -14630,10 +14730,10 @@ function formatDateSession(dateStr) {
   const today = new Date().toISOString().split('T')[0];
   const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
   const d = (dateStr + '').split('T')[0];
-  if (d === today) return 'Today';
-  if (d === yesterday) return 'Yesterday';
+  if (d === today) return t('today');
+  if (d === yesterday) return t('yesterday');
   const diff = Math.floor((new Date(today) - new Date(d)) / 86400000);
-  if (diff > 0 && diff < 60) return diff + ' days ago';
+  if (diff > 0 && diff < 60) return t('days_ago', { n: diff });
   return d;
 }
 
@@ -15831,9 +15931,9 @@ async function renderAccountCoachSections() {
     // Non-coach: show "Become a coach" CTA
     html += `
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1.5px;color:var(--accent);margin-bottom:8px;">BECOME A FORGE COACH</div>
-        <div style="font-size:13px;color:var(--text);line-height:1.5;margin-bottom:16px;">Give your clients 24/7 AI coaching. Manage their programmes and progress in one place. Earn commission on every client subscription.</div>
-        <button onclick="openCoachSetup()" style="width:100%;padding:13px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Set up coach account</button>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1.5px;color:var(--accent);margin-bottom:8px;">${t('become_coach_title')}</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.5;margin-bottom:16px;">${t('become_coach_cta_desc')}</div>
+        <button onclick="openCoachSetup()" style="width:100%;padding:13px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">${t('become_coach_cta_btn')}</button>
       </div>`;
   }
 
@@ -16139,9 +16239,13 @@ async function removeReminder() {
 
 async function handleNotifTap() {
   try {
-    if (!('Notification' in window) ||
-        !('serviceWorker' in navigator)) {
+    if (!('Notification' in window)) {
       showToast(t('notif_not_supported'), 'error');
+      return;
+    }
+    // FIX 5: no service worker (e.g. iOS Safari tab, not installed) — push can't work.
+    if (!('serviceWorker' in navigator)) {
+      showToast('Push notifications require the app to be installed on your home screen.', 'info', 4000);
       return;
     }
 
@@ -16153,10 +16257,22 @@ async function handleNotifTap() {
       return;
     }
 
+    // FIX 5: wait for the service worker to be ready, but never hang on it — the toggle
+    // stopped working when navigator.serviceWorker.ready never resolved. Time out at 5s.
+    let swReg;
+    try {
+      swReg = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('SW timeout')), 5000))
+      ]);
+    } catch (e) {
+      showToast('Notification setup failed. Try reinstalling the app from Safari.', 'error', 4000);
+      return;
+    }
+
     // Check actual subscription state
     // not just permission
-    const reg = await navigator.serviceWorker.ready;
-    const existingSub = await reg.pushManager
+    const existingSub = await swReg.pushManager
       .getSubscription();
 
     if (existingSub) {
