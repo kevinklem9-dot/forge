@@ -4488,7 +4488,13 @@ async function getActiveProgramme() {
   if (res?.programmes?.length) {
     const active = res.programmes.find(p => p.is_active && !p.is_archived);
     if (active && active.plan_data?.workout?.days?.length) {
-      result = { type: 'custom', name: active.name || 'Custom Programme', days: active.plan_data.workout.days };
+      // The custom programme is stored in English (saved at onboarding). When a translated
+      // AI plan is loaded, use its days so exercise names/descriptions follow the selected
+      // language; fall back to the stored English days when no AI plan is present.
+      const days = userPlan?.workout_plan?.days?.length
+        ? userPlan.workout_plan.days
+        : active.plan_data.workout.days;
+      result = { type: 'custom', name: active.name || 'Custom Programme', days: days };
     }
   }
 
@@ -8213,6 +8219,11 @@ function maybeShowA2HSPrompt() {
     // loadPlanAndLaunch() after the plan loads) — never on the landing page. The
     // login guard is defence-in-depth so a stray early call can't fire the sheet.
     if (typeof currentUser === 'undefined' || !currentUser) return;
+    // Only show when the user is in the app, not on the landing/auth/onboarding screen.
+    // Screens toggle the `.active` class (CSS: .screen.active{display:flex}); check the
+    // class — NOT inline style.display, which stays '' on hidden screens.
+    const _appScreen = document.getElementById('screen-app');
+    if (!_appScreen || !_appScreen.classList.contains('active')) return;
     if (localStorage.getItem('forge-a2hs-shown') === '1') return;
     const ua = navigator.userAgent || '';
     const isIOS = /iPhone|iPad/.test(ua);
@@ -14021,6 +14032,10 @@ function setLanguage(code) {
     // fresh workout-panel render so the plan switches language even if the panel was
     // not visible when the fetch resolved.
     loadPlanInCurrentLanguage().then(() => {
+      // Clear programme caches so getActiveProgramme() re-reads from the freshly
+      // translated userPlan instead of its cached English version.
+      window._logProgrammeCache = null;
+      window._planProgrammeCache = null;
       window._planPanelDays = null;
       if (typeof renderWorkoutPanel === 'function') renderWorkoutPanel();
     });
