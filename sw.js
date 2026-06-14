@@ -57,6 +57,19 @@ self.addEventListener('push', e => {
   e.waitUntil(
     self.registration.showNotification(title, options)
   );
+
+  // Notify open clients so they refresh
+  // unread counts immediately
+  self.clients.matchAll({
+    type: 'window',
+    includeUncontrolled: true
+  }).then(clients => {
+    clients.forEach(client =>
+      client.postMessage({
+        type: 'PUSH_RECEIVED'
+      })
+    );
+  });
 });
 
 self.addEventListener('notificationclick', e => {
