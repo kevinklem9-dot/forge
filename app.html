@@ -1806,6 +1806,16 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   }
 });
 
+// Keep forge-session in sync with Supabase token auto-refresh / sign-out.
+sb.auth.onAuthStateChange((event, session) => {
+  if (session) {
+    localStorage.setItem('forge-session', JSON.stringify(session));
+  } else if (event === 'SIGNED_OUT') {
+    localStorage.removeItem('forge-session');
+    sessionStorage.removeItem('forge-session-temp');
+  }
+});
+
 let currentUser = null;
 let userProfile = null;
 let userPlan = null;
@@ -2427,7 +2437,22 @@ async function handleSession(session) {
 async function api(path, method = 'GET', body = null, timeoutMs = 30000) {
   try {
     const session = JSON.parse(localStorage.getItem('forge-session') || sessionStorage.getItem('forge-session-temp') || 'null');
-    const token = session?.access_token;
+    let token = session?.access_token;
+    // Check if token is expired or expires soon
+    const expiresAt = session?.expires_at;
+    const nowSecs = Math.floor(Date.now() / 1000);
+    if (expiresAt && expiresAt - nowSecs < 60) {
+      // Token expired or expires in < 60s — force refresh via Supabase
+      try {
+        const { data } = await sb.auth.refreshSession();
+        if (data?.session) {
+          localStorage.setItem('forge-session', JSON.stringify(data.session));
+          token = data.session.access_token;
+        }
+      } catch(e) {
+        console.warn('[auth] token refresh failed:', e.message);
+      }
+    }
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     const opts = {
@@ -4367,8 +4392,11 @@ function renderWorkoutCoachUI() {
     </div>`;
 
   const hasBackup = wp._ai_backup && (wp._ai_backup.days || []).length;
+  // Hide the AI/Coach toggle when an active coach is connected — the coach controls which plan
+  // is shown. _myCoachActive is cached from /api/my-coach (true once a coach is linked).
+  const hasCoach = _myCoachActive === true || !!window._myCoachData?.coach_id || !!window._activeCoach;
   const onAI = !!window._useAIPlan;
-  const toggle = hasBackup ? `<div id="planSourceToggle" style="display:flex;gap:8px;margin:0 16px 10px;align-items:center;">
+  const toggle = (hasBackup && !hasCoach) ? `<div id="planSourceToggle" style="display:flex;gap:8px;margin:0 16px 10px;align-items:center;">
       <button onclick="setPlanSource('coach')" id="btnPlanCoach" class="tap-anim" style="flex:1;padding:8px;border-radius:8px;font-size:12px;font-family:'DM Mono',monospace;letter-spacing:1px;background:${onAI ? 'var(--surface2)' : 'var(--accent)'};color:${onAI ? 'var(--muted)' : 'var(--bg)'};border:none;cursor:pointer;">COACH PLAN</button>
       <button onclick="setPlanSource('ai')" id="btnPlanAI" class="tap-anim" style="flex:1;padding:8px;border-radius:8px;font-size:12px;font-family:'DM Mono',monospace;letter-spacing:1px;background:${onAI ? 'var(--accent)' : 'var(--surface2)'};color:${onAI ? 'var(--bg)' : 'var(--muted)'};border:none;cursor:pointer;">AI PLAN</button>
     </div>` : '';
@@ -4654,8 +4682,13 @@ async function renderLog() {
   // Init sets state for this day — default sets from plan
   logSetsState = {};
   day.exercises.forEach((e, i) => {
-    const targetSets = parseInt(e.sets) || 3;
-    logSetsState[i] = Array.from({ length: targetSets }, () => ({ weight: '', reps: '' }));
+    // Cardio exercises log duration/distance/intensity/intervals instead of weight×reps.
+    if (_exCategory(e.name) === 'cardio') {
+      logSetsState[i] = [{ cardio: true, type: 'cardio', duration: { value: '', unit: 'min' }, distance: { value: '', unit: 'km' }, intensity: '', intervals: '' }];
+    } else {
+      const targetSets = parseInt(e.sets) || 3;
+      logSetsState[i] = Array.from({ length: targetSets }, () => ({ weight: '', reps: '' }));
+    }
   });
 
   // Restore any auto-saved data
@@ -4671,6 +4704,22 @@ async function renderLog() {
 function renderLogCards(day) {
   const el = document.getElementById('logExerciseList');
   el.innerHTML = day.exercises.map((e, i) => {
+    // Cardio exercise — render the cardio field set instead of weight/reps rows.
+    if (_exCategory(e.name) === 'cardio') {
+      const cd = (logSetsState[i] && logSetsState[i][0]) || {};
+      return `
+      <div class="log-card" id="log-card-${i}">
+        <div class="log-card-header">
+          <div>
+            <div class="log-ex-name">${escHtml(e.name)}</div>
+            <div class="log-target" style="color:var(--accent);letter-spacing:1px;">CARDIO</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;padding:12px 14px;">
+          ${renderCardioFields(i, cd)}
+        </div>
+      </div>`;
+    }
     const sets = logSetsState[i] || [{ weight: '', reps: '' }];
     return `
       <div class="log-card" id="log-card-${i}">
@@ -4695,6 +4744,66 @@ function renderLogCards(day) {
   updateLogProgress();
 }
 
+// ── CARDIO LOGGING ─────────────────────────────────────
+// Four optional fields (duration, distance, intensity, intervals) for cardio exercises.
+// Values live in logSetsState[i][0] as a single { cardio:true, ... } entry.
+function renderCardioFields(i, cd) {
+  cd = cd || {};
+  const dur = cd.duration || { value: '', unit: 'min' };
+  const dist = cd.distance || { value: '', unit: 'km' };
+  const intensity = cd.intensity || '';
+  const intervals = cd.intervals || '';
+  const row = 'background:var(--surface2);border-radius:8px;padding:8px 12px;font-family:var(--font-mono);font-size:13px;display:flex;align-items:center;gap:8px;';
+  const lbl = 'font-family:var(--font-mono);font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;width:62px;flex-shrink:0;';
+  const inp = 'flex:1;min-width:0;background:transparent;border:none;color:var(--text);font-family:var(--font-mono);font-size:13px;outline:none;padding:0;';
+  const sel = 'background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--font-mono);font-size:12px;padding:4px 6px;flex-shrink:0;';
+  const opts = ['Easy', 'Moderate', 'Hard', 'Max Effort'];
+  return `
+    <div style="${row}">
+      <span style="${lbl}">Duration</span>
+      <input type="number" inputmode="decimal" placeholder="Duration" value="${escHtml(String(dur.value ?? ''))}" oninput="updateCardioData(${i},'duration.value',this.value)" style="${inp}">
+      <select onchange="updateCardioData(${i},'duration.unit',this.value)" style="${sel}">
+        <option value="min" ${dur.unit === 'min' ? 'selected' : ''}>min</option>
+        <option value="hr" ${dur.unit === 'hr' ? 'selected' : ''}>hr</option>
+      </select>
+    </div>
+    <div style="${row}">
+      <span style="${lbl}">Distance</span>
+      <input type="number" inputmode="decimal" placeholder="Distance" value="${escHtml(String(dist.value ?? ''))}" oninput="updateCardioData(${i},'distance.value',this.value)" style="${inp}">
+      <select onchange="updateCardioData(${i},'distance.unit',this.value)" style="${sel}">
+        <option value="km" ${dist.unit === 'km' ? 'selected' : ''}>km</option>
+        <option value="mi" ${dist.unit === 'mi' ? 'selected' : ''}>mi</option>
+      </select>
+    </div>
+    <div style="${row}">
+      <span style="${lbl}">Intensity</span>
+      <select onchange="updateCardioData(${i},'intensity',this.value)" style="${sel}flex:1;min-width:0;">
+        <option value="" ${!intensity ? 'selected' : ''}>—</option>
+        ${opts.map(o => `<option value="${o}" ${intensity === o ? 'selected' : ''}>${o}</option>`).join('')}
+      </select>
+    </div>
+    <div style="${row}">
+      <span style="${lbl}">Intervals</span>
+      <input type="text" placeholder="e.g. 10 × 30s sprint" value="${escHtml(String(intervals ?? ''))}" oninput="updateCardioData(${i},'intervals',this.value)" style="${inp}">
+    </div>`;
+}
+
+function updateCardioData(i, path, value) {
+  if (!logSetsState[i] || !logSetsState[i][0]) {
+    logSetsState[i] = [{ cardio: true, type: 'cardio', duration: { value: '', unit: 'min' }, distance: { value: '', unit: 'km' }, intensity: '', intervals: '' }];
+  }
+  const cd = logSetsState[i][0];
+  cd.cardio = true; cd.type = 'cardio';
+  if (path === 'duration.value') { cd.duration = cd.duration || { unit: 'min' }; cd.duration.value = value; }
+  else if (path === 'duration.unit') { cd.duration = cd.duration || { value: '' }; cd.duration.unit = value; }
+  else if (path === 'distance.value') { cd.distance = cd.distance || { unit: 'km' }; cd.distance.value = value; }
+  else if (path === 'distance.unit') { cd.distance = cd.distance || { value: '' }; cd.distance.unit = value; }
+  else if (path === 'intensity') { cd.intensity = value; }
+  else if (path === 'intervals') { cd.intervals = value; }
+  updateLogProgress();
+  autoSaveLog();
+}
+
 // FIX 4: session progress = valid logged sets / total target sets across today's workout.
 // A set counts as logged once it has reps AND either a weight or the bodyweight flag —
 // the same rule saveLog() uses to decide what gets persisted. Reads live input values so
@@ -4708,6 +4817,12 @@ function updateLogProgress() {
     const sets = logSetsState[k] || [];
     total += sets.length;
     sets.forEach((s, si) => {
+      // Cardio entry counts as "logged" once any of its fields has data.
+      if (s.cardio) {
+        const dur = s.duration || {}, dist = s.distance || {};
+        if (dur.value || dist.value || s.intensity || (s.intervals && String(s.intervals).trim())) logged++;
+        return;
+      }
       const isBw = s.is_bw === true;
       const repsEl = document.getElementById(`lr-${k}-${si}`);
       const reps = repsEl ? (parseInt(repsEl.value) || 0) : (parseInt(s.reps) || 0);
@@ -4849,6 +4964,30 @@ async function saveLog(btn) {
 
   day.exercises.forEach((e, i) => {
     const sets = logSetsState[i] || [];
+    // Cardio exercise — serialize the single cardio entry instead of weight/reps sets.
+    if ((sets[0] && sets[0].cardio) || _exCategory(e.name) === 'cardio') {
+      const cd = sets[0] || {};
+      const dur = cd.duration || {}, dist = cd.distance || {};
+      const hasData = dur.value || dist.value || cd.intensity || (cd.intervals && String(cd.intervals).trim());
+      if (hasData) {
+        exercises.push({
+          name: e.name,
+          cardio: true,
+          sets_data: [{
+            cardio: true,
+            type: 'cardio',
+            duration: { value: parseFloat(dur.value) || null, unit: dur.unit || 'min' },
+            distance: { value: parseFloat(dist.value) || null, unit: dist.unit || 'km' },
+            intensity: cd.intensity || null,
+            intervals: (cd.intervals || '').toString().trim() || null,
+          }],
+          sets: 1,
+          reps_range: e.reps,
+          target_sets: e.sets,
+        });
+      }
+      return;
+    }
     // Read current input values (in case onchange hasn't fired). BW sets have no weight input
     // in the DOM, so fall back to the state's is_bw flag and weight 0.
     const setsData = sets.map((s, si) => {
@@ -4914,6 +5053,7 @@ async function saveLog(btn) {
     (async () => {
       const feedback = [];
       for (const ex of exercises) {
+        if (ex.cardio) continue; // overload advice is weight/reps-based — not applicable to cardio
         const histRes = await api(`/api/history/${encodeURIComponent(ex.name)}`);
         const history = histRes?.history || [];
         const advice = getOverloadAdvice(ex, history);
@@ -5071,7 +5211,9 @@ function renderNutritionPanel() {
 
   // FIX 7: AI/Coach nutrition toggle (only when the coach assigned nutrition with an AI backup).
   document.getElementById('nutritionSourceToggle')?.remove();
-  if (np0.coach_assigned && np0._ai_backup) {
+  // Hide the AI/Coach toggle when an active coach is connected — the coach controls the plan.
+  const hasCoachN = _myCoachActive === true || !!window._myCoachData?.coach_id || !!window._activeCoach;
+  if (np0.coach_assigned && np0._ai_backup && !hasCoachN) {
     const mr2 = document.getElementById('macroRow');
     const onAI = !!window._useAIPlan;
     if (mr2) mr2.insertAdjacentHTML('beforebegin', `<div id="nutritionSourceToggle" style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
@@ -14336,7 +14478,7 @@ async function fetchUnreadCounts() {
 
 function startUnreadPolling() {
   if (_unreadPollTimer) return;
-  _unreadPollTimer = setInterval(fetchUnreadCounts, 60000);
+  _unreadPollTimer = setInterval(fetchUnreadCounts, 15000);
 }
 
 async function markSeen(type) {
@@ -15023,19 +15165,20 @@ function renderClientBodyweightSection(rows) {
   // Endpoint returns newest-first (logged_at desc), so the first row is the latest reading.
   const latest = list[0];
   const latestDate = latest.logged_at ? formatDateSession(latest.logged_at) : '';
-  const rowsHtml = list.slice(0, 10).map(r => {
-    const d = r.logged_at ? formatDateSession(r.logged_at) : '';
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:12px;">
-      <span style="color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.3px;">${escHtml(String(d).toUpperCase())}</span>
-      <span style="color:var(--text);">${escHtml(String(r.weight_kg ?? '—'))} <span style="color:var(--muted);">kg</span></span>
-    </div>`;
-  }).join('');
+  // FIX 3: render the same line chart used by the progress panel instead of a flat list.
+  // renderWeightChart expects [{ weight_kg, recorded_at }] in chronological (oldest-first) order;
+  // the coach endpoint returns [{ weight_kg, logged_at }] newest-first, so map + sort to match.
+  const chartData = list
+    .filter(r => r.weight_kg != null)
+    .map(r => ({ weight_kg: r.weight_kg, recorded_at: r.logged_at }))
+    .sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
+  const chart = renderWeightChart(chartData);
   return header + `
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;">
       <div style="font-family:'DM Mono',monospace;font-size:22px;color:var(--accent);letter-spacing:0.5px;">${escHtml(String(latest.weight_kg ?? '—'))} kg</div>
       <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:2px;text-transform:uppercase;">LOGGED ${escHtml(String(latestDate).toUpperCase())}</div>
     </div>
-    <div style="margin-bottom:18px;">${rowsHtml}</div>`;
+    ${chart ? `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:18px;">${chart}</div>` : `<div style="margin-bottom:18px;"></div>`}`;
 }
 
 function renderClientSessionCard(s, i) {
@@ -15206,6 +15349,9 @@ async function saveCoachNotes(content) {
 }
 
 // ── PROGRAMME TAB ─────────────────────────────────────
+// REDESIGNED: AI/Coach plan toggle with SET AS ACTIVE. Two pill-toggled sections each for
+// workout and nutrition. The ACTIVE badge marks whichever the client is currently using
+// (clientPlan.coach_assigned). The pill toggles only the VIEW; SET AS ACTIVE changes the live plan.
 async function renderClientProgrammeTab(body) {
   body.innerHTML = `<div style="padding:30px 0;text-align:center;color:var(--muted);font-size:13px;">Loading programmes…</div>`;
   const cid = _currentClientDetail.clientId;
@@ -15214,47 +15360,232 @@ async function renderClientProgrammeTab(body) {
     api('/api/coach/clients/' + cid + '/nutrition-plan'),
     api('/api/coach/clients/' + cid + '/plan'),
   ]);
+  if (!_currentClientDetail || _currentClientDetail.clientId !== cid) return; // tab switched mid-fetch
   const all = res?.programmes || [];
   const isNutri = p => (p.programme_type || 'workout') === 'nutrition';
   const assigned = all.find(p => p.client_id === cid && !p.is_template && !isNutri(p));
+  const assignedNutri = all.find(p => p.client_id === cid && !p.is_template && isNutri(p));
   const templates = all.filter(p => p.is_template && !isNutri(p));
   _currentClientDetail.programmes = all;
-  _currentClientDetail.nutritionPlan = npRes?.nutrition_plan || null;
-  if (assigned) {
-    const data = assigned.programme_data || {};
-    const sessions = data.sessions || [];
-    body.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-        <div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;color:var(--accent);">${escHtml(assigned.name)}</div>
-          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">ASSIGNED ${assigned.assigned_at ? relTime(assigned.assigned_at).toUpperCase() : ''}</div>
-        </div>
-        <button onclick="openProgrammeBuilder('${assigned.id}')" style="padding:8px 14px;background:var(--accent);color:var(--bg);border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Edit</button>
-      </div>
-      ${sessions.map(s => programmeSessionPreview(s)).join('')}
-      <button onclick="if(confirm('Reset to AI programme? The custom programme will be removed.')) deleteAssignedProgramme('${assigned.id}')" style="width:100%;padding:12px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:10px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:14px;">Reset to AI programme</button>
-    `;
+
+  const clientPlan = planRes?.plan || null;
+  const clientNutrition = npRes?.nutrition_plan || null;
+  _currentClientDetail.nutritionPlan = clientNutrition;
+
+  // Which plan is the client actually on right now (coach_assigned flag on the live plan).
+  const workoutActive = clientPlan?.coach_assigned ? 'coach' : 'ai';
+  const aiWorkoutDays = (clientPlan?.coach_assigned ? clientPlan?._ai_backup?.days : clientPlan?.days) || [];
+  const coachWorkoutDays = assigned
+    ? _sessionsToDays(assigned.programme_data?.sessions)
+    : (clientPlan?.coach_assigned ? (clientPlan?.days || []) : []);
+
+  const nutritionActive = clientNutrition?.coach_assigned ? 'coach' : 'ai';
+  const aiNutrition = (clientNutrition?.coach_assigned ? clientNutrition?._ai_backup : clientNutrition) || null;
+  const coachNutrition = assignedNutri?.nutrition_data
+    ? assignedNutri.nutrition_data
+    : (clientNutrition?.coach_assigned ? clientNutrition : null);
+
+  // Stash resolved data for the edit/activate handlers (no dynamic data in onclick attributes).
+  _currentClientDetail.progView = {
+    aiWorkoutDays, coachWorkoutDays, assignedWorkoutId: assigned?.id || null,
+    aiNutrition, coachNutrition,
+  };
+  if (_currentClientDetail.planView == null) _currentClientDetail.planView = workoutActive;
+  if (_currentClientDetail.nutriView == null) _currentClientDetail.nutriView = nutritionActive;
+  const planView = _currentClientDetail.planView;
+  const nutriView = _currentClientDetail.nutriView;
+
+  const sectionLabel = (txt, mt) => `<div style="font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;color:var(--dim);letter-spacing:2px;margin:${mt || '0'} 0 8px;">${txt}</div>`;
+  const planTitle = (title, active) => `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1.5px;color:var(--accent);text-transform:uppercase;">${title}</span>${active ? _activeBadge() : ''}</div>`;
+  const editBtn = (label, fn) => `<button onclick="${fn}" style="flex:1;padding:12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;">${label}</button>`;
+  const activeBtn = (isActive, fn) => isActive
+    ? `<button disabled style="flex:1;padding:12px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:10px;font-size:11px;font-weight:700;font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;cursor:default;">✓ ACTIVE</button>`
+    : `<button onclick="${fn}" style="flex:1;padding:12px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;">SET AS ACTIVE</button>`;
+  const emptyCard = (msg) => `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;color:var(--muted);font-size:13px;">${msg}</div>`;
+  const ctaBtn = (label, fn) => `<button onclick="${fn}" style="width:100%;padding:13px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">${label}</button>`;
+
+  let html = '';
+
+  // ── WORKOUT ──
+  html += sectionLabel('WORKOUT PLAN');
+  html += `<div style="display:flex;gap:8px;margin-bottom:14px;">${_coachPill(planView === 'ai', 'AI PLAN', "setCoachPlanView('ai')")}${_coachPill(planView === 'coach', 'COACH PLAN', "setCoachPlanView('coach')")}</div>`;
+  if (planView === 'ai') {
+    html += planTitle('AI PLAN', workoutActive === 'ai');
+    if (aiWorkoutDays.length) {
+      html += _coachRenderWorkoutDays(aiWorkoutDays);
+      html += `<div style="display:flex;gap:8px;margin:12px 0 4px;">${editBtn('EDIT AI PLAN', "editCoachWorkout('ai')")}${activeBtn(workoutActive === 'ai', "setActiveWorkout('ai')")}</div>`;
+    } else {
+      html += emptyCard('No AI plan generated yet.');
+    }
   } else {
-    body.innerHTML = `
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;color:var(--dim);letter-spacing:2px;margin-bottom:6px;">CURRENT — AI GENERATED</div>
-        <div style="font-size:13px;color:var(--text);line-height:1.5;">This client is following the AI-generated plan. You can assign a custom programme to override it.</div>
-      </div>
-      <button onclick="openProgrammeBuilder()" style="width:100%;padding:13px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;">Assign custom programme</button>
-      ${templates.length ? `
-      <div style="font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;color:var(--dim);letter-spacing:2px;margin:18px 0 8px;">TEMPLATE LIBRARY</div>
-      ${templates.map(t => `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;">
-          <div><div style="font-size:13px;color:var(--text);">${escHtml(t.name)}</div><div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace;">${(t.programme_data?.sessions || []).length} SESSIONS</div></div>
-          <button onclick="assignFromTemplate('${t.id}')" style="padding:7px 12px;background:var(--accent);color:var(--bg);border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Assign</button>
-        </div>`).join('')}
-      ` : ''}
-    `;
+    html += planTitle('COACH PLAN', workoutActive === 'coach');
+    if (coachWorkoutDays.length) {
+      html += _coachRenderWorkoutDays(coachWorkoutDays);
+      html += `<div style="display:flex;gap:8px;margin:12px 0 4px;">${editBtn('EDIT COACH PLAN', "editCoachWorkout('coach')")}${activeBtn(workoutActive === 'coach', "setActiveWorkout('coach')")}</div>`;
+    } else {
+      html += emptyCard('No coach plan assigned yet');
+      html += ctaBtn('Create plan', "editCoachWorkout('coach')");
+      if (templates.length) {
+        html += sectionLabel('TEMPLATE LIBRARY', '18px');
+        html += templates.map(tp => `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;">
+          <div><div style="font-size:13px;color:var(--text);">${escHtml(tp.name)}</div><div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace;">${(tp.programme_data?.sessions || []).length} SESSIONS</div></div>
+          <button onclick="assignFromTemplate('${tp.id}')" style="padding:7px 12px;background:var(--accent);color:var(--bg);border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Assign</button>
+        </div>`).join('');
+      }
+    }
   }
-  // Nutrition plan section (Feature 2) — appended below the workout programme section
-  body.innerHTML += renderCoachNutritionSection(_currentClientDetail.nutritionPlan);
-  // FIX 1: the client's current workout plan (read-only), shown ABOVE the builder.
-  body.insertAdjacentHTML('afterbegin', renderClientCurrentPlanSection(planRes?.plan));
+
+  // ── NUTRITION ──
+  html += sectionLabel('NUTRITION', '26px');
+  html += `<div style="display:flex;gap:8px;margin-bottom:14px;">${_coachPill(nutriView === 'ai', 'AI NUTRITION', "setCoachNutriView('ai')")}${_coachPill(nutriView === 'coach', 'COACH NUTRITION', "setCoachNutriView('coach')")}</div>`;
+  if (nutriView === 'ai') {
+    html += planTitle('AI NUTRITION', nutritionActive === 'ai');
+    if (aiNutrition && (aiNutrition.calories || aiNutrition.daily_calories || (aiNutrition.meals || []).length)) {
+      html += _coachNutritionCard(aiNutrition);
+      html += `<div style="display:flex;gap:8px;margin:12px 0 4px;">${editBtn('EDIT AI NUTRITION', "editCoachNutrition('ai')")}${activeBtn(nutritionActive === 'ai', "setActiveNutrition('ai')")}</div>`;
+    } else {
+      html += emptyCard('No AI nutrition plan yet.');
+    }
+  } else {
+    html += planTitle('COACH NUTRITION', nutritionActive === 'coach');
+    if (coachNutrition && (coachNutrition.calories || coachNutrition.daily_calories || (coachNutrition.meals || []).length)) {
+      html += _coachNutritionCard(coachNutrition);
+      html += `<div style="display:flex;gap:8px;margin:12px 0 4px;">${editBtn('EDIT COACH NUTRITION', "editCoachNutrition('coach')")}${activeBtn(nutritionActive === 'coach', "setActiveNutrition('coach')")}</div>`;
+    } else {
+      html += emptyCard('No coach nutrition assigned yet');
+      html += ctaBtn('Create plan', "editCoachNutrition('coach')");
+    }
+  }
+
+  body.innerHTML = `<div style="padding-bottom:8px;">${html}</div>`;
+}
+
+// ── Coach Programme tab — render helpers ──────────────
+function _coachPill(active, label, onclick) {
+  return `<button onclick="${onclick}" class="tap-anim" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-family:'DM Mono',monospace;letter-spacing:1px;border:none;cursor:pointer;background:${active ? 'var(--accent)' : 'var(--surface2)'};color:${active ? 'var(--bg)' : 'var(--muted)'};">${label}</button>`;
+}
+
+function _activeBadge() {
+  return `<span style="display:inline-block;background:var(--green,#39d98a);color:#04210f;font-family:'DM Mono',monospace;font-size:8px;font-weight:700;letter-spacing:1px;padding:2px 7px;border-radius:6px;text-transform:uppercase;">ACTIVE</span>`;
+}
+
+// coach_programmes store workout days as `sessions` [{name,note,exercises:[{name,sets,reps,rpe,weight}]}];
+// normalise to the `days` shape used by the live plan so one renderer handles both sources.
+function _sessionsToDays(sessions) {
+  return (sessions || []).map((s, i) => ({
+    label: s.name || `Day ${i + 1}`,
+    day_name: s.name || `Day ${i + 1}`,
+    muscles: '',
+    coach_note: s.note || '',
+    exercises: (s.exercises || []).map(e => ({
+      name: e.name, sets: e.sets, reps: e.reps,
+      rest: e.rest || null, rpe: e.rpe || null,
+    })),
+  }));
+}
+
+function _coachRenderWorkoutDays(days) {
+  if (!Array.isArray(days) || !days.length) return '';
+  return days.map(d => {
+    const muscles = Array.isArray(d.muscles) ? d.muscles.join(' · ') : (d.muscles || '');
+    const exs = (d.exercises || []).map(e => {
+      const sr = `${e.sets ?? ''} × ${e.reps ?? ''}`;
+      const meta = [];
+      if (e.rest) meta.push('Rest ' + e.rest);
+      if (e.rpe) meta.push('RPE ' + e.rpe);
+      const metaStr = meta.join(' · ');
+      return `<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:12px;color:var(--text);">
+        <span style="min-width:0;">${escHtml(e.name || '')}${metaStr ? `<span style="display:block;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:0.5px;margin-top:2px;">${escHtml(metaStr)}</span>` : ''}</span>
+        <span style="color:var(--muted);font-family:'DM Mono',monospace;white-space:nowrap;">${escHtml(sr)}</span>
+      </div>`;
+    }).join('');
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;">
+      <div style="font-size:13px;color:var(--text);font-weight:600;">${escHtml(d.label || d.day_name || 'Day')}</div>
+      ${muscles ? `<div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.5px;margin:2px 0 6px;text-transform:uppercase;">${escHtml(muscles)}</div>` : '<div style="height:6px;"></div>'}
+      ${exs || '<div style="font-size:12px;color:var(--muted);">Rest day</div>'}
+    </div>`;
+  }).join('');
+}
+
+function _coachNutritionCard(np) {
+  const cals = np.calories ?? np.daily_calories ?? 0;
+  const p = np.protein_g ?? np.protein ?? 0, c = np.carbs_g ?? np.carbs ?? 0, f = np.fat_g ?? np.fat ?? 0;
+  const meals = np.meals || [];
+  let h = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;">
+      <div style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text);letter-spacing:0.3px;">${cals} KCAL · ${p}P / ${c}C / ${f}F</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;font-family:'DM Mono',monospace;letter-spacing:0.3px;">${meals.length} MEAL${meals.length === 1 ? '' : 'S'}</div>
+    </div>`;
+  h += meals.map(m => `<div style="display:flex;justify-content:space-between;gap:8px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;font-size:12px;color:var(--text);">
+      <span style="min-width:0;">${escHtml(m.name || 'Meal')}${m.time ? `<span style="color:var(--muted);"> · ${escHtml(m.time)}</span>` : ''}</span>
+      <span style="color:var(--muted);font-family:'DM Mono',monospace;white-space:nowrap;">${escHtml(String(m.kcal ?? m.calories ?? 0))} kcal</span>
+    </div>`).join('');
+  return h;
+}
+
+// View toggles — change which section is shown, not which plan is active.
+function setCoachPlanView(v) { if (_currentClientDetail) { _currentClientDetail.planView = v; renderClientTab(); } }
+function setCoachNutriView(v) { if (_currentClientDetail) { _currentClientDetail.nutriView = v; renderClientTab(); } }
+
+function editCoachWorkout(kind) {
+  const pv = _currentClientDetail?.progView; if (!pv) return;
+  if (kind === 'coach' && pv.assignedWorkoutId) { openProgrammeBuilder(pv.assignedWorkoutId); return; }
+  const days = kind === 'ai' ? pv.aiWorkoutDays : pv.coachWorkoutDays;
+  openProgrammeBuilderFromDays(days, kind === 'ai' ? 'Custom programme' : 'Coach programme');
+}
+
+// Open the programme builder pre-filled from a `days` array (e.g. the client's AI plan).
+function openProgrammeBuilderFromDays(days, name) {
+  const sessions = (days || []).map((d, i) => ({
+    name: d.label || d.day_name || `Day ${i + 1}`,
+    note: d.coach_note || '',
+    exercises: (d.exercises || []).map(e => ({
+      name: e.name || '', sets: e.sets ?? 3, reps: e.reps ?? '', rpe: e.rpe || e.rest || '',
+    })),
+  }));
+  _builderState = {
+    id: null, name: name || 'Custom programme', is_template: false,
+    sessions: sessions.length ? sessions : [{ name: 'Day 1', note: '', exercises: [{ name: '', sets: 3, reps: '8-10', rpe: '' }] }],
+  };
+  renderProgrammeBuilder();
+}
+
+function editCoachNutrition(kind) {
+  const pv = _currentClientDetail?.progView; if (!pv) return;
+  const cid = _currentClientDetail.clientId;
+  const np = kind === 'ai' ? pv.aiNutrition : pv.coachNutrition;
+  openNutritionBuilder(cid, np || {});
+}
+
+async function setActiveWorkout(kind) {
+  const cid = _currentClientDetail?.clientId; if (!cid) return;
+  const ep = kind === 'ai' ? 'activate-ai-plan' : 'activate-coach-plan';
+  const res = await api('/api/coach/clients/' + cid + '/' + ep, 'PATCH', {});
+  if (res?.ok) {
+    showToast(kind === 'ai' ? 'AI plan set as active' : 'Coach plan set as active', 'success');
+    if (_currentClientDetail) _currentClientDetail.planView = kind;
+    renderClientTab();
+  } else {
+    const msg = res?.error === 'no_ai_plan' ? 'No AI plan to activate'
+      : res?.error === 'no_coach_plan' ? 'Create a coach plan first'
+      : 'Failed to set active';
+    showToast(msg, 'error');
+  }
+}
+
+async function setActiveNutrition(kind) {
+  const cid = _currentClientDetail?.clientId; if (!cid) return;
+  const ep = kind === 'ai' ? 'activate-ai-nutrition' : 'activate-coach-nutrition';
+  const res = await api('/api/coach/clients/' + cid + '/' + ep, 'PATCH', {});
+  if (res?.ok) {
+    showToast(kind === 'ai' ? 'AI nutrition set as active' : 'Coach nutrition set as active', 'success');
+    if (_currentClientDetail) _currentClientDetail.nutriView = kind;
+    renderClientTab();
+  } else {
+    const msg = res?.error === 'no_ai_nutrition' ? 'No AI nutrition to activate'
+      : res?.error === 'no_coach_nutrition' ? 'Create a coach nutrition plan first'
+      : 'Failed to set active';
+    showToast(msg, 'error');
+  }
 }
 
 // FIX 1: collapsible, read-only view of the client's current workout plan (coach-facing).
@@ -15345,10 +15676,11 @@ function nbField(label, id) {
   return `<div><div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-family:'DM Mono',monospace;">${label}</div><input id="${id}" type="number" inputmode="numeric" oninput="nbRecalc()" style="width:100%;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;box-sizing:border-box;"></div>`;
 }
 
-function openNutritionBuilder(clientId) {
+function openNutritionBuilder(clientId, prefillPlan) {
   _nbShopping = false; // FIX 7: reset the shopping-list toggle each time the builder opens
   _nbClientId = clientId;
-  const np = _currentClientDetail?.nutritionPlan || {};
+  // prefillPlan lets the coach edit a specific plan (AI vs coach); falls back to the live plan.
+  const np = (prefillPlan && typeof prefillPlan === 'object') ? prefillPlan : (_currentClientDetail?.nutritionPlan || {});
   const clientName = (_currentClientDetail?.overview?.profile?.name) || 'client';
   _nbMeals = ((np.meals) || []).map(m => ({
     name: m.name || '', time: m.time || '',
@@ -16352,6 +16684,9 @@ function showUpdateBanner() {
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('message', e => {
     if (e.data?.type === 'SW_ACTIVATED') checkForUpdate();
+    // A push arrived / was acted on while the app is open — refresh unread badges
+    // immediately instead of waiting for the next poll cycle.
+    if (typeof fetchUnreadCounts === 'function') fetchUnreadCounts();
   });
 }
 
