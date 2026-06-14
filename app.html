@@ -1547,6 +1547,22 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// Register the service worker unconditionally on page load so it is always active
+// (push, offline, update flow). Previously registration only happened lazily inside
+// initPushNotifications(), so a fresh load with no notification interaction left the
+// active SW count at 0.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js', {
+    scope: '/'
+  }).then(reg => {
+    console.log('[sw] registered:',
+      reg.scope, reg.active?.state ||
+      reg.installing?.state);
+  }).catch(e => {
+    console.error('[sw] registration failed:', e);
+  });
+}
+
 // PWA standalone-mode flag for the whole document. Sets `.pwa-mode` on <body> only
 // when the app is launched from the home-screen icon (matches modern browsers and
 // legacy iOS Safari). In a normal browser tab the class is never added.
@@ -4190,7 +4206,7 @@ function _todayIdx() { const d = new Date().getDay(); return d === 0 ? 6 : d - 1
 // plus the day's muscle list. Order matters: leg/hinge keywords win before the pull
 // bucket so RDLs / hip thrusts read as Legs, not Pull.
 function _exCategory(name, dayMuscles) {
-  const s = ((name || '') + ' ' + (Array.isArray(dayMuscles) ? dayMuscles.join(' ') : (dayMuscles || ''))).toLowerCase();
+  const s = (name || '').toLowerCase();
   const has = arr => arr.some(k => s.includes(k));
   // Case-insensitive substring match. Order matters because keywords overlap:
   //   cardio → core → legs → pull → push.
@@ -8544,6 +8560,7 @@ async function renderAdmin() {
   if (!res?.users) { el.innerHTML = '<div class="empty-state">Failed to load users.</div>'; return; }
 
   window._adminUsers = res.users;
+  window._adminStats = res.stats || null; // FIX 2: server-computed paying/exempt/trial counts
   renderAdminList(res.users);
 }
 
@@ -8558,6 +8575,7 @@ function checkAdminPin() {
       if (res?.users) {
         window._adminUnlocked = true;
         window._adminUsers = res.users;
+        window._adminStats = res.stats || null; // FIX 2
         renderAdminList(res.users);
       } else {
         showToast('Incorrect password', 'error');
@@ -8585,6 +8603,23 @@ function renderAdminList(users) {
   const tierColour = { iron: 'var(--muted)', steel: '#7eb8f7', forge: 'var(--accent)' };
   const tierIcon = { iron: '⚙️', steel: '🔩', forge: '🔥' };
 
+  // FIX 2: paying vs exempt vs trial. Prefer server-computed res.stats; fall back to a
+  // client-side count (same rule as the server) so the cards still work if the backend
+  // build isn't deployed yet.
+  const s = window._adminStats || (() => {
+    const o = { active_paid: 0, active_exempt: 0, trial: 0 };
+    users.forEach(u => {
+      if (u.subscription_status === 'active') { if (u.is_exempt === true) o.active_exempt++; else o.active_paid++; }
+      else if (u.subscription_status === 'trial') o.trial++;
+    });
+    return o;
+  })();
+  const adminStatCard = (label, val, colour) =>
+    `<div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:${colour};line-height:1;">${val}</div>
+      <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:5px;">${label}</div>
+    </div>`;
+
   el.innerHTML = `
     <div style="padding:0 0 12px;">
       <div style="display:flex;gap:8px;margin-bottom:10px;">
@@ -8594,6 +8629,11 @@ function renderAdminList(users) {
       <button onclick="clearAllTranslationCaches()" style="width:100%;margin-bottom:8px;padding:10px;background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.4);color:#ff6b35;border-radius:10px;font-size:12px;cursor:pointer;font-family:'DM Mono',sans-serif;letter-spacing:1px;">🌐 CLEAR ALL TRANSLATION CACHES</button>
       <button onclick="renderAdminLaunchPricing()" style="width:100%;margin-bottom:14px;padding:10px;background:rgba(232,255,61,0.08);border:1px solid rgba(232,255,61,0.3);color:var(--accent);border-radius:10px;font-size:12px;cursor:pointer;font-family:'DM Mono',sans-serif;letter-spacing:1px;">🚀 LAUNCH PRICING CONTROLS</button>
       <div id="adminLaunchPricingSection"></div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        ${adminStatCard('Paying', s.active_paid, 'var(--accent)')}
+        ${adminStatCard('Exempt', s.active_exempt, '#ffa726')}
+        ${adminStatCard('Trial', s.trial, '#7eb8f7')}
+      </div>
       <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:10px;">${users.length} USERS</div>
       <div id="adminUserListInner">${renderAdminUserCards(users)}</div>
     </div>
@@ -13950,6 +13990,11 @@ function setLanguage(code) {
   loadLanguage();   // language button flag + drawer swatches
   applyLanguage();  // static DOM [data-i18n] / [data-i18n-key] sweep
 
+  // FIX 3: instantly re-render nutrition + coach greeting from cached data so their
+  // labels switch language with no delay (the server re-fetch continues in background).
+  if (typeof renderNutritionPanel === 'function') renderNutritionPanel();
+  if (typeof initCoach === 'function') initCoach();
+
   // Re-render whichever main panel is visible, using already-cached data.
   const panels = ['coach','workout','log','nutrition','progress','account','clients','programmes','my-coach','admin'];
   panels.forEach(name => {
@@ -13972,7 +14017,13 @@ function setLanguage(code) {
   // ── BACKGROUND (non-blocking): persist preference + re-fetch the translated plan ──
   api('/api/profile', 'PATCH', { preferred_language: code }).catch(() => {});
   if (userPlan && typeof loadPlanInCurrentLanguage === 'function') {
-    loadPlanInCurrentLanguage();
+    // FIX 4: after the translated plan loads, clear the cached day list and force a
+    // fresh workout-panel render so the plan switches language even if the panel was
+    // not visible when the fetch resolved.
+    loadPlanInCurrentLanguage().then(() => {
+      window._planPanelDays = null;
+      if (typeof renderWorkoutPanel === 'function') renderWorkoutPanel();
+    });
   }
 }
 
@@ -16238,78 +16289,68 @@ async function removeReminder() {
 }
 
 async function handleNotifTap() {
+  if (!('Notification' in window) ||
+      !('serviceWorker' in navigator)) {
+    showToast(t('notif_not_supported'),
+      'error');
+    return;
+  }
+
+  const permission = Notification.permission;
+
+  if (permission === 'denied') {
+    showToast(t('notif_enable_instructions'),
+      'info', 6000);
+    return;
+  }
+
+  // Ensure SW is registered
+  let swReg;
   try {
-    if (!('Notification' in window)) {
-      showToast(t('notif_not_supported'), 'error');
-      return;
-    }
-    // FIX 5: no service worker (e.g. iOS Safari tab, not installed) — push can't work.
-    if (!('serviceWorker' in navigator)) {
-      showToast('Push notifications require the app to be installed on your home screen.', 'info', 4000);
-      return;
-    }
-
-    const permission = Notification.permission;
-
-    if (permission === 'denied') {
-      showToast(t('notif_enable_instructions'),
-        'info', 6000);
-      return;
-    }
-
-    // FIX 5: wait for the service worker to be ready, but never hang on it — the toggle
-    // stopped working when navigator.serviceWorker.ready never resolved. Time out at 5s.
-    let swReg;
-    try {
-      swReg = await Promise.race([
-        navigator.serviceWorker.ready,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('SW timeout')), 5000))
-      ]);
-    } catch (e) {
-      showToast('Notification setup failed. Try reinstalling the app from Safari.', 'error', 4000);
-      return;
-    }
-
-    // Check actual subscription state
-    // not just permission
-    const existingSub = await swReg.pushManager
-      .getSubscription();
-
-    if (existingSub) {
-      // HAS subscription — toggle OFF
-      await existingSub.unsubscribe();
-      await api('/api/push/subscribe', 'DELETE',
-        { endpoint: existingSub.endpoint })
-        .catch(() => {});
-      updateNotifToggle(false);
-      showToast(t('notif_disabled'), 'info');
-      return;
-    }
-
-    // NO subscription — toggle ON
-    if (permission === 'granted') {
-      // Permission already granted, just subscribe
-      await initPushNotifications();
-      updateNotifToggle(true);
-      showToast(t('notif_enabled'), 'success');
-      return;
-    }
-
-    // Need to request permission first
-    const result =
-      await Notification.requestPermission();
-
-    if (result === 'granted') {
-      await initPushNotifications();
-      updateNotifToggle(true);
-      showToast(t('notif_enabled'), 'success');
-    } else {
-      updateNotifToggle(false);
-      showToast(t('notif_blocked'), 'info', 6000);
-    }
+    swReg = await navigator.serviceWorker
+      .ready;
   } catch(e) {
-    console.error('[notif] handleNotifTap error:', e);
-    showToast('Notification error: ' + e.message, 'error');
+    // Try registering fresh
+    try {
+      swReg = await navigator.serviceWorker
+        .register('/sw.js', { scope: '/' });
+      await navigator.serviceWorker.ready;
+    } catch(e2) {
+      showToast('Could not set up notifications. Please try again.', 'error');
+      return;
+    }
+  }
+
+  const sub = await swReg.pushManager
+    .getSubscription();
+
+  if (sub) {
+    // Toggle OFF
+    await sub.unsubscribe();
+    await api('/api/push/subscribe', 'DELETE',
+      { endpoint: sub.endpoint }).catch(()=>{});
+    updateNotifToggle(false);
+    showToast(t('notif_disabled'), 'info');
+    return;
+  }
+
+  // Toggle ON
+  if (permission === 'granted') {
+    await initPushNotifications();
+    updateNotifToggle(true);
+    showToast(t('notif_enabled'), 'success');
+    return;
+  }
+
+  const result =
+    await Notification.requestPermission();
+  if (result === 'granted') {
+    await initPushNotifications();
+    updateNotifToggle(true);
+    showToast(t('notif_enabled'), 'success');
+  } else {
+    updateNotifToggle(false);
+    showToast(t('notif_blocked'), 'info', 6000);
   }
 }
 
